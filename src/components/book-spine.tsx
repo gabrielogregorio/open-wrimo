@@ -1,10 +1,11 @@
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 import type { BookView } from '@/lib/books/repository';
 import { spineHeightRem, spineTone, spineWidthRem } from '@/lib/books/spine';
 
-export function BookSpine({ book }: { book: BookView }) {
+export function BookSpine({ book, order = 0 }: { book: BookView; order?: number }) {
   return (
-    <li className="flex">
+    <li className="spine-slot flex" style={{ '--order': order } as CSSProperties}>
       <Link
         href={`/shelf/${book.id}`}
         data-tone={spineTone(book.title)}
@@ -21,8 +22,8 @@ export function Shelf({ books, label }: { books: BookView[]; label: string }) {
   return (
     <section aria-label={label} className="relative">
       <ul className="flex min-h-56 items-end gap-1.5 overflow-x-auto px-4 pt-6">
-        {books.map((book) => (
-          <BookSpine key={book.id} book={book} />
+        {books.map((book, order) => (
+          <BookSpine key={book.id} book={book} order={order} />
         ))}
       </ul>
       <div className="shelf-board h-4 rounded-sm" aria-hidden="true" />

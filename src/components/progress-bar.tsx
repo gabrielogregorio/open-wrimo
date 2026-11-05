@@ -13,7 +13,7 @@ export function ProgressBar({ currentPage, totalPages, label }: ProgressBarProps
       aria-valuemax={100}
       aria-valuenow={percent}
       className="h-2 w-full overflow-hidden rounded-full bg-rule">
-      <div className="h-full rounded-full bg-accent" style={{ width: `${percent}%` }} />
+      <div className="ink-fill h-full rounded-full bg-accent" style={{ width: `${percent}%` }} />
     </div>
   );
 }

@@ -39,6 +39,8 @@ export const ptBR: Record<string, string> = {
   'Invalid email or password.': 'E-mail ou senha incorretos.',
   'It may have been removed, or it was never written.': 'Talvez tenha sido arrancada, ou nunca foi escrita.',
   'Keep it': 'Manter',
+  Cancel: 'Cancelar',
+  'Turning the pages…': 'Virando as páginas…',
   'Keep notes under 4000 characters.': 'Mantenha as notas abaixo de 4000 caracteres.',
   'Keep the note under 500 characters.': 'Mantenha a nota abaixo de 500 caracteres.',
   'Keep your shelf, note the page you stopped on and bookmark the passages worth returning to.':

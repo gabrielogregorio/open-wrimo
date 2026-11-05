@@ -21,8 +21,9 @@ export function SubmitButton({ children, variant = 'primary' }: SubmitButtonProp
       type="submit"
       disabled={pending}
       aria-disabled={pending}
-      className={`inline-flex items-center justify-center rounded-sm px-4 py-2 font-display text-sm font-semibold tracking-wide transition disabled:opacity-60 ${VARIANT_CLASSES[variant]}`}>
+      className={`relative inline-flex items-center justify-center rounded-sm px-4 py-2 font-display text-sm font-semibold tracking-wide transition disabled:opacity-60 ${VARIANT_CLASSES[variant]}`}>
       {pending ? t('Saving…') : children}
+      {pending ? <span className="pending-ink" aria-hidden="true" /> : null}
     </button>
   );
 }

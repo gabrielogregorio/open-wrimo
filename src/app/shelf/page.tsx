@@ -65,7 +65,9 @@ export default async function ShelfPage({ searchParams }: PageProps<'/shelf'>) {
           <p className="mt-2 text-ink-soft">{t('Add the book on your nightstand to begin.')}</p>
         </div>
       ) : (
-        <Shelf books={books} label={t('Books on the shelf')} />
+        <div key={`${query.status ?? 'all'}-${query.page}`} className="page-turn">
+          <Shelf books={books} label={t('Books on the shelf')} />
+        </div>
       )}
 
       {hasNextPage || query.page > 1 ? (
