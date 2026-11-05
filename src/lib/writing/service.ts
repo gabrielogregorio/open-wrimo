@@ -1,5 +1,6 @@
 import { fieldErrorsFrom, type FormState } from '@/lib/form';
-import { checkImage } from '@/lib/storage/images';
+import { UPLOAD_RULE, type RateLimiter } from '@/lib/auth/rate-limit';
+import { prepareImage } from '@/lib/storage/images';
 import type { ImageStorage, StoredImage } from '@/lib/storage/storage';
 import { onlyPersonalBadges } from './badges';
 import { localDate, localHour } from './dates';
@@ -12,10 +13,12 @@ export const PROJECT_NOT_FOUND = 'This project is not in your notebook.';
 export const GOAL_NOT_FOUND = 'This goal no longer exists.';
 const NOTHING_TO_ADD = 'Enter how much you wrote.';
 export const POST_NOT_FOUND = 'This post no longer exists.';
+export const UPLOADS_TOO_FAST = 'Wait a second before sending another image.';
 
 export type WritingContext = {
   writing: WritingRepository;
   storage: ImageStorage;
+  limiter: RateLimiter;
   userId: string;
   now: Date;
   timeZone: string;
@@ -27,18 +30,22 @@ const fillIn = (text: string, values: Record<string, string | number>): string =
   text.replace(/\{(\w+)\}/g, (_match, name: string) => String(values[name]));
 
 const storeImage = async (
-  storage: ImageStorage,
+  { storage, limiter, userId, now }: WritingContext,
   bytes: Uint8Array,
   folder: string,
   field: string,
 ): Promise<{ image: StoredImage } | { fieldErrors: Record<string, string> }> => {
-  const checked = checkImage(bytes);
-
-  if (checked.error !== undefined) {
-    return { fieldErrors: { [field]: checked.error } };
+  if (!(await limiter.consume(`upload:${userId}`, UPLOAD_RULE, now)).allowed) {
+    return { fieldErrors: { [field]: UPLOADS_TOO_FAST } };
   }
 
-  return { image: await storage.save({ bytes, kind: checked.kind, folder }) };
+  const prepared = await prepareImage(bytes);
+
+  if ('error' in prepared) {
+    return { fieldErrors: { [field]: prepared.error } };
+  }
+
+  return { image: await storage.save({ bytes: prepared.image.bytes, kind: prepared.image.kind, folder }) };
 };
 
 export const saveProject = async (
@@ -70,14 +77,15 @@ export const saveProject = async (
 };
 
 export const saveCover = async (
-  { writing, storage, userId, now }: WritingContext,
+  context: WritingContext,
   projectId: string,
   bytes: Uint8Array | null,
 ): Promise<WritingResult> => {
+  const { writing, storage, userId, now } = context;
   let image: StoredImage | null = null;
 
   if (bytes) {
-    const stored = await storeImage(storage, bytes, 'covers', 'cover');
+    const stored = await storeImage(context, bytes, 'covers', 'cover');
 
     if ('fieldErrors' in stored) {
       return stored;
@@ -117,11 +125,12 @@ export const removeProject = async (
 };
 
 export const savePost = async (
-  { writing, storage, userId, now }: WritingContext,
+  context: WritingContext,
   projectId: string,
   input: Record<string, unknown>,
   options: { image?: Uint8Array | null; removeImage?: boolean; postId?: string } = {},
 ): Promise<WritingResult> => {
+  const { writing, storage, userId, now } = context;
   const parsed = postInputSchema.safeParse(input);
 
   if (!parsed.success) {
@@ -131,7 +140,7 @@ export const savePost = async (
   let image: StoredImage | null | undefined = options.removeImage ? null : undefined;
 
   if (options.image) {
-    const stored = await storeImage(storage, options.image, 'posts', 'image');
+    const stored = await storeImage(context, options.image, 'posts', 'image');
 
     if ('fieldErrors' in stored) {
       return stored;

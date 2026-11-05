@@ -1,12 +1,15 @@
 import { ObjectId } from 'mongodb';
 import { startTestDatabase, type TestDatabase } from '@/test/mongo';
 import { createWritingRepository, type WritingRepository } from './repository';
-import { IMAGE_TOO_BIG, IMAGE_WRONG_TYPE, MAX_IMAGE_BYTES } from '@/lib/storage/images';
+import sharp from 'sharp';
+import { createRateLimiter } from '@/lib/auth/rate-limit';
+import { IMAGE_UPLOAD_TOO_BIG, IMAGE_WRONG_TYPE, MAX_UPLOAD_BYTES } from '@/lib/storage/images';
 import type { ImageStorage } from '@/lib/storage/storage';
 import {
   GOAL_NOT_FOUND,
   POST_NOT_FOUND,
   PROJECT_NOT_FOUND,
+  UPLOADS_TOO_FAST,
   exportNotebook,
   logProgress,
   removePost,
@@ -41,12 +44,13 @@ const GOAL_FORM = {
   startDate: '2026-11-01',
   endDate: '2026-11-30',
 };
-const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const allowAll = { consume: async () => ({ allowed: true, retryAfterMs: 0 }), reset: async () => undefined };
 
 describe('writing service', () => {
   let testDatabase: TestDatabase;
   let writing: WritingRepository;
   let context: WritingContext;
+  let PNG: Uint8Array;
   let saved = 0;
   const storage = {
     save: vi.fn<ImageStorage['save']>(async ({ kind, folder }) => {
@@ -60,7 +64,12 @@ describe('writing service', () => {
   beforeAll(async () => {
     testDatabase = await startTestDatabase();
     writing = createWritingRepository(testDatabase.database);
-    context = { writing, storage, userId: WRITER, now: NOW, timeZone: 'America/Sao_Paulo' };
+    PNG = new Uint8Array(
+      await sharp({ create: { width: 40, height: 30, channels: 3, background: '#7d2a26' } })
+        .png()
+        .toBuffer(),
+    );
+    context = { writing, storage, limiter: allowAll, userId: WRITER, now: NOW, timeZone: 'America/Sao_Paulo' };
   });
 
   afterAll(async () => {
@@ -134,10 +143,24 @@ describe('writing service', () => {
     await expect(saveCover(context, projectId, new TextEncoder().encode('<svg/>'))).resolves.toEqual({
       fieldErrors: { cover: IMAGE_WRONG_TYPE },
     });
-    await expect(saveCover(context, projectId, new Uint8Array(MAX_IMAGE_BYTES + 1))).resolves.toEqual({
-      fieldErrors: { cover: IMAGE_TOO_BIG },
+    await expect(saveCover(context, projectId, new Uint8Array(MAX_UPLOAD_BYTES))).resolves.toEqual({
+      fieldErrors: { cover: IMAGE_UPLOAD_TOO_BIG },
     });
     expect(storage.save).not.toHaveBeenCalled();
+  });
+
+  it('accepts two images per second for each writer', async () => {
+    const projectId = await newProject();
+    const limited = { ...context, limiter: createRateLimiter(testDatabase.database) };
+
+    await expect(saveCover(limited, projectId, PNG)).resolves.toMatchObject({ saved: true });
+    await expect(saveCover(limited, projectId, PNG)).resolves.toMatchObject({ saved: true });
+    await expect(saveCover(limited, projectId, PNG)).resolves.toEqual({ fieldErrors: { cover: UPLOADS_TOO_FAST } });
+    await expect(saveCover({ ...limited, now: new Date(NOW.getTime() + 1000) }, projectId, PNG)).resolves.toMatchObject(
+      {
+        saved: true,
+      },
+    );
   });
 
   it('throws away a new cover when the project is gone', async () => {

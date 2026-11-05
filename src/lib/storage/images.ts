@@ -1,6 +1,16 @@
-export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
-export const IMAGE_TOO_BIG = 'Use an image up to 2 MB.';
+import sharp from 'sharp';
+
+export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+export const MAX_STORED_BYTES = 2 * 1024 * 1024;
+export const MAX_WIDTH = 1920;
+export const MAX_HEIGHT = 1080;
+const MAX_INPUT_PIXELS = 40_000_000;
+const WEBP_QUALITY = 82;
+
+export const IMAGE_UPLOAD_TOO_BIG = 'Send an image under 5 MB.';
 export const IMAGE_WRONG_TYPE = 'Use a PNG, JPEG, WebP or GIF image.';
+export const IMAGE_UNREADABLE = 'This image could not be read.';
+export const IMAGE_STILL_TOO_BIG = 'The image is still 2 MB or more after converting to WebP.';
 
 const ascii = (bytes: Uint8Array, from: number, to: number): string => String.fromCharCode(...bytes.slice(from, to));
 
@@ -8,7 +18,7 @@ const SIGNATURES = [
   {
     contentType: 'image/png',
     extension: 'png',
-    matches: (bytes: Uint8Array) => ascii(bytes, 1, 4) === 'PNG' && bytes[0] === 0x89,
+    matches: (bytes: Uint8Array) => bytes[0] === 0x89 && ascii(bytes, 1, 4) === 'PNG',
   },
   {
     contentType: 'image/jpeg',
@@ -24,6 +34,7 @@ const SIGNATURES = [
 ] as const;
 
 export type ImageKind = { contentType: string; extension: string };
+export const WEBP: ImageKind = { contentType: 'image/webp', extension: 'webp' };
 
 export const imageKindOf = (bytes: Uint8Array): ImageKind | null => {
   const signature = SIGNATURES.find((candidate) => candidate.matches(bytes));
@@ -34,14 +45,36 @@ export const imageKindOf = (bytes: Uint8Array): ImageKind | null => {
 export const contentTypeForExtension = (extension: string): string | null =>
   SIGNATURES.find((signature) => signature.extension === extension)?.contentType ?? null;
 
-export type ImageCheck = { kind: ImageKind; error?: never } | { kind?: never; error: string };
+export type PreparedImage = { bytes: Uint8Array; kind: ImageKind; width: number; height: number };
+export type ImageLimits = { maxUploadBytes: number; maxStoredBytes: number };
 
-export const checkImage = (bytes: Uint8Array): ImageCheck => {
-  if (bytes.byteLength > MAX_IMAGE_BYTES) {
-    return { error: IMAGE_TOO_BIG };
+const DEFAULT_LIMITS: ImageLimits = { maxUploadBytes: MAX_UPLOAD_BYTES, maxStoredBytes: MAX_STORED_BYTES };
+
+export const prepareImage = async (
+  bytes: Uint8Array,
+  limits: ImageLimits = DEFAULT_LIMITS,
+): Promise<{ image: PreparedImage } | { error: string }> => {
+  if (bytes.byteLength >= limits.maxUploadBytes) {
+    return { error: IMAGE_UPLOAD_TOO_BIG };
   }
 
-  const kind = imageKindOf(bytes);
+  if (!imageKindOf(bytes)) {
+    return { error: IMAGE_WRONG_TYPE };
+  }
 
-  return kind ? { kind } : { error: IMAGE_WRONG_TYPE };
+  try {
+    const { data, info } = await sharp(bytes, { limitInputPixels: MAX_INPUT_PIXELS })
+      .rotate()
+      .resize({ width: MAX_WIDTH, height: MAX_HEIGHT, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: WEBP_QUALITY })
+      .toBuffer({ resolveWithObject: true });
+
+    if (data.byteLength >= limits.maxStoredBytes) {
+      return { error: IMAGE_STILL_TOO_BIG };
+    }
+
+    return { image: { bytes: new Uint8Array(data), kind: WEBP, width: info.width, height: info.height } };
+  } catch {
+    return { error: IMAGE_UNREADABLE };
+  }
 };

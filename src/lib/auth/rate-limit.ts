@@ -18,6 +18,8 @@ export const REGISTER_RULES = {
   global: { limit: 50, windowMs: MINUTE_IN_MS },
 } satisfies Record<string, RateRule>;
 
+export const UPLOAD_RULE: RateRule = { limit: 2, windowMs: 1000 };
+
 export const decide = (count: number, limit: number, expiresAt: Date, now: Date): RateDecision => {
   if (count <= limit) {
     return { allowed: true, retryAfterMs: 0 };

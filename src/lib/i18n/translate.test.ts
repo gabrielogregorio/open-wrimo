@@ -3,8 +3,8 @@ import { join } from 'node:path';
 import { STATUS_LABELS } from '@/components/book-status';
 import { EMAIL_TAKEN, INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS } from '@/lib/auth/service';
 import { BOOK_NOT_FOUND } from '@/lib/books/service';
-import { IMAGE_TOO_BIG, IMAGE_WRONG_TYPE } from '@/lib/storage/images';
-import { GOAL_NOT_FOUND, POST_NOT_FOUND, PROJECT_NOT_FOUND } from '@/lib/writing/service';
+import { IMAGE_STILL_TOO_BIG, IMAGE_UNREADABLE, IMAGE_UPLOAD_TOO_BIG, IMAGE_WRONG_TYPE } from '@/lib/storage/images';
+import { GOAL_NOT_FOUND, POST_NOT_FOUND, PROJECT_NOT_FOUND, UPLOADS_TOO_FAST } from '@/lib/writing/service';
 import { ptBR } from './pt-BR';
 import { translate, translator } from './translate';
 
@@ -66,8 +66,11 @@ describe('pt-BR dictionary', () => {
     BOOK_NOT_FOUND,
     PROJECT_NOT_FOUND,
     GOAL_NOT_FOUND,
-    IMAGE_TOO_BIG,
+    IMAGE_UPLOAD_TOO_BIG,
+    IMAGE_STILL_TOO_BIG,
+    IMAGE_UNREADABLE,
     IMAGE_WRONG_TYPE,
+    UPLOADS_TOO_FAST,
     POST_NOT_FOUND,
     'Enter how much you wrote.',
   ]);
