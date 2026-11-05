@@ -9,6 +9,9 @@ describe('parseEnvironment', () => {
       MONGODB_DB: 'openwrimo',
       APP_URL: 'http://localhost:8920',
       TRUST_PROXY: false,
+      STORAGE_DRIVER: 'local',
+      LOCAL_UPLOADS_DIR: 'public/uploads',
+      CLOUDINARY_FOLDER: 'openwrimo',
     });
   });
 
@@ -22,6 +25,24 @@ describe('parseEnvironment', () => {
 
     expect(environment.TRUST_PROXY).toBe(true);
     expect(environment.MONGODB_DB).toBe('library');
+  });
+
+  it('needs a Cloudinary address only when images go to Cloudinary', () => {
+    expect(() => parseEnvironment({ MONGODB_URI: LOCAL_URI, STORAGE_DRIVER: 'cloudinary' })).toThrow(/CLOUDINARY_URL/);
+    expect(() =>
+      parseEnvironment({
+        MONGODB_URI: LOCAL_URI,
+        STORAGE_DRIVER: 'cloudinary',
+        CLOUDINARY_URL: 'https://leaked-secret@x',
+      }),
+    ).toThrow(expect.objectContaining({ message: expect.not.stringContaining('leaked-secret') }));
+    expect(
+      parseEnvironment({
+        MONGODB_URI: LOCAL_URI,
+        STORAGE_DRIVER: 'cloudinary',
+        CLOUDINARY_URL: 'cloudinary://1234:secret@demo-cloud',
+      }).CLOUDINARY_URL,
+    ).toBe('cloudinary://1234:secret@demo-cloud');
   });
 
   it('refuses a connection string from another database', () => {

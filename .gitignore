@@ -16,3 +16,4 @@ next-env.d.ts
 /lighthouseReport*.html
 /resourceUsageReport.json
 /trash/
+/public/uploads/
