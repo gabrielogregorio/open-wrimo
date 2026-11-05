@@ -8,7 +8,15 @@ import {
   type StoredProject,
 } from '@/lib/db/collections';
 import type { StoredImage } from '@/lib/storage/storage';
-import type { GoalInput, GoalUnit, Mood, PostInput, ProjectInput } from './schema';
+import type { EventId } from './events';
+import {
+  PROJECT_STATUSES,
+  type GoalInput,
+  type GoalUnit,
+  type Mood,
+  type PostInput,
+  type ProjectInput,
+} from './schema';
 
 export type ProjectView = Omit<ProjectInput, 'event'> & {
   id: string;
@@ -17,7 +25,7 @@ export type ProjectView = Omit<ProjectInput, 'event'> & {
   updatedAt: string;
 };
 
-export type GoalView = GoalInput & { id: string; projectId: string };
+export type GoalView = GoalInput & { id: string; projectId: string; eventId?: EventId | null };
 
 export type EntryView = {
   id: string;
@@ -45,7 +53,7 @@ export type PostView = PostInput & {
 const toProjectView = (project: StoredProject): ProjectView => ({
   id: project._id.toHexString(),
   title: project.title,
-  status: project.status,
+  status: (PROJECT_STATUSES as readonly string[]).includes(project.status) ? project.status : 'in-progress',
   type: project.type,
   genres: project.genres,
   summary: project.summary,
@@ -66,6 +74,7 @@ const toGoalView = (goal: StoredGoal): GoalView => ({
   target: goal.target,
   startDate: goal.startDate,
   endDate: goal.endDate,
+  eventId: goal.eventId ?? null,
 });
 
 const toEntryView = (entry: StoredEntry): EntryView => ({
@@ -164,6 +173,17 @@ export const createWritingRepository = (database: Db) => {
       return matchedCount === 1;
     },
 
+    async markStarted(userId: string, projectId: string, now: Date): Promise<void> {
+      const filter = owned(userId, projectId);
+
+      if (filter) {
+        await projects.updateOne(
+          { ...filter, status: 'not-started' },
+          { $set: { status: 'in-progress', updatedAt: now } },
+        );
+      }
+    },
+
     async setAwards(userId: string, projectId: string, awards: string[], now: Date): Promise<boolean> {
       const filter = owned(userId, projectId);
       const result = filter ? await projects.updateOne(filter, { $set: { awards, updatedAt: now } }) : null;
@@ -222,7 +242,12 @@ export const createWritingRepository = (database: Db) => {
       return goal ? toGoalView(goal) : null;
     },
 
-    async createGoal(userId: string, projectId: string, input: GoalInput, now: Date): Promise<string | null> {
+    async createGoal(
+      userId: string,
+      projectId: string,
+      input: GoalInput & { eventId?: EventId | null },
+      now: Date,
+    ): Promise<string | null> {
       const filter = owned(userId, projectId);
 
       if (!filter || (await projects.countDocuments(filter, { limit: 1 })) === 0) {

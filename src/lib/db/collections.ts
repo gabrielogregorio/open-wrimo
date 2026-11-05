@@ -1,5 +1,6 @@
 import type { Db, ObjectId, WithId } from 'mongodb';
 import type { BookStatus } from '@/lib/books/schema';
+import type { EventId } from '@/lib/writing/events';
 import type { GoalUnit, Mood, ProjectStatus, ProjectType } from '@/lib/writing/schema';
 
 export type UserDocument = {
@@ -69,6 +70,7 @@ export type GoalDocument = {
   target: number;
   startDate: string;
   endDate: string;
+  eventId?: EventId | null;
   createdAt: Date;
 };
 

@@ -5,6 +5,7 @@ import type { ImageStorage, StoredImage } from '@/lib/storage/storage';
 import { onlyPersonalBadges } from './badges';
 import { localDate, localHour } from './dates';
 import { eventGoal } from './events';
+import { sanitizeRichText } from './rich-text';
 import { entriesForGoal } from './goals';
 import type { WritingRepository } from './repository';
 import { entryInputSchema, goalInputSchema, postInputSchema, projectInputSchema } from './schema';
@@ -59,7 +60,8 @@ export const saveProject = async (
     return { fieldErrors: fieldErrorsFrom(parsed.error) };
   }
 
-  const { event, ...project } = parsed.data;
+  const { event, ...fields } = parsed.data;
+  const project = { ...fields, excerpt: sanitizeRichText(fields.excerpt) };
 
   if (projectId) {
     return (await writing.updateProject(userId, projectId, project, now))
@@ -70,7 +72,12 @@ export const saveProject = async (
   const id = await writing.createProject(userId, project, now);
 
   if (event) {
-    await writing.createGoal(userId, id, eventGoal(event, localDate(now, timeZone), translate), now);
+    await writing.createGoal(
+      userId,
+      id,
+      { ...eventGoal(event, localDate(now, timeZone), translate), eventId: event },
+      now,
+    );
   }
 
   return { id };
@@ -154,7 +161,8 @@ export const savePost = async (
   };
 
   if (!options.postId) {
-    const created = await writing.createPost(userId, projectId, parsed.data, image ?? null, now);
+    const post = { ...parsed.data, body: sanitizeRichText(parsed.data.body) };
+    const created = await writing.createPost(userId, projectId, post, image ?? null, now);
 
     if (!created) {
       await discardNewImage();
@@ -165,7 +173,13 @@ export const savePost = async (
     return { id: created };
   }
 
-  const previousKey = await writing.updatePost(userId, options.postId, parsed.data, image, now);
+  const previousKey = await writing.updatePost(
+    userId,
+    options.postId,
+    { ...parsed.data, body: sanitizeRichText(parsed.data.body) },
+    image,
+    now,
+  );
 
   if (previousKey === false) {
     await discardNewImage();
@@ -259,6 +273,10 @@ export const logProgress = async (
     now,
   );
 
+  if (change > 0) {
+    await writing.markStarted(userId, goal.projectId, now);
+  }
+
   return { id: goalId, saved: true };
 };
 
@@ -280,4 +298,13 @@ export const exportNotebook = async ({ writing, userId }: WritingContext) => {
   ]);
 
   return { exportedFrom: 'Open Wrimo', version: 1, projects, goals, entries, posts };
+};
+
+export const saveInlineImage = async (
+  context: WritingContext,
+  bytes: Uint8Array,
+): Promise<{ url: string } | { error: string }> => {
+  const stored = await storeImage(context, bytes, 'inline', 'image');
+
+  return 'image' in stored ? { url: stored.image.url } : { error: stored.fieldErrors.image };
 };

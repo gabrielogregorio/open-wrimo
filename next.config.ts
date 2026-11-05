@@ -16,6 +16,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   agentRules: false,
+  experimental: { serverActions: { bodySizeLimit: '6mb' } },
   poweredByHeader: false,
   serverExternalPackages: ['mongodb'],
   async headers() {

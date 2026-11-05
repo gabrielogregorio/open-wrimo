@@ -1,9 +1,8 @@
 import sharp from 'sharp';
 
-export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-export const MAX_STORED_BYTES = 2 * 1024 * 1024;
-export const MAX_WIDTH = 1920;
-export const MAX_HEIGHT = 1080;
+import { MAX_HEIGHT, MAX_STORED_BYTES, MAX_UPLOAD_BYTES, MAX_WIDTH } from './limits';
+
+export { MAX_UPLOAD_BYTES } from './limits';
 const MAX_INPUT_PIXELS = 40_000_000;
 const WEBP_QUALITY = 82;
 

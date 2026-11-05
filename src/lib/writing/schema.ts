@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { isIsoDate } from './dates';
 import { EVENT_IDS } from './events';
 
-export const PROJECT_STATUSES = ['planning', 'in-progress', 'drafted', 'completed', 'published'] as const;
+export const PROJECT_STATUSES = ['not-started', 'in-progress', 'completed', 'on-hiatus'] as const;
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
 export const PROJECT_TYPES = [
@@ -70,7 +70,7 @@ export const projectInputSchema = z.object({
   type: z.enum(PROJECT_TYPES, { error: 'Choose a project type.' }),
   genres,
   summary: text(2000, 'Keep the summary under 2000 characters.'),
-  excerpt: text(5000, 'Keep the excerpt under 5000 characters.'),
+  excerpt: text(100000, 'Keep the additional details shorter.'),
   pinterestUrl: optionalUrl('Enter an https:// address.'),
   playlistUrl: optionalUrl('Enter an https:// address.'),
   featured: z.preprocess((value) => value === 'on' || value === true, z.boolean()),
@@ -89,8 +89,8 @@ export const postInputSchema = z.object({
   body: z
     .string()
     .trim()
-    .min(1, { error: 'Write the post in up to 20000 characters.' })
-    .max(20000, { error: 'Write the post in up to 20000 characters.' }),
+    .min(1, { error: 'Write something in the post.' })
+    .max(200000, { error: 'Keep the post shorter.' }),
 });
 
 const count = (maximum: number, message: string) =>

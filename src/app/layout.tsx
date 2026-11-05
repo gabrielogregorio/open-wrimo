@@ -3,7 +3,10 @@ import '@fontsource-variable/literata';
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { cookies } from 'next/headers';
 import { I18nProvider } from '@/components/i18n-provider';
+import { TimeZoneSync } from '@/components/time-zone-sync';
+import { TIME_ZONE_COOKIE } from '@/lib/writing/dates';
 import { getLocale, getTranslator } from '@/server/i18n';
 import { SiteHeader } from './site-header';
 
@@ -12,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: { default: 'Open Wrimo', template: '%s · Open Wrimo' },
-    description: t('A calm reading log: keep your shelf, track pages and bookmark passages.'),
+    description: t('Write your novel, track every word and keep the books you read.'),
     applicationName: 'Open Wrimo',
   };
 }
@@ -30,6 +33,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang={locale}>
       <body className="flex flex-col antialiased">
         <I18nProvider locale={locale}>
+          <TimeZoneSync saved={(await cookies()).get(TIME_ZONE_COOKIE)?.value} />
           <a
             href="#content"
             className="sr-only rounded-sm bg-accent px-3 py-2 text-accent-ink focus:not-sr-only focus:absolute focus:top-2 focus:left-2">

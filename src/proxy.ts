@@ -8,12 +8,12 @@ import {
   normalizeLocale,
 } from '@/lib/i18n/locales';
 
-const PROTECTED_PREFIX = '/shelf';
+const PROTECTED_PREFIXES = ['/shelf', '/write'];
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  if (pathname.startsWith(PROTECTED_PREFIX) && !request.cookies.has(SESSION_COOKIE)) {
+  if (PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix)) && !request.cookies.has(SESSION_COOKIE)) {
     const login = new URL('/login', request.url);
     login.searchParams.set('next', `${pathname}${search}`);
 
@@ -35,5 +35,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|api/health|icon.svg|robots.txt).*)'],
+  matcher: ['/((?!_next/static|_next/image|api/health|media|icon.svg|robots.txt).*)'],
 };
