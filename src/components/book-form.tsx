@@ -162,7 +162,7 @@ export function BookForm({ action, title, cancelHref, book }: BookFormProps) {
       {book ? null : (
         <div className="book-cover" aria-hidden="true" data-testid="book-cover">
           <LogoMark className="h-14 w-14" />
-          <span className="font-display text-2xl font-semibold tracking-wide">Folio</span>
+          <span className="font-display text-2xl font-semibold tracking-wide">Open Wrimo</span>
         </div>
       )}
     </div>

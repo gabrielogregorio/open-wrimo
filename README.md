@@ -1,6 +1,6 @@
 <div align="center">
 
-# Folio
+# Open Wrimo
 
 A calm reading log: keep your shelf, track the page you stopped on and bookmark the passages worth returning to.
 
@@ -23,7 +23,7 @@ A calm reading log: keep your shelf, track the page you stopped on and bookmark 
 
 ## About
 
-Folio keeps the books you read on a shelf drawn as spines. Each book has a status (want to read, reading, finished),
+Open Wrimo keeps the books you read on a shelf drawn as spines. Each book has a status (want to read, reading, finished),
 the current page, a rating, notes and bookmarks. Typing the page you reached moves the status by itself.
 
 - English and Brazilian Portuguese, picked from `?lang=`, your choice or the browser.
@@ -47,8 +47,8 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 nvm install 24
 corepack enable
 
-git clone <this repository> folio
-cd folio
+git clone <this repository> openwrimo
+cd openwrimo
 nvm use 24
 pnpm install
 cp .env.example .env.local
@@ -66,7 +66,7 @@ once into `~/.cache/mongodb-binaries`.
 Keep the local database by default. To use a cluster such as MongoDB Atlas, change one line in `.env.local`:
 
 ```bash
-MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority&appName=folio
+MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority&appName=openwrimo
 ```
 
 Allow your address in the cluster network settings. Indexes are created on the first request. To go back, restore the
@@ -74,13 +74,13 @@ local line and run `pnpm run db:up`.
 
 ### Environment variables
 
-| Variable                                     | Default                         | Meaning                                                             |
-| -------------------------------------------- | ------------------------------- | ------------------------------------------------------------------- |
-| `MONGODB_URI`                                | required                        | `mongodb://` or `mongodb+srv://` connection string                  |
-| `MONGODB_DB`                                 | `folio`                         | Database name                                                       |
-| `APP_URL`                                    | `http://localhost:8920`         | Public address; `https://` turns on secure cookies                  |
-| `TRUST_PROXY`                                | `false`                         | `true` only behind your own reverse proxy, to rate limit by address |
-| `MONGO_ROOT_USERNAME`, `MONGO_ROOT_PASSWORD` | `folio`, `folio-local-password` | Credentials of the local container                                  |
+| Variable                                     | Default                                 | Meaning                                                             |
+| -------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------- |
+| `MONGODB_URI`                                | required                                | `mongodb://` or `mongodb+srv://` connection string                  |
+| `MONGODB_DB`                                 | `openwrimo`                             | Database name                                                       |
+| `APP_URL`                                    | `http://localhost:8920`                 | Public address; `https://` turns on secure cookies                  |
+| `TRUST_PROXY`                                | `false`                                 | `true` only behind your own reverse proxy, to rate limit by address |
+| `MONGO_ROOT_USERNAME`, `MONGO_ROOT_PASSWORD` | `openwrimo`, `openwrimo-local-password` | Credentials of the local container                                  |
 
 ## Available scripts
 

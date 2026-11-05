@@ -14,7 +14,7 @@ const server = spawn(process.execPath, [NEXT_BIN, 'start', '--port', PORT, '--ho
   env: {
     ...process.env,
     MONGODB_URI: uri,
-    MONGODB_DB: `folio-e2e-${Date.now()}`,
+    MONGODB_DB: `openwrimo-e2e-${Date.now()}`,
     APP_URL: `http://127.0.0.1:${PORT}`,
     TRUST_PROXY: 'false',
   },

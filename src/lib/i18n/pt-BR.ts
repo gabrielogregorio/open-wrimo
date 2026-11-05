@@ -35,7 +35,7 @@ export const ptBR: Record<string, string> = {
   'Enter your password.': 'Informe sua senha.',
   'Filter by status': 'Filtrar por situação',
   Finished: 'Lido',
-  'Folio · read slowly, remember more.': 'Folio · leia devagar, lembre mais.',
+  'Open Wrimo · write every day, read slowly.': 'Open Wrimo · escreva todo dia, leia devagar.',
   'Get a library card': 'Faça sua carteirinha',
   'Hello, {name}': 'Olá, {name}',
   'I am on page': 'Estou na página',

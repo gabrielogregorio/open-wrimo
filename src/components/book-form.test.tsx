@@ -94,7 +94,7 @@ describe('BookForm', () => {
   it('opens a cover over a new book and none over an existing one', () => {
     const { unmount } = renderWithLocale(<BookForm title="Add a book" cancelHref="/shelf" action={async () => ({})} />);
 
-    expect(screen.getByTestId('book-cover')).toHaveTextContent('Folio');
+    expect(screen.getByTestId('book-cover')).toHaveTextContent('Open Wrimo');
     unmount();
     renderWithLocale(<BookForm title="Edit details" cancelHref="/shelf/1" action={async () => ({})} book={BOOK} />);
 

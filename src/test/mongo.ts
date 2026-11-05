@@ -8,7 +8,7 @@ export const startTestDatabase = async (): Promise<TestDatabase> => {
   const server = await MongoMemoryServer.create();
   const uri = server.getUri();
   const client = await new MongoClient(uri).connect();
-  const database = client.db('folio-test');
+  const database = client.db('openwrimo-test');
   await ensureIndexes(database);
 
   return {

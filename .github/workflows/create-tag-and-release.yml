@@ -38,7 +38,7 @@ jobs:
           TAG="v$VERSION"
           {
             echo "TAG_NAME=$TAG"
-            echo "RELEASE_NAME=Folio $TAG"
+            echo "RELEASE_NAME=Open Wrimo $TAG"
             [[ "$VERSION" == *-* ]] && echo "PRERELEASE=true" || echo "PRERELEASE=false"
           } >> "$GITHUB_ENV"
           # PR text goes through env + a file, never straight into the script

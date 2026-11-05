@@ -2,8 +2,8 @@ export const LOCALES = ['en-US', 'pt-BR'] as const;
 export type Locale = (typeof LOCALES)[number];
 
 export const DEFAULT_LOCALE: Locale = 'en-US';
-export const LOCALE_COOKIE = 'folio-locale';
-export const LOCALE_HEADER = 'x-folio-locale';
+export const LOCALE_COOKIE = 'openwrimo-locale';
+export const LOCALE_HEADER = 'x-openwrimo-locale';
 export const LOCALE_QUERY = 'lang';
 export const PREFERENCE_MAX_AGE_SECONDS = 365 * 24 * 60 * 60;
 

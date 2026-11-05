@@ -1,6 +1,6 @@
 # Accessibility
 
-Folio aims at WCAG 2.1 AA.
+Open Wrimo aims at WCAG 2.1 AA.
 
 ## What is checked on every pull request
 

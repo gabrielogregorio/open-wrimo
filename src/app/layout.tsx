@@ -11,9 +11,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslator();
 
   return {
-    title: { default: 'Folio', template: '%s · Folio' },
+    title: { default: 'Open Wrimo', template: '%s · Open Wrimo' },
     description: t('A calm reading log: keep your shelf, track pages and bookmark passages.'),
-    applicationName: 'Folio',
+    applicationName: 'Open Wrimo',
   };
 }
 
@@ -41,7 +41,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           </main>
           <footer className="border-t border-rule">
             <p className="mx-auto max-w-5xl px-4 py-6 text-center text-sm text-ink-soft italic">
-              {t('Folio · read slowly, remember more.')}
+              {t('Open Wrimo · write every day, read slowly.')}
             </p>
           </footer>
         </I18nProvider>

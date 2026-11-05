@@ -161,5 +161,5 @@ export const exportNotebook = async ({ writing, userId }: WritingContext) => {
     writing.listEntries(userId),
   ]);
 
-  return { exportedFrom: 'Folio', version: 1, projects, goals, entries };
+  return { exportedFrom: 'Open Wrimo', version: 1, projects, goals, entries };
 };

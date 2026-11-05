@@ -2,7 +2,7 @@
 
 ## The problem
 
-Readers lose track of what they are reading, where they stopped and which passages they wanted to keep. Folio is a
+Readers lose track of what they are reading, where they stopped and which passages they wanted to keep. Open Wrimo is a
 private reading log: a shelf of books with a status, the current page and bookmarks with notes. It stays small on
 purpose so it can grow in the directions listed at the end.
 

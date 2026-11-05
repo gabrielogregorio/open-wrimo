@@ -45,7 +45,7 @@ test('the shelf asks for a session and returns to the page asked for', async ({ 
 });
 
 test('a forged session cookie does not open the shelf', async ({ page, context }) => {
-  await context.addCookies([{ name: 'folio-session', value: 'forged', url: 'http://127.0.0.1:8921' }]);
+  await context.addCookies([{ name: 'openwrimo-session', value: 'forged', url: 'http://127.0.0.1:8921' }]);
 
   await page.goto('/shelf');
 

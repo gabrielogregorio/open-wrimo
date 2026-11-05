@@ -4,7 +4,7 @@ const MONGODB_URI_PATTERN = /^mongodb(\+srv)?:\/\/\S+$/;
 
 const environmentSchema = z.object({
   MONGODB_URI: z.string().regex(MONGODB_URI_PATTERN, { error: 'must start with mongodb:// or mongodb+srv://' }),
-  MONGODB_DB: z.string().min(1).default('folio'),
+  MONGODB_DB: z.string().min(1).default('openwrimo'),
   APP_URL: z.url().default('http://localhost:8920'),
   TRUST_PROXY: z
     .enum(['true', 'false'])

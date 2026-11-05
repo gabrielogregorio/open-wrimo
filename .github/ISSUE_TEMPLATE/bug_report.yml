@@ -1,5 +1,5 @@
 name: Bug report
-description: Something on Folio looks wrong, a form fails or a page shows an error
+description: Something on Open Wrimo looks wrong, a form fails or a page shows an error
 labels: [bug]
 body:
   - type: textarea

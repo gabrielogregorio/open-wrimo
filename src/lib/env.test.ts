@@ -1,12 +1,12 @@
 import { getEnvironment, parseEnvironment, resetEnvironmentCache } from './env';
 
-const LOCAL_URI = 'mongodb://folio:secret@localhost:27017/?authSource=admin';
+const LOCAL_URI = 'mongodb://openwrimo:secret@localhost:27017/?authSource=admin';
 
 describe('parseEnvironment', () => {
   it('fills the defaults when only the connection string is set', () => {
     expect(parseEnvironment({ MONGODB_URI: LOCAL_URI })).toEqual({
       MONGODB_URI: LOCAL_URI,
-      MONGODB_DB: 'folio',
+      MONGODB_DB: 'openwrimo',
       APP_URL: 'http://localhost:8920',
       TRUST_PROXY: false,
     });
@@ -25,7 +25,7 @@ describe('parseEnvironment', () => {
   });
 
   it('refuses a connection string from another database', () => {
-    expect(() => parseEnvironment({ MONGODB_URI: 'postgres://localhost/folio' })).toThrow(
+    expect(() => parseEnvironment({ MONGODB_URI: 'postgres://localhost/openwrimo' })).toThrow(
       /Invalid environment: .*MONGODB_URI/s,
     );
   });

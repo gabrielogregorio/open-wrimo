@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import type { Db, ObjectId } from 'mongodb';
 import { collections } from '@/lib/db/collections';
 
-export const SESSION_COOKIE = 'folio-session';
+export const SESSION_COOKIE = 'openwrimo-session';
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const TOKEN_BYTES = 32;
 

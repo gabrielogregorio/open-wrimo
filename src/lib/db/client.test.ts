@@ -22,14 +22,14 @@ describe('getDatabase', () => {
 
   it('connects once, creates the indexes and reuses the client', async () => {
     vi.stubEnv('MONGODB_URI', testDatabase.uri);
-    vi.stubEnv('MONGODB_DB', 'folio-client-test');
+    vi.stubEnv('MONGODB_DB', 'openwrimo-client-test');
 
     const connect = vi.spyOn(MongoClient.prototype, 'connect');
     const [first] = await Promise.all([getDatabase(), getDatabase()]);
     await getDatabase();
     const sessionIndexes = await first.collection('sessions').indexes();
 
-    expect(first.databaseName).toBe('folio-client-test');
+    expect(first.databaseName).toBe('openwrimo-client-test');
     expect(connect).toHaveBeenCalledTimes(1);
     expect(sessionIndexes.map((index) => index.name).sort()).toEqual(['_id_', 'expiresAt_1', 'tokenHash_1']);
   });
@@ -42,7 +42,7 @@ describe('getDatabase', () => {
     resetEnvironmentCache();
     vi.stubEnv('MONGODB_URI', testDatabase.uri);
 
-    await expect(getDatabase()).resolves.toHaveProperty('databaseName', 'folio');
+    await expect(getDatabase()).resolves.toHaveProperty('databaseName', 'openwrimo');
   });
 
   it('closes nothing when it never connected', async () => {

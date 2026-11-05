@@ -169,7 +169,7 @@ describe('writing service', () => {
   it('exports the whole notebook', async () => {
     const notebook = await exportNotebook(context);
 
-    expect(notebook).toMatchObject({ exportedFrom: 'Folio', version: 1 });
+    expect(notebook).toMatchObject({ exportedFrom: 'Open Wrimo', version: 1 });
     expect(notebook.projects.length).toBeGreaterThan(0);
     expect(notebook.goals.length).toBeGreaterThan(0);
     expect(notebook.entries.length).toBeGreaterThan(0);

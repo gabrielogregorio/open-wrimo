@@ -21,7 +21,7 @@ export type AuthResult =
 
 type Limit = { key: string; rule: RateRule };
 
-const DUMMY_HASH_PASSWORD = 'folio-dummy-password';
+const DUMMY_HASH_PASSWORD = 'openwrimo-dummy-password';
 let dummyHash: Promise<string> | undefined;
 
 const checkLimits = async (limiter: RateLimiter, limits: Limit[], now: Date): Promise<AuthResult | null> => {

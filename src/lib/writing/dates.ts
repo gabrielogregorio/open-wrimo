@@ -2,7 +2,7 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const DEFAULT_TIME_ZONE = 'UTC';
-export const TIME_ZONE_COOKIE = 'folio-time-zone';
+export const TIME_ZONE_COOKIE = 'openwrimo-time-zone';
 
 export const isTimeZone = (value: unknown): value is string => {
   if (typeof value !== 'string' || value.length === 0 || value.length > 64) {

@@ -15,7 +15,7 @@ export async function SiteHeader() {
       <div className="mx-auto flex max-w-5xl flex-wrap items-end justify-between gap-4 px-4 py-4">
         <Link href={user ? '/shelf' : '/'} className="flex items-center gap-2 text-accent">
           <LogoMark />
-          <span className="font-display text-2xl font-semibold tracking-tight text-ink">Folio</span>
+          <span className="font-display text-2xl font-semibold tracking-tight text-ink">Open Wrimo</span>
         </Link>
         {user ? (
           <nav aria-label={t('Main')} className="flex items-center gap-5 font-display text-sm">
