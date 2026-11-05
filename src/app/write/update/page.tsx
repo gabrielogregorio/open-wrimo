@@ -7,7 +7,7 @@ import { MOOD_LABELS, UNIT_LABELS } from '@/components/writing-labels';
 import { formatDay, formatNumber } from '@/lib/i18n/format';
 import { getLocale, getTranslator } from '@/server/i18n';
 import { loadNotebook } from '@/server/notebook';
-import { goalChoices, pickGoal } from '../goal-choices';
+import { bookChoices, pickGoal } from '../goal-choices';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslator();
@@ -21,7 +21,7 @@ export default async function UpdatePage({ searchParams }: PageProps<'/write/upd
   const notebook = await loadNotebook();
   const t = await getTranslator();
   const locale = await getLocale();
-  const choices = goalChoices(notebook);
+  const choices = bookChoices(notebook, t);
   const selected = pickGoal(choices, (await searchParams).goal);
   const titles = new Map(notebook.projects.map((project) => [project.id, project.title]));
   const recent = notebook.entries.slice(0, RECENT_ENTRIES);
@@ -31,7 +31,7 @@ export default async function UpdatePage({ searchParams }: PageProps<'/write/upd
       <h1 className="font-display text-4xl font-semibold">{t('Update my word count')}</h1>
       {choices.length > 0 ? (
         <div className="sheet rounded-sm p-8">
-          <UpdateForm action={logProgressAction} goals={choices} selectedGoal={selected} today={notebook.today} />
+          <UpdateForm action={logProgressAction} books={choices} selectedGoal={selected} today={notebook.today} />
         </div>
       ) : (
         <p className="sheet rounded-sm p-8 text-center">

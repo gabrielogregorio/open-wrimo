@@ -3,7 +3,7 @@ import { logSprintAction } from '@/app/actions/writing';
 import { SprintTimer } from '@/components/sprint-timer';
 import { getTranslator } from '@/server/i18n';
 import { loadNotebook } from '@/server/notebook';
-import { goalChoices, pickGoal } from '../goal-choices';
+import { bookChoices, pickGoal } from '../goal-choices';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslator();
@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SprintPage() {
   const notebook = await loadNotebook();
   const t = await getTranslator();
-  const choices = goalChoices(notebook);
+  const choices = bookChoices(notebook, t);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -22,7 +22,7 @@ export default async function SprintPage() {
       <p className="text-ink-soft">{t('Pick a time, write without stopping, then log what you wrote.')}</p>
       <SprintTimer
         action={logSprintAction}
-        goals={choices}
+        books={choices}
         selectedGoal={pickGoal(choices, undefined)}
         today={notebook.today}
       />

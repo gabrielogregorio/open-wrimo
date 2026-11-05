@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormState } from '@/lib/form';
 import { useI18n } from './i18n-provider';
-import { UpdateForm, type GoalChoice } from './update-form';
+import { UpdateForm, type BookChoice } from './update-form';
 
 const PRESETS = [5, 10, 15, 20, 25, 30, 45, 60];
 
 type SprintTimerProps = {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
-  goals: GoalChoice[];
+  books: BookChoice[];
   selectedGoal: string;
   today: string;
 };
@@ -25,7 +25,7 @@ export const clockText = (seconds: number): string => {
   return hours > 0 ? `${hours}:${minutes}:${rest}` : `${minutes}:${rest}`;
 };
 
-export function SprintTimer({ action, goals, selectedGoal, today }: SprintTimerProps) {
+export function SprintTimer({ action, books, selectedGoal, today }: SprintTimerProps) {
   const { t } = useI18n();
   const [kind, setKind] = useState<'timer' | 'stopwatch'>('timer');
   const [minutes, setMinutes] = useState(15);
@@ -142,9 +142,9 @@ export function SprintTimer({ action, goals, selectedGoal, today }: SprintTimerP
           {phase === 'done' ? t('Pens down! How much did you write?') : ''}
         </p>
       </div>
-      {phase === 'done' && goals.length > 0 ? (
+      {phase === 'done' && books.length > 0 ? (
         <section className="sheet rounded-sm p-6">
-          <UpdateForm action={action} goals={goals} selectedGoal={selectedGoal} today={today} compact />
+          <UpdateForm action={action} books={books} selectedGoal={selectedGoal} today={today} compact />
         </section>
       ) : null}
     </div>
