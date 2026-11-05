@@ -19,7 +19,9 @@ Folio aims at WCAG 2.1 AA.
 - Removing a book asks for a confirmation in place, with a "Keep it" way back.
 - Focus is always visible with a 3px blue outline that stands out on the paper.
 - The `lang` of the page follows the chosen language, English or Brazilian Portuguese.
-- Hover lifts on the spines turn off with `prefers-reduced-motion`.
+- With `prefers-reduced-motion` every animation turns off: page turns, the opening cover, the crumpled sheet on
+  cancel, lines being drawn and the hover lift on the spines. Cancel then leaves at once.
+- The loading screen is a `role="status"` line, so the wait is announced.
 
 ## Theme
 

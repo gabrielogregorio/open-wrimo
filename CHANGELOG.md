@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Paper is now the only theme; dark and night were removed.
+- Page turn between screens and shelf pages, opening cover on a new book, crumpled sheet on cancel.
+- Loading screen with a turning leaf and lines being written; drawn rules, progress and shelf board.
 
 ## 0.1.0
 

@@ -28,6 +28,8 @@ the current page, a rating, notes and bookmarks. Typing the page you reached mov
 
 - English and Brazilian Portuguese, picked from `?lang=`, your choice or the browser.
 - One warm paper theme on every page, whatever the system prefers.
+- Book-like motion: pages turn between screens, a cover opens over a new book, a cancelled form is crumpled and
+  thrown away, books drop onto the shelf and rules draw themselves. All of it stops with reduced motion.
 - Accounts with hashed passwords, server sessions and a sign in rate limit stored in MongoDB.
 - MongoDB runs locally through docker compose; point `MONGODB_URI` to a cluster online only when you want.
 
