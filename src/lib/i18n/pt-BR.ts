@@ -1,4 +1,7 @@
+import { ptBRWriting } from './pt-BR-writing';
+
 export const ptBR: Record<string, string> = {
+  ...ptBRWriting,
   'A calm reading log: keep your shelf, track pages and bookmark passages.':
     'Um diário de leitura tranquilo: organize sua estante, acompanhe as páginas e marque trechos.',
   'A quiet place for the books you read.': 'Um lugar sereno para os livros que você lê.',

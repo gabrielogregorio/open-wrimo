@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { STATUS_LABELS } from '@/components/book-status';
 import { EMAIL_TAKEN, INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS } from '@/lib/auth/service';
 import { BOOK_NOT_FOUND } from '@/lib/books/service';
+import { COVER_TOO_BIG, COVER_WRONG_TYPE, GOAL_NOT_FOUND, PROJECT_NOT_FOUND } from '@/lib/writing/service';
 import { ptBR } from './pt-BR';
 import { translate, translator } from './translate';
 
@@ -11,6 +12,7 @@ const TRANSLATE_CALL = /\bt\(\s*'([^']+)'/g;
 const ERROR_MESSAGE = /error: '([^']+)'/g;
 const PAGE_MESSAGE = /^const PAGE_\w+ = '([^']+)'/gm;
 const PAGE_NUMBER_MESSAGE = /pageNumber\(\d+, '([^']+)'\)/g;
+const HELPER_MESSAGE = /\b(?:text\(\d+|optionalUrl\(|isoDate\(|count\(\w+),?\s*'([^']+)'\)/g;
 
 const sourceFiles = (directory: string): string[] =>
   readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -55,11 +57,17 @@ describe('pt-BR dictionary', () => {
     ...keysIn(ERROR_MESSAGE, libraryFiles).filter((key) => !key.startsWith('must ')),
     ...keysIn(PAGE_MESSAGE, libraryFiles),
     ...keysIn(PAGE_NUMBER_MESSAGE, libraryFiles),
+    ...keysIn(HELPER_MESSAGE, libraryFiles),
     ...Object.values(STATUS_LABELS),
     INVALID_CREDENTIALS,
     TOO_MANY_ATTEMPTS,
     EMAIL_TAKEN,
     BOOK_NOT_FOUND,
+    PROJECT_NOT_FOUND,
+    GOAL_NOT_FOUND,
+    COVER_TOO_BIG,
+    COVER_WRONG_TYPE,
+    'Enter how much you wrote.',
   ]);
 
   it('finds the texts used by the interface', () => {
