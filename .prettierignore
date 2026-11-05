@@ -1,0 +1,7 @@
+pnpm-lock.yaml
+public/
+trash/
+coverage/
+.next/
+playwright-report/
+test-results/
