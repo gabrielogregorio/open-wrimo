@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
   if (await getCurrentUser()) {
-    redirect('/shelf');
+    redirect('/write');
   }
 
   const t = await getTranslator();

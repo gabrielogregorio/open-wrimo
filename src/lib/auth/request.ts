@@ -1,7 +1,7 @@
 const SAFE_PATH = /^\/(?![/\\])[\w\-./?=&%]*$/;
 const MAX_PATH_LENGTH = 512;
 
-export const safeRedirectPath = (value: unknown, fallback = '/shelf'): string => {
+export const safeRedirectPath = (value: unknown, fallback = '/write'): string => {
   if (typeof value !== 'string' || value.length > MAX_PATH_LENGTH || !SAFE_PATH.test(value)) {
     return fallback;
   }

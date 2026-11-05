@@ -16,7 +16,7 @@ export const signUp = async (page: Page, reader: Reader): Promise<void> => {
   await page.getByLabel('Email').fill(reader.email);
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page).toHaveURL('/shelf');
+  await expect(page).toHaveURL('/write');
 };
 
 export type NewBook = { title: string; author: string; totalPages: number };
@@ -50,7 +50,7 @@ export const axeViolations = async (page: Page) => {
   return (await new AxeBuilder({ page }).withTags(WCAG_AA_TAGS).analyze()).violations;
 };
 
-export const test = base.extend<{ readerPage: Page }>({
+export const test = base.extend<{ readerPage: Page; writerPage: Page }>({
   context: async ({ context }, use) => {
     await context.route('**/*', async (route) => {
       const url = new URL(route.request().url());
@@ -67,6 +67,11 @@ export const test = base.extend<{ readerPage: Page }>({
   },
   readerPage: async ({ page }, use, testInfo) => {
     await signUp(page, { name: 'Lia', email: uniqueEmail(`reader-${testInfo.workerIndex}`) });
+    await page.goto('/shelf');
+    await use(page);
+  },
+  writerPage: async ({ page }, use, testInfo) => {
+    await signUp(page, { name: 'Clara', email: uniqueEmail(`writer-${testInfo.workerIndex}`) });
     await use(page);
   },
 });

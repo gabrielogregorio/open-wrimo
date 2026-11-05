@@ -25,7 +25,7 @@ test('a new reader signs up, signs out and signs back in', async ({ page }) => {
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
 
-  await expect(page).toHaveURL('/shelf');
+  await expect(page).toHaveURL('/write');
 });
 
 test('the shelf asks for a session and returns to the page asked for', async ({ page }) => {

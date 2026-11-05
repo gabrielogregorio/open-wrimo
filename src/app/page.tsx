@@ -16,7 +16,7 @@ const DECORATIVE_SPINES = [
 
 export default async function HomePage() {
   if (await getCurrentUser()) {
-    redirect('/shelf');
+    redirect('/write');
   }
 
   const t = await getTranslator();
@@ -24,12 +24,12 @@ export default async function HomePage() {
   return (
     <div className="grid items-center gap-12 md:grid-cols-[1.1fr_1fr]">
       <div className="flex flex-col gap-6">
-        <p className="font-display text-sm tracking-[0.3em] text-accent uppercase">{t('Your reading log')}</p>
+        <p className="font-display text-sm tracking-[0.3em] text-accent uppercase">{t('Your writing notebook')}</p>
         <h1 className="font-display text-4xl leading-tight font-semibold text-balance sm:text-5xl">
-          {t('A quiet place for the books you read.')}
+          {t('A quiet place to write your novel.')}
         </h1>
         <p className="max-w-prose text-lg leading-relaxed text-ink-soft">
-          {t('Keep your shelf, note the page you stopped on and bookmark the passages worth returning to.')}
+          {t('Set a goal, log your words every day, run sprints, earn badges and watch your book grow.')}
         </p>
         <div className="flex flex-wrap gap-3">
           <Link

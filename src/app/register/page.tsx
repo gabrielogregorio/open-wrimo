@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RegisterPage() {
   if (await getCurrentUser()) {
-    redirect('/shelf');
+    redirect('/write');
   }
 
   const t = await getTranslator();

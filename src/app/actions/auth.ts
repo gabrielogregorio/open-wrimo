@@ -35,7 +35,7 @@ export async function signUpAction(_previous: FormState, formData: FormData): Pr
   const input = formValues(formData, ['name', 'email', 'password']);
   const result = await signUp(await authDependencies(), input, await clientAddress());
 
-  return finish(result, { name: input.name, email: input.email }, '/shelf');
+  return finish(result, { name: input.name, email: input.email }, '/write');
 }
 
 export async function signOutAction(): Promise<void> {

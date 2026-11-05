@@ -14,7 +14,7 @@ describe('safeRedirectPath', () => {
     ['a value that is not text', 42],
     ['a very long path', `/${'a'.repeat(600)}`],
   ])('falls back on %s', (_description, value) => {
-    expect(safeRedirectPath(value)).toBe('/shelf');
+    expect(safeRedirectPath(value)).toBe('/write');
   });
 
   it('uses the given fallback', () => {
