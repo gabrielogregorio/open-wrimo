@@ -23,9 +23,11 @@ export default async function EditBookPage({ params }: PageProps<'/shelf/[id]/ed
   const t = await getTranslator();
 
   return (
-    <div className="sheet mx-auto max-w-2xl rounded-sm p-8">
-      <h1 className="mb-6 font-display text-3xl font-semibold">{t('Edit details')}</h1>
-      <BookForm action={updateBookAction.bind(null, book.id)} book={book} />
-    </div>
+    <BookForm
+      action={updateBookAction.bind(null, book.id)}
+      book={book}
+      title={t('Edit details')}
+      cancelHref={`/shelf/${book.id}`}
+    />
   );
 }

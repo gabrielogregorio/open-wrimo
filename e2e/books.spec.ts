@@ -88,3 +88,13 @@ test("one reader cannot open another reader's book", async ({ readerPage: page, 
   await expect(strangerPage.getByRole('heading', { name: 'This page is missing from the book.' })).toBeVisible();
   await strangerContext.close();
 });
+
+test('cancelling a new book crumples the sheet and goes back to the shelf', async ({ readerPage: page }) => {
+  await page.getByRole('link', { name: 'Add a book' }).first().click();
+  await page.getByLabel('Title').fill('Rascunho');
+  await page.getByRole('link', { name: 'Cancel' }).click();
+
+  await expect(page.getByTestId('book-sheet')).toHaveClass(/crumple/);
+  await expect(page).toHaveURL('/shelf');
+  await expect(page.getByText('This shelf is still empty.')).toBeVisible();
+});
