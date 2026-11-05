@@ -1,4 +1,4 @@
-import { goalStats, longestStreak, sumByDate, writingStreak } from './stats';
+import { goalStats, longestStreak, monthlyTotals, sumByDate, writingPace, writingStreak } from './stats';
 
 const NOVEMBER = { target: 50000, startDate: '2026-11-01', endDate: '2026-11-30' };
 
@@ -111,5 +111,42 @@ describe('streaks', () => {
 
   it('adds counts of the same day', () => {
     expect(sumByDate(entries.slice(0, 1).concat({ date: '2026-11-01', count: 5 })).get('2026-11-01')).toBe(105);
+  });
+});
+
+describe('monthly totals and pace', () => {
+  const entries = [
+    { date: '2026-10-30', count: 900 },
+    { date: '2026-10-31', count: 0 },
+    { date: '2026-11-01', count: 1200 },
+    { date: '2026-11-04', count: 700 },
+    { date: '2026-11-04', count: 100 },
+    { date: '2026-11-05', count: 2100 },
+  ];
+
+  it('adds the words of each month, newest first', () => {
+    expect(monthlyTotals(entries)).toEqual([
+      { month: '2026-11', count: 4100, days: 3 },
+      { month: '2026-10', count: 900, days: 1 },
+    ]);
+  });
+
+  it('measures the pace over the last week and month', () => {
+    expect(writingPace(entries, '2026-11-05')).toEqual({
+      total: 5000,
+      writingDays: 4,
+      perWritingDay: 1250,
+      lastSevenDays: Math.round(5000 / 7),
+      lastThirtyDays: Math.round(5000 / 30),
+      currentStreak: 2,
+      longestStreak: 2,
+      bestDay: { date: '2026-11-05', count: 2100 },
+    });
+    expect(writingPace(entries, '2026-12-20').lastSevenDays).toBe(0);
+  });
+
+  it('starts at zero', () => {
+    expect(writingPace([], '2026-11-05')).toMatchObject({ total: 0, perWritingDay: 0, bestDay: null });
+    expect(monthlyTotals([])).toEqual([]);
   });
 });

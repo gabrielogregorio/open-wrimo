@@ -35,6 +35,12 @@ export const sumByDate = (entries: DayCount[]): Map<string, number> => {
   return totals;
 };
 
+const bestDayOf = (totals: Map<string, number>): DayCount | null =>
+  [...totals.entries()].reduce<DayCount | null>(
+    (current, [date, count]) => (count > 0 && (!current || count > current.count) ? { date, count } : current),
+    null,
+  );
+
 const goalState = ({ startDate, endDate }: GoalSpan, today: string): GoalState => {
   if (today < startDate) {
     return 'upcoming';
@@ -67,10 +73,7 @@ export const goalStats = (goal: GoalSpan, entries: DayCount[], today: string): G
   const daysLeft = { upcoming: totalDays, active: totalDays - daysElapsed + 1, ended: 0 }[state];
   const remainingAtDawn = Math.max(0, goal.target - (total - writtenToday));
   const averagePerDay = daysElapsed > 0 ? Math.round(total / daysElapsed) : 0;
-  const best = [...totals.entries()].reduce<DayCount | null>(
-    (current, [date, count]) => (count > 0 && (!current || count > current.count) ? { date, count } : current),
-    null,
-  );
+  const best = bestDayOf(totals);
 
   return {
     state,
@@ -124,4 +127,62 @@ export const longestStreak = (entries: DayCount[]): number => {
   });
 
   return longest;
+};
+
+export type MonthTotal = { month: string; count: number; days: number };
+
+export const monthlyTotals = (entries: DayCount[]): MonthTotal[] => {
+  const months = new Map<string, MonthTotal>();
+
+  for (const [date, count] of sumByDate(entries)) {
+    const month = date.slice(0, 7);
+    const total = months.get(month) ?? { month, count: 0, days: 0 };
+    total.count += count;
+    total.days += count > 0 ? 1 : 0;
+    months.set(month, total);
+  }
+
+  return [...months.values()].sort((first, second) => second.month.localeCompare(first.month));
+};
+
+export type WritingPace = {
+  total: number;
+  writingDays: number;
+  perWritingDay: number;
+  lastSevenDays: number;
+  lastThirtyDays: number;
+  currentStreak: number;
+  longestStreak: number;
+  bestDay: DayCount | null;
+};
+
+const averageOver = (totals: Map<string, number>, today: string, days: number): number => {
+  const since = addDays(today, 1 - days);
+  let sum = 0;
+
+  for (const [date, count] of totals) {
+    if (date >= since && date <= today) {
+      sum += count;
+    }
+  }
+
+  return Math.round(sum / days);
+};
+
+export const writingPace = (entries: DayCount[], today: string): WritingPace => {
+  const totals = sumByDate(entries);
+  const writingDays = [...totals.values()].filter((count) => count > 0).length;
+  const total = [...totals.values()].reduce((sum, count) => sum + count, 0);
+  const bestDay = bestDayOf(totals);
+
+  return {
+    total,
+    writingDays,
+    perWritingDay: writingDays > 0 ? Math.round(total / writingDays) : 0,
+    lastSevenDays: averageOver(totals, today, 7),
+    lastThirtyDays: averageOver(totals, today, 30),
+    currentStreak: writingStreak(entries, today),
+    longestStreak: longestStreak(entries),
+    bestDay,
+  };
 };
