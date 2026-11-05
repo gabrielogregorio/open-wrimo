@@ -3,7 +3,36 @@ import type { EntryView, GoalView } from './repository';
 import { goalStats, longestStreak, sumByDate } from './stats';
 
 export type BadgeGlyph =
-  'quill' | 'flame' | 'stack' | 'sun-day' | 'flag' | 'summit' | 'clock' | 'sun' | 'moon' | 'heart';
+  | 'quill'
+  | 'flame'
+  | 'stack'
+  | 'sun-day'
+  | 'flag'
+  | 'summit'
+  | 'clock'
+  | 'sun'
+  | 'moon'
+  | 'heart'
+  | 'disk'
+  | 'pulse'
+  | 'runner'
+  | 'tear'
+  | 'pants'
+  | 'clipboard'
+  | 'tent'
+  | 'pencil'
+  | 'shades'
+  | 'typewriter'
+  | 'music'
+  | 'megaphone'
+  | 'letter'
+  | 'cup'
+  | 'book'
+  | 'target'
+  | 'calendar'
+  | 'image'
+  | 'skull'
+  | 'map';
 
 export type Badge = { id: string; label: string; description: string; glyph: BadgeGlyph; mark?: string };
 
@@ -68,15 +97,123 @@ export const WRITING_BADGES: Badge[] = [
 ];
 
 export const PERSONAL_BADGES: Badge[] = [
-  { id: 'planned-plot', label: 'Planned the plot', description: 'The outline is done.', glyph: 'flag' },
-  { id: 'met-characters', label: 'Met my characters', description: 'They feel like people now.', glyph: 'heart' },
-  { id: 'finished-chapter', label: 'Finished a chapter', description: 'One more chapter closed.', glyph: 'stack' },
-  { id: 'made-me-cry', label: 'Made myself cry', description: 'A scene hit hard.', glyph: 'heart' },
-  { id: 'killed-character', label: 'Killed a character', description: 'Someone did not make it.', glyph: 'quill' },
+  {
+    id: 'back-it-up',
+    label: 'Back it up',
+    description: 'You backed up your work. Then again. And again.',
+    glyph: 'disk',
+  },
+  {
+    id: 'writer-wellness',
+    label: 'Writer wellness',
+    description: 'You took care of yourself while writing: food, sleep, a walk.',
+    glyph: 'pulse',
+  },
+  {
+    id: 'word-sprinter',
+    label: 'Word sprinter',
+    description: 'You joined a word sprint and your count got a boost.',
+    glyph: 'runner',
+  },
+  {
+    id: 'in-my-eye',
+    label: 'Something in my eye',
+    description: 'Your own story moved you to tears. You are its first reader.',
+    glyph: 'tear',
+  },
+  {
+    id: 'pantser',
+    label: 'Pantser',
+    description: 'You start with a blank page and your imagination, no outline.',
+    glyph: 'pants',
+  },
+  {
+    id: 'planner',
+    label: 'Planner',
+    description: 'You start with an outline, or at least lots of notes.',
+    glyph: 'clipboard',
+  },
+  {
+    id: 'plantser',
+    label: 'Plantser',
+    description: 'A comfortable mix of loose structure and improvisation.',
+    glyph: 'map',
+  },
+  { id: 'camper', label: 'Camper', description: 'You took on a camp challenge in April or July.', glyph: 'tent' },
+  { id: 'prep-month', label: 'Prep month', description: 'You spent October getting ready to write.', glyph: 'pencil' },
+  {
+    id: 'rebel',
+    label: 'Rebel',
+    description: 'Rules are meant to be broken: you are writing anything but a brand new novel.',
+    glyph: 'shades',
+  },
+  {
+    id: 'old-school',
+    label: 'Old school',
+    description: 'Tradition: the very first draft of a brand new novel.',
+    glyph: 'typewriter',
+  },
+  { id: 'novel-maestro', label: 'Novel maestro', description: 'You made a soundtrack for your novel.', glyph: 'music' },
+  {
+    id: 'tell-the-world',
+    label: 'Tell the world',
+    description: 'You told people you are writing a novel.',
+    glyph: 'megaphone',
+  },
+  {
+    id: 'with-gratitude',
+    label: 'With gratitude',
+    description: 'You thanked someone who helped you write.',
+    glyph: 'letter',
+  },
+  {
+    id: 'caffeine',
+    label: 'Caffeine overload',
+    description: 'Third coffee of the day? This one is yours.',
+    glyph: 'cup',
+  },
+  {
+    id: 'killed-character',
+    label: 'Killed a character',
+    description: 'Someone in the story did not make it.',
+    glyph: 'skull',
+  },
+  { id: 'finished-chapter', label: 'Finished a chapter', description: 'One more chapter closed.', glyph: 'book' },
+  { id: 'met-characters', label: 'Met my characters', description: 'They started talking back.', glyph: 'heart' },
   { id: 'wrote-outside', label: 'Wrote away from home', description: 'A café, a park, a bus.', glyph: 'sun' },
-  { id: 'no-editing', label: 'Kept going', description: 'Wrote a whole session without editing.', glyph: 'flame' },
   { id: 'shared-excerpt', label: 'Shared an excerpt', description: 'Someone read a piece of it.', glyph: 'quill' },
 ];
+
+export const PARTICIPATION_BADGES: Badge[] = [
+  { id: 'first-novel', label: 'New novel', description: 'Created a novel.', glyph: 'book' },
+  { id: 'first-goal', label: 'Goal set', description: 'Gave a novel its first goal.', glyph: 'target' },
+  { id: 'joined-event', label: 'Joined an event', description: 'Took part in a writing event.', glyph: 'calendar' },
+  { id: 'cover-art', label: 'Cover art', description: 'Gave a novel a cover.', glyph: 'image' },
+  { id: 'first-post', label: 'Dear diary', description: 'Wrote the first post about a novel.', glyph: 'letter' },
+];
+
+export const earnedParticipationBadges = ({
+  projects,
+  goals,
+  posts,
+}: {
+  projects: { coverUrl: string | null }[];
+  goals: { eventId?: string | null }[];
+  posts: number;
+}): Set<string> => {
+  const earned = new Set<string>();
+  const rules: [string, boolean][] = [
+    ['first-novel', projects.length > 0],
+    ['first-goal', goals.length > 0],
+    ['joined-event', goals.some((goal) => Boolean(goal.eventId))],
+    ['cover-art', projects.some((project) => project.coverUrl !== null)],
+    ['first-post', posts > 0],
+  ];
+
+  rules.filter(([, met]) => met).forEach(([id]) => earned.add(id));
+
+  return earned;
+};
 
 const PERSONAL_IDS = new Set(PERSONAL_BADGES.map((badge) => badge.id));
 
