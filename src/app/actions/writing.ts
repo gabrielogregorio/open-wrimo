@@ -2,14 +2,16 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { PROFILE_SECTIONS, type ProfileSection } from '@/lib/db/collections';
 import { formValues, type FormState } from '@/lib/form';
-import { ENTRY_FIELDS, GOAL_FIELDS, POST_FIELDS, PROJECT_FIELDS } from '@/lib/writing/schema';
+import { ENTRY_FIELDS, GOAL_FIELDS, POST_FIELDS, PROFILE_FIELDS, PROJECT_FIELDS } from '@/lib/writing/schema';
 import {
   logProgress,
   removePost,
   removeProject,
   saveCover,
   saveGoal,
+  saveProfile,
   savePost,
   saveProject,
   setPersonalBadges,
@@ -153,4 +155,25 @@ export async function deletePostAction(projectId: string, postId: string): Promi
   await removePost(await writingContext(), postId);
   revalidatePath('/write/posts');
   redirect(novelPath(projectId, 'posts'));
+}
+
+export async function updateProfileAction(_previous: FormState, formData: FormData): Promise<FormState> {
+  const values = formValues(formData, PROFILE_FIELDS);
+  const shownSections = new Set(formData.getAll('show'));
+  const result = await saveProfile(
+    await writingContext(),
+    values,
+    { bytes: await imageFrom(formData, 'avatar'), remove: formData.get('removeImage') === 'on' },
+    Object.fromEntries(PROFILE_SECTIONS.map((section) => [section, shownSections.has(section)])) as Record<
+      ProfileSection,
+      boolean
+    >,
+  );
+
+  if (!result.saved) {
+    return { ...result, values };
+  }
+
+  revalidatePath('/', 'layout');
+  redirect('/write/profile');
 }

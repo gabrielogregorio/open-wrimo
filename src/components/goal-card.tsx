@@ -4,9 +4,17 @@ import Link from 'next/link';
 import { formatMonth, formatNumber } from '@/lib/i18n/format';
 import type { GoalWithStats } from '@/lib/writing/goals';
 import { useI18n } from './i18n-provider';
-import { UNIT_LABELS } from './writing-labels';
+import { PERIOD_SUFFIX, UNIT_LABELS } from './writing-labels';
 
-export function GoalCard({ goal, showName = true }: { goal: GoalWithStats; showName?: boolean }) {
+export function GoalCard({
+  goal,
+  showName = true,
+  readOnly = false,
+}: {
+  goal: GoalWithStats;
+  showName?: boolean;
+  readOnly?: boolean;
+}) {
   const { t, locale } = useI18n();
   const unit = t(UNIT_LABELS[goal.unit]);
   const { stats } = goal;
@@ -17,6 +25,7 @@ export function GoalCard({ goal, showName = true }: { goal: GoalWithStats; showN
         {showName ? <span>{goal.name}: </span> : null}
         <span className="text-accent">
           {t('Write {target} {unit}', { target: formatNumber(locale, goal.target), unit })}
+          {goal.period ? ` ${t(PERIOD_SUFFIX[goal.period])}` : ''}
         </span>
       </p>
       <div
@@ -34,26 +43,30 @@ export function GoalCard({ goal, showName = true }: { goal: GoalWithStats; showN
           <span className="text-sm tracking-wide uppercase">{unit}</span>
         </p>
         <p className="text-sm text-ink-soft">
-          {t('Started {month}', { month: formatMonth(locale, goal.startDate.slice(0, 7)) })}
+          {goal.period
+            ? t('Renews by itself')
+            : t('Started {month}', { month: formatMonth(locale, goal.startDate.slice(0, 7)) })}
         </p>
       </div>
-      <div className="flex flex-wrap items-center gap-4 text-sm">
-        {stats.state === 'ended' ? null : (
-          <Link
-            href={`/write/update?goal=${goal.id}`}
-            className="rounded-sm bg-accent px-3 py-1.5 font-display font-semibold text-accent-ink hover:brightness-110">
-            {t('Update')}
+      {readOnly ? null : (
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          {stats.state === 'ended' ? null : (
+            <Link
+              href={`/write/update?goal=${goal.id}`}
+              className="rounded-sm bg-accent px-3 py-1.5 font-display font-semibold text-accent-ink hover:brightness-110">
+              {t('Update')}
+            </Link>
+          )}
+          <Link href={`/write/stats?goal=${goal.id}`} className="underline underline-offset-4">
+            {t('Stats')}
           </Link>
-        )}
-        <Link href={`/write/stats?goal=${goal.id}`} className="underline underline-offset-4">
-          {t('Stats')}
-        </Link>
-        {stats.reached ? (
-          <Link href={`/write/goals/${goal.id}/certificate`} className="text-accent underline underline-offset-4">
-            {t('Certificate')}
-          </Link>
-        ) : null}
-      </div>
+          {stats.reached ? (
+            <Link href={`/write/goals/${goal.id}/certificate`} className="text-accent underline underline-offset-4">
+              {t('Certificate')}
+            </Link>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }

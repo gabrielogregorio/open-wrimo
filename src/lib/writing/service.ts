@@ -1,18 +1,21 @@
 import { fieldErrorsFrom, type FormState } from '@/lib/form';
 import { UPLOAD_RULE, type RateLimiter } from '@/lib/auth/rate-limit';
 import { prepareImage } from '@/lib/storage/images';
+import type { ProfileSection } from '@/lib/db/collections';
 import type { ImageStorage, StoredImage } from '@/lib/storage/storage';
 import { onlyPersonalBadges } from './badges';
-import { localDate, localHour } from './dates';
+import { addDays, localDate, localHour } from './dates';
 import { eventGoal } from './events';
 import { sanitizeRichText } from './rich-text';
 import { entriesForGoal } from './goals';
 import type { WritingRepository } from './repository';
-import { entryInputSchema, goalInputSchema, postInputSchema, projectInputSchema } from './schema';
+import { entryInputSchema, goalInputSchema, postInputSchema, profileInputSchema, projectInputSchema } from './schema';
 
 export const PROJECT_NOT_FOUND = 'This project is not in your notebook.';
 export const GOAL_NOT_FOUND = 'This goal no longer exists.';
 const NOTHING_TO_ADD = 'Enter how much you wrote.';
+const PERIOD_GOAL_NAMES = { daily: 'Daily goal', monthly: 'Monthly goal', yearly: 'Yearly goal' } as const;
+export const USERNAME_TAKEN_HERE = 'This username is taken.';
 export const POST_NOT_FOUND = 'This post no longer exists.';
 export const UPLOADS_TOO_FAST = 'Wait a second before sending another image.';
 
@@ -60,7 +63,7 @@ export const saveProject = async (
     return { fieldErrors: fieldErrorsFrom(parsed.error) };
   }
 
-  const { event, ...fields } = parsed.data;
+  const { event, period, periodTarget, ...fields } = parsed.data;
   const project = { ...fields, excerpt: sanitizeRichText(fields.excerpt) };
 
   if (projectId) {
@@ -70,6 +73,13 @@ export const saveProject = async (
   }
 
   const id = await writing.createProject(userId, project, now);
+
+  if (period && periodTarget) {
+    const today = localDate(now, timeZone);
+    const name = translate(PERIOD_GOAL_NAMES[period], {});
+    const span = { startDate: today, endDate: addDays(today, 365) };
+    await writing.createGoal(userId, id, { name, unit: 'words', target: periodTarget, ...span, period }, now);
+  }
 
   if (event) {
     await writing.createGoal(
@@ -307,4 +317,44 @@ export const saveInlineImage = async (
   const stored = await storeImage(context, bytes, 'inline', 'image');
 
   return 'image' in stored ? { url: stored.image.url } : { error: stored.fieldErrors.image };
+};
+
+export const saveProfile = async (
+  context: WritingContext,
+  input: Record<string, unknown>,
+  avatar: { bytes: Uint8Array | null; remove: boolean },
+  shown: Record<ProfileSection, boolean> = { bio: true, stats: true, favorites: true, badges: true },
+): Promise<WritingResult> => {
+  const { writing, storage, userId, now } = context;
+  const parsed = profileInputSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
+
+  if (avatar.bytes || avatar.remove) {
+    let image: StoredImage | null = null;
+
+    if (avatar.bytes) {
+      const stored = await storeImage(context, avatar.bytes, 'avatars', 'avatar');
+
+      if ('fieldErrors' in stored) {
+        return stored;
+      }
+
+      image = stored.image;
+    }
+
+    const previousKey = await writing.setAvatar(userId, image, now);
+
+    if (previousKey) {
+      await storage.remove(previousKey);
+    }
+  }
+
+  if (!(await writing.saveProfile(userId, parsed.data, shown, now))) {
+    return { fieldErrors: { username: USERNAME_TAKEN_HERE } };
+  }
+
+  return { saved: true };
 };

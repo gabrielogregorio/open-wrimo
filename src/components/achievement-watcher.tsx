@@ -66,7 +66,15 @@ export function AchievementWatcher({ earned }: { earned: EarnedAchievement[] }) 
   return (
     <div
       role="status"
-      className="achievement-toast fixed right-4 bottom-4 z-50 flex max-w-sm items-center gap-4 rounded-sm border border-accent bg-paper p-4 shadow-2xl">
+      className="achievement-toast fixed right-4 bottom-4 z-50 flex max-w-sm items-center gap-4 pr-10 rounded-sm border border-accent bg-paper p-4 shadow-2xl">
+      <button
+        type="button"
+        onClick={() => setQueue([])}
+        aria-label={t('Close all achievements')}
+        title={t('Close')}
+        className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none text-ink-soft hover:bg-paper-deep hover:text-ink">
+        ×
+      </button>
       <span className="badge-earned shrink-0">
         <BadgeIcon badge={current.badge} kind={current.kind} className="h-16 w-16" />
       </span>

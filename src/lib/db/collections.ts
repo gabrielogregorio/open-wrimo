@@ -1,10 +1,11 @@
 import type { Db, ObjectId, WithId } from 'mongodb';
 import type { BookStatus } from '@/lib/books/schema';
 import type { EventId } from '@/lib/writing/events';
-import type { GoalUnit, Mood, ProjectStatus, ProjectType } from '@/lib/writing/schema';
+import type { GoalPeriod, GoalUnit, Mood, ProjectStatus, ProjectType } from '@/lib/writing/schema';
 
 export type UserDocument = {
   email: string;
+  username: string;
   name: string;
   passwordHash: string;
   createdAt: Date;
@@ -55,6 +56,7 @@ export type ProjectDocument = {
   pinterestUrl: string;
   playlistUrl: string;
   featured: boolean;
+  isPublic?: boolean;
   awards: string[];
   coverUrl: string | null;
   coverKey: string | null;
@@ -71,6 +73,7 @@ export type GoalDocument = {
   startDate: string;
   endDate: string;
   eventId?: EventId | null;
+  period?: GoalPeriod | null;
   createdAt: Date;
 };
 
@@ -98,6 +101,23 @@ export type PostDocument = {
   updatedAt: Date;
 };
 
+export type ProfileDocument = {
+  userId: ObjectId;
+  bio: string;
+  location: string;
+  writingTime: string;
+  favoriteBooks: string;
+  favoriteAuthors: string;
+  avatarUrl: string | null;
+  avatarKey: string | null;
+  isPublic?: boolean;
+  shown?: Partial<Record<ProfileSection, boolean>>;
+  updatedAt: Date;
+};
+
+export const PROFILE_SECTIONS = ['bio', 'stats', 'favorites', 'badges'] as const;
+export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
+
 export type StoredUser = WithId<UserDocument>;
 export type StoredBook = WithId<BookDocument>;
 export type StoredProject = WithId<ProjectDocument>;
@@ -114,13 +134,27 @@ export const collections = (database: Db) => ({
   goals: database.collection<GoalDocument>('goals'),
   entries: database.collection<EntryDocument>('entries'),
   posts: database.collection<PostDocument>('posts'),
+  profiles: database.collection<ProfileDocument>('profiles'),
 });
 
+const migrateUsernames = async (database: Db): Promise<void> => {
+  const { users } = collections(database);
+  const missing = await users.find({ username: { $exists: false } }, { projection: { _id: 1 } }).toArray();
+
+  await Promise.all(
+    missing.map((user) =>
+      users.updateOne({ _id: user._id }, { $set: { username: `escritor-${user._id.toHexString().slice(-6)}` } }),
+    ),
+  );
+};
+
 export const ensureIndexes = async (database: Db): Promise<void> => {
-  const { users, sessions, rateLimits, books, projects, goals, entries, posts } = collections(database);
+  await migrateUsernames(database);
+  const { users, sessions, rateLimits, books, projects, goals, entries, posts, profiles } = collections(database);
 
   await Promise.all([
     users.createIndex({ email: 1 }, { unique: true }),
+    users.createIndex({ username: 1 }, { unique: true, partialFilterExpression: { username: { $type: 'string' } } }),
     sessions.createIndex({ tokenHash: 1 }, { unique: true }),
     sessions.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     rateLimits.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
@@ -130,6 +164,7 @@ export const ensureIndexes = async (database: Db): Promise<void> => {
     goals.createIndex({ userId: 1, projectId: 1, startDate: -1 }),
     entries.createIndex({ userId: 1, projectId: 1, unit: 1, date: 1 }),
     posts.createIndex({ userId: 1, createdAt: -1 }),
+    profiles.createIndex({ userId: 1 }, { unique: true }),
     posts.createIndex({ userId: 1, projectId: 1, createdAt: -1 }),
   ]);
 };

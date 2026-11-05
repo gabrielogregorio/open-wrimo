@@ -12,7 +12,7 @@ import { PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
 import { filterGoals } from '@/lib/writing/goals';
 import { GOAL_FILTERS, type GoalFilter } from '@/lib/writing/schema';
 import { getLocale, getTranslator } from '@/server/i18n';
-import { loadNotebook, projectBadges } from '@/server/notebook';
+import { loadNotebook, projectBadges, wordsFor } from '@/server/notebook';
 import { NovelCard } from '../../novel-card';
 
 const TABS = ['details', 'goals', 'badges', 'posts'] as const;
@@ -48,7 +48,7 @@ export default async function NovelPage({ params, searchParams }: PageProps<'/wr
 
   return (
     <div className="flex flex-col gap-8">
-      <NovelCard novel={novel} goals={goals} headingLevel={1} />
+      <NovelCard novel={novel} goals={goals} totalWords={wordsFor(notebook, id)} headingLevel={1} />
       <nav aria-label={t('Novel sections')} className="border-b border-rule">
         <ul className="flex flex-wrap gap-6 font-display text-lg">
           {TABS.map((item) => (

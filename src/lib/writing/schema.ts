@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isIsoDate } from './dates';
+import { usernameField } from '@/lib/auth/schema';
 import { EVENT_IDS } from './events';
 
 export const PROJECT_STATUSES = ['not-started', 'in-progress', 'completed', 'on-hiatus'] as const;
@@ -19,6 +20,14 @@ export type ProjectType = (typeof PROJECT_TYPES)[number];
 
 export const GOAL_UNITS = ['words', 'hours', 'minutes', 'lines', 'pages'] as const;
 export type GoalUnit = (typeof GOAL_UNITS)[number];
+
+export const GOAL_PERIODS = ['daily', 'monthly', 'yearly'] as const;
+export type GoalPeriod = (typeof GOAL_PERIODS)[number];
+
+const optionalPeriod = z.preprocess(
+  (value) => (value === undefined || value === '' ? null : value),
+  z.enum(GOAL_PERIODS, { error: 'Choose how often the goal repeats.' }).nullable(),
+);
 
 export const MOODS = ['inspired', 'steady', 'tired', 'stuck', 'proud'] as const;
 export type Mood = (typeof MOODS)[number];
@@ -74,6 +83,17 @@ export const projectInputSchema = z.object({
   pinterestUrl: optionalUrl('Enter an https:// address.'),
   playlistUrl: optionalUrl('Enter an https:// address.'),
   featured: z.preprocess((value) => value === 'on' || value === true, z.boolean()),
+  isPublic: z.preprocess((value) => value === 'on' || value === true, z.boolean()),
+  periodTarget: z.preprocess(
+    (value) => (value === undefined || value === '' ? null : value),
+    z.coerce
+      .number({ error: 'Enter a target from 1 to 10000000.' })
+      .int({ error: 'Enter a target from 1 to 10000000.' })
+      .min(1, { error: 'Enter a target from 1 to 10000000.' })
+      .max(MAX_GOAL_TARGET, { error: 'Enter a target from 1 to 10000000.' })
+      .nullable(),
+  ),
+  period: optionalPeriod,
   event: z.preprocess(
     (value) => (value === undefined || value === '' ? null : value),
     z.enum(EVENT_IDS, { error: 'Choose an event from the list.' }).nullable(),
@@ -111,6 +131,7 @@ export const goalInputSchema = z
     target: count(MAX_GOAL_TARGET, 'Enter a target from 1 to 10000000.'),
     startDate: isoDate('Enter a valid date.'),
     endDate: isoDate('Enter a valid date.'),
+    period: optionalPeriod,
   })
   .refine((goal) => goal.endDate >= goal.startDate, { path: ['endDate'], error: 'End on or after the start.' })
   .refine((goal) => (Date.parse(goal.endDate) - Date.parse(goal.startDate)) / 86_400_000 < MAX_GOAL_DAYS, {
@@ -139,6 +160,7 @@ export type ProjectInput = z.infer<typeof projectInputSchema>;
 export type GoalInput = z.infer<typeof goalInputSchema>;
 export type EntryInput = z.infer<typeof entryInputSchema>;
 export type PostInput = z.infer<typeof postInputSchema>;
+export type ProjectFields = Omit<ProjectInput, 'event' | 'period' | 'periodTarget'>;
 
 export const PROJECT_FIELDS = [
   'title',
@@ -150,8 +172,38 @@ export const PROJECT_FIELDS = [
   'pinterestUrl',
   'playlistUrl',
   'featured',
+  'isPublic',
   'event',
+  'period',
+  'periodTarget',
 ] as const;
 export const POST_FIELDS = ['title', 'body'] as const;
-export const GOAL_FIELDS = ['name', 'unit', 'target', 'startDate', 'endDate'] as const;
+
+export const profileInputSchema = z.object({
+  username: usernameField,
+  isPublic: z.preprocess((value) => value === 'on' || value === true, z.boolean()),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: 'Enter a name up to 80 characters.' })
+    .max(80, { error: 'Enter a name up to 80 characters.' }),
+  bio: text(4000, 'Keep the bio under 4000 characters.'),
+  location: text(120, 'Keep it under 120 characters.'),
+  writingTime: text(120, 'Keep it under 120 characters.'),
+  favoriteBooks: text(1000, 'Keep the list under 1000 characters.'),
+  favoriteAuthors: text(1000, 'Keep the list under 1000 characters.'),
+});
+
+export type ProfileInput = z.infer<typeof profileInputSchema>;
+export const PROFILE_FIELDS = [
+  'name',
+  'username',
+  'isPublic',
+  'bio',
+  'location',
+  'writingTime',
+  'favoriteBooks',
+  'favoriteAuthors',
+] as const;
+export const GOAL_FIELDS = ['name', 'unit', 'target', 'startDate', 'endDate', 'period'] as const;
 export const ENTRY_FIELDS = ['mode', 'count', 'date', 'mood', 'place'] as const;

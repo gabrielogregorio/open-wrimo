@@ -31,5 +31,6 @@ export const eventGoal = (
     unit: 'words',
     target: event.target,
     ...span,
+    period: null,
   };
 };

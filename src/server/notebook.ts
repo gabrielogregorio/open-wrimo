@@ -53,3 +53,8 @@ export const badgeById = new Map(
 );
 
 export const laurelCount = (notebook: Notebook): number => laurels(notebook.goals, notebook.entries, notebook.today);
+
+export const wordsFor = (notebook: Notebook, projectId: string): number =>
+  notebook.entries
+    .filter((entry) => entry.projectId === projectId && entry.unit === 'words')
+    .reduce((sum, entry) => sum + entry.count, 0);

@@ -4,19 +4,26 @@ import { GoalCard } from '@/components/goal-card';
 import { PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '@/components/writing-labels';
 import { currentGoal, type GoalWithStats } from '@/lib/writing/goals';
 import type { ProjectView } from '@/lib/writing/repository';
-import { getTranslator } from '@/server/i18n';
+import { formatNumber } from '@/lib/i18n/format';
+import { getLocale, getTranslator } from '@/server/i18n';
 
 export async function NovelCard({
   novel,
   goals,
+  totalWords,
   headingLevel = 2,
+  readOnly = false,
 }: {
   novel: ProjectView;
   goals: GoalWithStats[];
+  totalWords: number;
   headingLevel?: 1 | 2;
+  readOnly?: boolean;
 }) {
   const t = await getTranslator();
-  const goal = currentGoal(goals);
+  const running = goals.filter((item) => item.stats.state === 'active');
+  const shown = running.length > 0 ? running : [currentGoal(goals)].filter((item) => item !== null);
+  const locale = await getLocale();
   const Heading = headingLevel === 1 ? 'h1' : 'h2';
 
   return (
@@ -28,22 +35,37 @@ export async function NovelCard({
         <CoverCard title={novel.title} coverUrl={novel.coverUrl} summary={novel.summary} excerpt={novel.excerpt} />
         <div className="flex min-w-48 flex-1 flex-col gap-2">
           <Heading className="font-display text-3xl leading-tight font-semibold text-balance">
-            <Link href={`/write/novels/${novel.id}`} className="hover:underline">
-              {novel.title}
-            </Link>
+            {readOnly ? (
+              novel.title
+            ) : (
+              <Link href={`/write/novels/${novel.id}`} className="hover:underline">
+                {novel.title}
+              </Link>
+            )}
           </Heading>
           <p className="text-ink-soft">{[t(PROJECT_TYPE_LABELS[novel.type]), ...novel.genres].join(', ')}</p>
-          <Link
-            href={`/write/novels/${novel.id}/edit`}
-            className="w-fit text-sm text-ink-soft underline underline-offset-4"
-            aria-label={t('Settings of {title}', { title: novel.title })}>
-            {t('Settings')}
-          </Link>
+          {readOnly ? null : (
+            <Link
+              href={`/write/novels/${novel.id}/edit`}
+              className="w-fit text-sm text-ink-soft underline underline-offset-4"
+              aria-label={t('Settings of {title}', { title: novel.title })}>
+              {t('Settings')}
+            </Link>
+          )}
         </div>
       </div>
-      {goal ? (
-        <GoalCard goal={goal} />
-      ) : (
+      <p className="font-display text-lg">
+        {t('Written so far: {count} words', { count: formatNumber(locale, totalWords) })}
+      </p>
+      {shown.length > 0 ? (
+        <div className="flex flex-col gap-6 divide-y divide-rule">
+          {shown.map((goal) => (
+            <div key={goal.id} className="pt-4 first:pt-0">
+              <GoalCard goal={goal} readOnly={readOnly} />
+            </div>
+          ))}
+        </div>
+      ) : readOnly ? null : (
         <Link
           href={`/write/novels/${novel.id}/goals/new`}
           className="w-fit font-display text-accent underline underline-offset-4">

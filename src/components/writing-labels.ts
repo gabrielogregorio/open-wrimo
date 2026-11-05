@@ -1,5 +1,5 @@
 import type { EventId } from '@/lib/writing/events';
-import type { GoalFilter, GoalUnit, Mood, ProjectStatus, ProjectType } from '@/lib/writing/schema';
+import type { GoalFilter, GoalPeriod, GoalUnit, Mood, ProjectStatus, ProjectType } from '@/lib/writing/schema';
 
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   'not-started': 'Not started (0%)',
@@ -64,3 +64,15 @@ export const GENRE_SUGGESTIONS = [
   'Short story',
   'Fan fiction',
 ];
+
+export const PERIOD_LABELS: Record<GoalPeriod, string> = {
+  daily: 'Every day',
+  monthly: 'Every month',
+  yearly: 'Every year',
+};
+
+export const PERIOD_SUFFIX: Record<GoalPeriod, string> = {
+  daily: 'today',
+  monthly: 'this month',
+  yearly: 'this year',
+};

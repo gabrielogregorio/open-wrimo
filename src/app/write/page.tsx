@@ -5,7 +5,7 @@ import { formatNumber } from '@/lib/i18n/format';
 import { PARTICIPATION_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
 import { writingPace } from '@/lib/writing/stats';
 import { getLocale, getTranslator } from '@/server/i18n';
-import { allEarnedBadges, laurelCount, loadNotebook, participationBadges } from '@/server/notebook';
+import { allEarnedBadges, laurelCount, loadNotebook, participationBadges, wordsFor } from '@/server/notebook';
 import { bookRepository, requireUser } from '@/server/session';
 import { NovelCard } from './novel-card';
 
@@ -70,7 +70,7 @@ export default async function WritingDeskPage() {
       </dl>
 
       {featured ? (
-        <NovelCard novel={featured} goals={goalsOf(featured.id)} />
+        <NovelCard novel={featured} goals={goalsOf(featured.id)} totalWords={wordsFor(notebook, featured.id)} />
       ) : (
         <div className="sheet rounded-sm p-10 text-center">
           <p className="font-display text-xl">{t('No novels yet.')}</p>
@@ -84,7 +84,12 @@ export default async function WritingDeskPage() {
             {t('My novels')}
           </h2>
           {others.map((novel) => (
-            <NovelCard key={novel.id} novel={novel} goals={goalsOf(novel.id)} />
+            <NovelCard
+              key={novel.id}
+              novel={novel}
+              goals={goalsOf(novel.id)}
+              totalWords={wordsFor(notebook, novel.id)}
+            />
           ))}
         </section>
       ) : null}

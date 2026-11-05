@@ -1,6 +1,7 @@
 import { ObjectId, type Db } from 'mongodb';
 import {
   collections,
+  type ProfileSection,
   type EntryDocument,
   type StoredEntry,
   type StoredGoal,
@@ -12,20 +13,27 @@ import type { EventId } from './events';
 import {
   PROJECT_STATUSES,
   type GoalInput,
+  type GoalPeriod,
   type GoalUnit,
   type Mood,
   type PostInput,
-  type ProjectInput,
+  type ProfileInput,
+  type ProjectFields,
 } from './schema';
 
-export type ProjectView = Omit<ProjectInput, 'event'> & {
+export type ProjectView = ProjectFields & {
   id: string;
   awards: string[];
   coverUrl: string | null;
   updatedAt: string;
 };
 
-export type GoalView = GoalInput & { id: string; projectId: string; eventId?: EventId | null };
+export type GoalView = Omit<GoalInput, 'period'> & {
+  id: string;
+  projectId: string;
+  eventId?: EventId | null;
+  period?: GoalPeriod | null;
+};
 
 export type EntryView = {
   id: string;
@@ -38,6 +46,24 @@ export type EntryView = {
   source: 'update' | 'sprint';
   hour: number;
   createdAt: string;
+};
+
+export type ProfileView = Omit<ProfileInput, 'name' | 'username'> & {
+  avatarUrl: string | null;
+  shown: Record<ProfileSection, boolean>;
+};
+
+const ALL_SHOWN: Record<ProfileSection, boolean> = { bio: true, stats: true, favorites: true, badges: true };
+
+export const EMPTY_PROFILE: ProfileView = {
+  bio: '',
+  location: '',
+  writingTime: '',
+  favoriteBooks: '',
+  favoriteAuthors: '',
+  avatarUrl: null,
+  isPublic: false,
+  shown: ALL_SHOWN,
 };
 
 export type PreviousImageKey = string | null | false;
@@ -61,6 +87,7 @@ const toProjectView = (project: StoredProject): ProjectView => ({
   pinterestUrl: project.pinterestUrl,
   playlistUrl: project.playlistUrl,
   featured: project.featured,
+  isPublic: project.isPublic ?? false,
   awards: project.awards,
   coverUrl: project.coverUrl,
   updatedAt: project.updatedAt.toISOString(),
@@ -75,6 +102,7 @@ const toGoalView = (goal: StoredGoal): GoalView => ({
   startDate: goal.startDate,
   endDate: goal.endDate,
   eventId: goal.eventId ?? null,
+  period: goal.period ?? null,
 });
 
 const toEntryView = (entry: StoredEntry): EntryView => ({
@@ -105,7 +133,7 @@ const objectIdOrNull = (value: string): ObjectId | null => (ObjectId.isValid(val
 export type WritingRepository = ReturnType<typeof createWritingRepository>;
 
 export const createWritingRepository = (database: Db) => {
-  const { projects, goals, entries, posts } = collections(database);
+  const { projects, goals, entries, posts, profiles, users } = collections(database);
 
   const owned = (userId: string, id: string) => {
     const objectId = objectIdOrNull(id);
@@ -134,7 +162,7 @@ export const createWritingRepository = (database: Db) => {
       return project ? toProjectView(project) : null;
     },
 
-    async createProject(userId: string, input: Omit<ProjectInput, 'event'>, now: Date): Promise<string> {
+    async createProject(userId: string, input: ProjectFields, now: Date): Promise<string> {
       const { insertedId } = await projects.insertOne({
         ...input,
         userId: new ObjectId(userId),
@@ -152,12 +180,7 @@ export const createWritingRepository = (database: Db) => {
       return insertedId.toHexString();
     },
 
-    async updateProject(
-      userId: string,
-      projectId: string,
-      input: Omit<ProjectInput, 'event'>,
-      now: Date,
-    ): Promise<boolean> {
+    async updateProject(userId: string, projectId: string, input: ProjectFields, now: Date): Promise<boolean> {
       const filter = owned(userId, projectId);
 
       if (!filter) {
@@ -392,6 +415,77 @@ export const createWritingRepository = (database: Db) => {
       const removed = filter ? await posts.findOneAndDelete(filter) : null;
 
       return removed ? removed.imageKey : false;
+    },
+
+    async getProfile(userId: string): Promise<ProfileView> {
+      const profile = await profiles.findOne({ userId: new ObjectId(userId) });
+
+      return profile
+        ? {
+            bio: profile.bio,
+            location: profile.location,
+            writingTime: profile.writingTime,
+            favoriteBooks: profile.favoriteBooks,
+            favoriteAuthors: profile.favoriteAuthors,
+            avatarUrl: profile.avatarUrl,
+            isPublic: profile.isPublic ?? false,
+            shown: { ...ALL_SHOWN, ...profile.shown },
+          }
+        : EMPTY_PROFILE;
+    },
+
+    async saveProfile(
+      userId: string,
+      { name, username, ...input }: ProfileInput,
+      shown: Record<ProfileSection, boolean>,
+      now: Date,
+    ): Promise<boolean> {
+      const owner = new ObjectId(userId);
+
+      if (await users.findOne({ username, _id: { $ne: owner } }, { projection: { _id: 1 } })) {
+        return false;
+      }
+
+      await users.updateOne({ _id: owner }, { $set: { name, username } });
+      await profiles.updateOne(
+        { userId: owner },
+        { $set: { ...input, shown, updatedAt: now }, $setOnInsert: { avatarUrl: null, avatarKey: null } },
+        { upsert: true },
+      );
+
+      return true;
+    },
+
+    async setAvatar(userId: string, image: StoredImage | null, now: Date): Promise<string | null> {
+      const before = await profiles.findOneAndUpdate(
+        { userId: new ObjectId(userId) },
+        {
+          $set: { avatarUrl: image?.url ?? null, avatarKey: image?.key ?? null, updatedAt: now },
+          $setOnInsert: {
+            bio: '',
+            location: '',
+            writingTime: '',
+            favoriteBooks: '',
+            favoriteAuthors: '',
+            isPublic: false,
+          },
+        },
+        { upsert: true },
+      );
+
+      return before?.avatarKey ?? null;
+    },
+
+    async findPublicWriter(username: string): Promise<{ userId: string; name: string; username: string } | null> {
+      const user = await users.findOne({ username }, { projection: { name: 1, username: 1 } });
+
+      if (!user) {
+        return null;
+      }
+
+      const profile = await profiles.findOne({ userId: user._id, isPublic: true }, { projection: { _id: 1 } });
+
+      return profile ? { userId: user._id.toHexString(), name: user.name, username: user.username } : null;
     },
   };
 };

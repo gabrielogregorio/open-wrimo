@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useActionState } from 'react';
 import type { FormState } from '@/lib/form';
 import { EVENT_IDS } from '@/lib/writing/events';
+import { GOAL_PERIODS } from '@/lib/writing/schema';
 import type { ProjectView } from '@/lib/writing/repository';
 import { PROJECT_STATUSES, PROJECT_TYPES } from '@/lib/writing/schema';
 import { FormAlert } from './form-alert';
@@ -11,9 +12,10 @@ import { FormField, fieldClasses } from './form-field';
 import { GenreInput } from './genre-input';
 import { useI18n } from './i18n-provider';
 import { ImageField } from './image-field';
+import { NumberInput } from './number-input';
 import { RichTextEditor } from './rich-text-editor';
 import { SubmitButton } from './submit-button';
-import { EVENT_LABELS, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from './writing-labels';
+import { EVENT_LABELS, PERIOD_LABELS, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from './writing-labels';
 
 type NovelFormProps = {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
@@ -32,7 +34,10 @@ const initialValues = (novel?: ProjectView): Record<string, string> => ({
   pinterestUrl: novel?.pinterestUrl ?? '',
   playlistUrl: novel?.playlistUrl ?? '',
   featured: novel?.featured ? 'on' : '',
+  isPublic: novel?.isPublic ? 'on' : '',
   event: '',
+  period: '',
+  periodTarget: '',
 });
 
 function SelectField({
@@ -121,6 +126,15 @@ export function NovelForm({ action, cancelHref, novel, initialError }: NovelForm
         error={fieldError('cover')}
         removeLabel={t('Remove the cover')}
       />
+      <SelectField
+        name="isPublic"
+        label={t('How much privacy do you want?')}
+        value={values.isPublic}
+        options={[
+          ['', t('Only me')],
+          ['on', t('Public on my profile')],
+        ]}
+      />
       <div className="grid gap-5 sm:grid-cols-2">
         <SelectField
           name="status"
@@ -136,6 +150,27 @@ export function NovelForm({ action, cancelHref, novel, initialError }: NovelForm
         />
       </div>
       <GenreInput defaultValue={values.genres} error={fieldError('genres')} />
+      {novel ? null : (
+        <fieldset className="grid gap-4 rounded-sm border border-rule p-4 sm:grid-cols-2">
+          <legend className="px-1 font-display text-sm font-semibold">{t('Word goal that repeats')}</legend>
+          <SelectField
+            name="period"
+            label={t('How often')}
+            value={values.period}
+            options={[
+              ['', t('No repeating goal')],
+              ...GOAL_PERIODS.map((period): [string, string] => [period, t(PERIOD_LABELS[period])]),
+            ]}
+          />
+          <NumberInput
+            label={t('Words each time')}
+            name="periodTarget"
+            placeholder="1.667"
+            defaultValue={values.periodTarget}
+            error={fieldError('periodTarget')}
+          />
+        </fieldset>
+      )}
       {novel ? null : (
         <SelectField
           name="event"

@@ -5,12 +5,13 @@ import { useActionState } from 'react';
 import type { FormState } from '@/lib/form';
 import { addDays } from '@/lib/writing/dates';
 import type { GoalView } from '@/lib/writing/repository';
-import { GOAL_UNITS } from '@/lib/writing/schema';
+import { GOAL_PERIODS, GOAL_UNITS } from '@/lib/writing/schema';
 import { FormAlert } from './form-alert';
 import { FormField, fieldClasses } from './form-field';
 import { useI18n } from './i18n-provider';
+import { NumberInput } from './number-input';
 import { SubmitButton } from './submit-button';
-import { UNIT_LABELS } from './writing-labels';
+import { PERIOD_LABELS, UNIT_LABELS } from './writing-labels';
 
 type GoalFormProps = {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
@@ -29,6 +30,7 @@ export function GoalForm({ action, cancelHref, today, defaultName, goal }: GoalF
     target: String(goal?.target ?? 50000),
     startDate: goal?.startDate ?? today,
     endDate: goal?.endDate ?? addDays(today, 29),
+    period: goal?.period ?? '',
   };
   const fieldError = (field: string): string | undefined => {
     const message = state.fieldErrors?.[field];
@@ -44,16 +46,7 @@ export function GoalForm({ action, cancelHref, today, defaultName, goal }: GoalF
       <div className="sm:col-span-2">
         <FormField label={t('Goal name')} name="name" defaultValue={values.name} error={fieldError('name')} required />
       </div>
-      <FormField
-        label={t('Target')}
-        name="target"
-        type="number"
-        inputMode="numeric"
-        min={1}
-        defaultValue={values.target}
-        error={fieldError('target')}
-        required
-      />
+      <NumberInput label={t('Target')} name="target" defaultValue={values.target} error={fieldError('target')} />
       <div className="flex flex-col gap-1">
         <label htmlFor="field-unit" className="font-display text-sm font-semibold">
           {t('Counted in')}
@@ -62,6 +55,19 @@ export function GoalForm({ action, cancelHref, today, defaultName, goal }: GoalF
           {GOAL_UNITS.map((unit) => (
             <option key={unit} value={unit}>
               {t(UNIT_LABELS[unit])}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="flex flex-col gap-1 sm:col-span-2">
+        <label htmlFor="field-period" className="font-display text-sm font-semibold">
+          {t('Repeats')}
+        </label>
+        <select id="field-period" name="period" defaultValue={values.period} className={fieldClasses}>
+          <option value="">{t('Does not repeat: use the dates below')}</option>
+          {GOAL_PERIODS.map((period) => (
+            <option key={period} value={period}>
+              {t(PERIOD_LABELS[period])}
             </option>
           ))}
         </select>
