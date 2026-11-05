@@ -1,7 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { STATUS_LABELS } from '@/components/book-status';
-import { THEME_NAMES } from '@/components/preferences-menu';
 import { EMAIL_TAKEN, INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS } from '@/lib/auth/service';
 import { BOOK_NOT_FOUND } from '@/lib/books/service';
 import { ptBR } from './pt-BR';
@@ -57,7 +56,6 @@ describe('pt-BR dictionary', () => {
     ...keysIn(PAGE_MESSAGE, libraryFiles),
     ...keysIn(PAGE_NUMBER_MESSAGE, libraryFiles),
     ...Object.values(STATUS_LABELS),
-    ...Object.values(THEME_NAMES),
     INVALID_CREDENTIALS,
     TOO_MANY_ATTEMPTS,
     EMAIL_TAKEN,

@@ -13,5 +13,5 @@
 - [ ] New UI text is English inside `t('…')` with its line in `src/lib/i18n/pt-BR.ts`
 - [ ] New behavior has tests in the same PR
 - [ ] Every query that touches a book filters by the signed-in reader
-- [ ] Checked at 320px, 375px, 768px, 1280x720 and 1440px, in the paper, dark and night themes
+- [ ] Checked at 320px, 375px, 768px, 1280x720 and 1440px
 - [ ] Docs updated when a command, a route, an environment variable or a setting changed

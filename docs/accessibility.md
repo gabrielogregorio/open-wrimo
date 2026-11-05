@@ -1,11 +1,11 @@
 # Accessibility
 
-Folio aims at WCAG 2.1 AA in every theme.
+Folio aims at WCAG 2.1 AA.
 
 ## What is checked on every pull request
 
 - **axe** runs in Playwright on the home, sign in, sign up with errors, empty shelf, book page with a bookmark and
-  full shelf, once for each theme: paper, dark and night (`e2e/accessibility.spec.ts`).
+  full shelf (`e2e/accessibility.spec.ts`).
 - **Lighthouse** must score at least 95 in accessibility on the home and sign in pages (`scripts/lighthouse.mts`).
 - **eslint-plugin-jsx-a11y** in the recommended preset, plus `react/button-has-type`.
 - Component tests find elements by role and label, so a field without a label fails them.
@@ -17,15 +17,13 @@ Folio aims at WCAG 2.1 AA in every theme.
 - Form errors appear in a `role="alert"` box, and a saved reading page is announced in a `role="status"` line.
 - Progress is a `progressbar` with its percent; book spines are links whose name is the title and the author.
 - Removing a book asks for a confirmation in place, with a "Keep it" way back.
-- Focus is always visible with a 3px outline in a color picked for each theme.
+- Focus is always visible with a 3px blue outline that stands out on the paper.
 - The `lang` of the page follows the chosen language, English or Brazilian Portuguese.
 - Hover lifts on the spines turn off with `prefers-reduced-motion`.
 
-## Themes
+## Theme
 
-- **Paper** and **Dark** follow the system when "Follow the system" is chosen.
-- **Night** removes the blue channel from every color on the page and tints images, for reading before sleep.
-  A test reads the computed colors of every element and fails if any has blue.
+- Every page uses the paper theme, with `color-scheme: light`, even when the system prefers dark.
 
 ## Known gaps
 

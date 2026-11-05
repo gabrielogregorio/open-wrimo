@@ -2,10 +2,8 @@ import '@fontsource-variable/fraunces';
 import '@fontsource-variable/literata';
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
-import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
 import { I18nProvider } from '@/components/i18n-provider';
-import { THEME_COOKIE, resolveTheme } from '@/lib/preferences/theme';
 import { getLocale, getTranslator } from '@/server/i18n';
 import { SiteHeader } from './site-header';
 
@@ -20,19 +18,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f7f1e3' },
-    { media: '(prefers-color-scheme: dark)', color: '#1a1714' },
-  ],
+  themeColor: '#f7f1e3',
+  colorScheme: 'light',
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const locale = await getLocale();
   const t = await getTranslator();
-  const theme = resolveTheme((await cookies()).get(THEME_COOKIE)?.value);
 
   return (
-    <html lang={locale} data-theme={theme}>
+    <html lang={locale}>
       <body className="flex flex-col antialiased">
         <I18nProvider locale={locale}>
           <a

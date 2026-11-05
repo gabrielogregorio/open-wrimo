@@ -55,8 +55,7 @@ new window. Parallel attempts cannot pass the limit, which a unit test checks wi
 - The interface text is English and doubles as the key; `src/lib/i18n/pt-BR.ts` holds the Portuguese. A test scans
   every `t('…')` call and every validation message and fails when one has no translation.
 - Locale order: `?lang=`, then the saved cookie, then the browser, then English.
-- Theme order: the saved cookie, otherwise the system. The server writes `data-theme` on `<html>`, so there is no flash.
-  Paper and dark come from one set of `light-dark()` variables; night overrides them with colors whose blue is zero.
+- There is one theme, paper. Its colors are CSS variables in `globals.css`, read by the Tailwind utilities.
 
 ## Local database or a cluster online
 

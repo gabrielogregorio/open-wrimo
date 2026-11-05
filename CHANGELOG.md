@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Paper is now the only theme; dark and night were removed.
+
 ## 0.1.0
 
 - Shelf with spines, filters by status and paging.

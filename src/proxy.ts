@@ -1,7 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { SESSION_COOKIE } from '@/lib/auth/session';
-import { LOCALE_COOKIE, LOCALE_HEADER, LOCALE_QUERY, normalizeLocale } from '@/lib/i18n/locales';
-import { PREFERENCE_MAX_AGE_SECONDS } from '@/lib/preferences/theme';
+import {
+  LOCALE_COOKIE,
+  LOCALE_HEADER,
+  LOCALE_QUERY,
+  PREFERENCE_MAX_AGE_SECONDS,
+  normalizeLocale,
+} from '@/lib/i18n/locales';
 
 const PROTECTED_PREFIX = '/shelf';
 

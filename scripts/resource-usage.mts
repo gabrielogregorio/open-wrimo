@@ -125,7 +125,6 @@ const readABook = async (page: Page, round: number): Promise<void> => {
   await page.getByRole('button', { name: 'Add bookmark' }).click();
   await page.getByRole('button', { name: 'Remove bookmark on page 12' }).waitFor();
   await settle();
-  await page.getByLabel('Theme').selectOption(round % 2 === 0 ? 'night' : 'light');
   await page.getByRole('link', { name: 'My shelf' }).click();
   await page.waitForURL('**/shelf');
   await page.getByRole('link', { name: /^Reading/ }).click();

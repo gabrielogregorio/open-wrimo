@@ -19,65 +19,28 @@
 }
 
 :root {
-  color-scheme: light dark;
-  --paper: light-dark(#f7f1e3, #1a1714);
-  --paper-deep: light-dark(#efe5cf, #24201b);
-  --ink: light-dark(#2a2118, #ece4d6);
-  --ink-soft: light-dark(#5f4f3e, #b9ad9b);
-  --rule: light-dark(#d6c6a6, #3d362d);
-  --accent: light-dark(#7d2a26, #e0a37a);
-  --accent-ink: light-dark(#fdf8ee, #1a1714);
-  --wood: light-dark(#8b5a2b, #4a3322);
-  --wood-dark: light-dark(#5c3a1a, #2e2015);
-  --ribbon: light-dark(#9b2d2a, #c85a50);
-  --focus: light-dark(#1f5fa8, #f0c070);
-  --danger: light-dark(#9b1c1c, #f28b82);
-  --spine-ink: light-dark(#fdf8ee, #f3ead8);
-  --spine-0: light-dark(#7d2a26, #6e2b28);
-  --spine-1: light-dark(#2f4b3a, #2c4a3a);
-  --spine-2: light-dark(#1f3a5f, #2a3f5e);
-  --spine-3: light-dark(#6b4423, #5b3c22);
-  --spine-4: light-dark(#4a3b5c, #45385a);
-  --spine-5: light-dark(#7a4f17, #6f4a1a);
-  --spine-6: light-dark(#3d4a4f, #3a464b);
-  --spine-7: light-dark(#5a2e3e, #552c3b);
-}
-
-:root[data-theme='light'] {
   color-scheme: light;
-}
-
-:root[data-theme='dark'] {
-  color-scheme: dark;
-}
-
-:root[data-theme='night'] {
-  color-scheme: dark;
-  --paper: #120b00;
-  --paper-deep: #1c1200;
-  --ink: #e8a300;
-  --ink-soft: #c08600;
-  --rule: #3d2a00;
-  --accent: #e08a00;
-  --accent-ink: #120b00;
-  --wood: #3d2200;
-  --wood-dark: #261500;
-  --ribbon: #b84a00;
-  --focus: #ffb800;
-  --danger: #ff7a00;
-  --spine-ink: #f0b000;
-  --spine-0: #3d1a00;
-  --spine-1: #4a2600;
-  --spine-2: #2e1d00;
-  --spine-3: #452200;
-  --spine-4: #3a1500;
-  --spine-5: #503000;
-  --spine-6: #2a1800;
-  --spine-7: #4d1f00;
-}
-
-:root[data-theme='night'] img {
-  filter: sepia(1) saturate(0.7) brightness(0.8);
+  --paper: #f7f1e3;
+  --paper-deep: #efe5cf;
+  --ink: #2a2118;
+  --ink-soft: #5f4f3e;
+  --rule: #d6c6a6;
+  --accent: #7d2a26;
+  --accent-ink: #fdf8ee;
+  --wood: #8b5a2b;
+  --wood-dark: #5c3a1a;
+  --ribbon: #9b2d2a;
+  --focus: #1f5fa8;
+  --danger: #9b1c1c;
+  --spine-ink: #fdf8ee;
+  --spine-0: #7d2a26;
+  --spine-1: #2f4b3a;
+  --spine-2: #1f3a5f;
+  --spine-3: #6b4423;
+  --spine-4: #4a3b5c;
+  --spine-5: #7a4f17;
+  --spine-6: #3d4a4f;
+  --spine-7: #5a2e3e;
 }
 
 @layer base {

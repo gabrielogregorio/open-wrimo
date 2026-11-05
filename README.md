@@ -18,8 +18,7 @@ A calm reading log: keep your shelf, track the page you stopped on and bookmark 
 </div>
 
 <p align="center">
-  <img src="docs/screenshots/shelf-light.png" alt="The shelf in the paper theme, with book spines on a wooden board" width="49%" />
-  <img src="docs/screenshots/book-night.png" alt="A book page in the night theme, in amber on near black" width="49%" />
+  <img src="docs/screenshots/shelf-light.png" alt="The shelf on paper, with book spines on a wooden board" width="70%" />
 </p>
 
 ## About
@@ -28,7 +27,7 @@ Folio keeps the books you read on a shelf drawn as spines. Each book has a statu
 the current page, a rating, notes and bookmarks. Typing the page you reached moves the status by itself.
 
 - English and Brazilian Portuguese, picked from `?lang=`, your choice or the browser.
-- Three themes: **paper**, **dark** and **night**, which removes every trace of blue light for reading before sleep.
+- One warm paper theme on every page, whatever the system prefers.
 - Accounts with hashed passwords, server sessions and a sign in rate limit stored in MongoDB.
 - MongoDB runs locally through docker compose; point `MONGODB_URI` to a cluster online only when you want.
 
@@ -101,9 +100,9 @@ local line and run `pnpm run db:up`.
   components run in jsdom with Testing Library. Coverage of `src/lib` and `src/components` must stay at 100%.
 - **E2E** (`e2e/`): Playwright on the production build, served on port 8921 by `scripts/serve-e2e.mts` with a
   throwaway database. Set `E2E_MONGODB_URI` to use another one. Requests to any other host are blocked.
-- **Accessibility**: axe with WCAG 2.1 A and AA tags on every main page in all three themes, plus Lighthouse.
+- **Accessibility**: axe with WCAG 2.1 A and AA tags on every main page, plus Lighthouse.
   See [docs/accessibility.md](docs/accessibility.md).
-- **Memory**: `scripts/resource-usage.mts` signs up, adds books, saves progress, bookmarks and switches themes five
+- **Memory**: `scripts/resource-usage.mts` signs up, adds books, saves progress, bookmarks and browses the shelf five
   times, and fails if the page goes over 300 MB (PSS of the Chrome renderers).
 
 Locally, `PLAYWRIGHT_CHANNEL=chrome` reuses an installed Chrome instead of downloading Chromium.
@@ -125,7 +124,7 @@ Dependabot updates npm packages, actions and the MongoDB image monthly, waiting 
 ```
 src/app          routes, layout and server actions
 src/server       session, locale and repository wiring for requests
-src/lib          schemas, services, repositories, rate limit, i18n, themes
+src/lib          schemas, services, repositories, rate limit, i18n
 src/components   React components
 e2e/             Playwright specs
 scripts/         E2E server, Lighthouse and memory check
