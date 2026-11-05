@@ -1,14 +1,16 @@
-import { Binary, ObjectId, type Db } from 'mongodb';
+import { ObjectId, type Db } from 'mongodb';
 import {
   collections,
   type EntryDocument,
   type StoredEntry,
   type StoredGoal,
+  type StoredPost,
   type StoredProject,
 } from '@/lib/db/collections';
-import type { GoalInput, GoalUnit, Mood, ProjectInput } from './schema';
+import type { StoredImage } from '@/lib/storage/storage';
+import type { GoalInput, GoalUnit, Mood, PostInput, ProjectInput } from './schema';
 
-export type ProjectView = ProjectInput & {
+export type ProjectView = Omit<ProjectInput, 'event'> & {
   id: string;
   awards: string[];
   coverUrl: string | null;
@@ -30,8 +32,15 @@ export type EntryView = {
   createdAt: string;
 };
 
+export type PreviousImageKey = string | null | false;
 export type NewEntry = Omit<EntryView, 'id' | 'createdAt'>;
-export type Cover = { contentType: string; data: Uint8Array };
+export type PostView = PostInput & {
+  id: string;
+  projectId: string;
+  imageUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
 
 const toProjectView = (project: StoredProject): ProjectView => ({
   id: project._id.toHexString(),
@@ -45,7 +54,7 @@ const toProjectView = (project: StoredProject): ProjectView => ({
   playlistUrl: project.playlistUrl,
   featured: project.featured,
   awards: project.awards,
-  coverUrl: project.coverVersion === null ? null : `/api/covers/${project._id.toHexString()}?v=${project.coverVersion}`,
+  coverUrl: project.coverUrl,
   updatedAt: project.updatedAt.toISOString(),
 });
 
@@ -72,12 +81,22 @@ const toEntryView = (entry: StoredEntry): EntryView => ({
   createdAt: entry.createdAt.toISOString(),
 });
 
+const toPostView = (post: StoredPost): PostView => ({
+  id: post._id.toHexString(),
+  projectId: post.projectId.toHexString(),
+  title: post.title,
+  body: post.body,
+  imageUrl: post.imageUrl,
+  createdAt: post.createdAt.toISOString(),
+  updatedAt: post.updatedAt.toISOString(),
+});
+
 const objectIdOrNull = (value: string): ObjectId | null => (ObjectId.isValid(value) ? new ObjectId(value) : null);
 
 export type WritingRepository = ReturnType<typeof createWritingRepository>;
 
 export const createWritingRepository = (database: Db) => {
-  const { projects, goals, entries, covers } = collections(database);
+  const { projects, goals, entries, posts } = collections(database);
 
   const owned = (userId: string, id: string) => {
     const objectId = objectIdOrNull(id);
@@ -106,12 +125,13 @@ export const createWritingRepository = (database: Db) => {
       return project ? toProjectView(project) : null;
     },
 
-    async createProject(userId: string, input: ProjectInput, now: Date): Promise<string> {
+    async createProject(userId: string, input: Omit<ProjectInput, 'event'>, now: Date): Promise<string> {
       const { insertedId } = await projects.insertOne({
         ...input,
         userId: new ObjectId(userId),
         awards: [],
-        coverVersion: null,
+        coverUrl: null,
+        coverKey: null,
         createdAt: now,
         updatedAt: now,
       });
@@ -123,7 +143,12 @@ export const createWritingRepository = (database: Db) => {
       return insertedId.toHexString();
     },
 
-    async updateProject(userId: string, projectId: string, input: ProjectInput, now: Date): Promise<boolean> {
+    async updateProject(
+      userId: string,
+      projectId: string,
+      input: Omit<ProjectInput, 'event'>,
+      now: Date,
+    ): Promise<boolean> {
       const filter = owned(userId, projectId);
 
       if (!filter) {
@@ -146,69 +171,32 @@ export const createWritingRepository = (database: Db) => {
       return result?.matchedCount === 1;
     },
 
-    async removeProject(userId: string, projectId: string): Promise<boolean> {
+    async removeProject(userId: string, projectId: string): Promise<string[] | null> {
       const filter = owned(userId, projectId);
+      const project = filter ? await projects.findOneAndDelete(filter) : null;
 
-      if (!filter) {
-        return false;
+      if (!filter || !project) {
+        return null;
       }
 
-      const { deletedCount } = await projects.deleteOne(filter);
+      const children = { userId: filter.userId, projectId: filter._id };
+      const postImages = await posts.find({ ...children, imageKey: { $ne: null } }).toArray();
+      await Promise.all([goals.deleteMany(children), entries.deleteMany(children), posts.deleteMany(children)]);
 
-      if (deletedCount === 1) {
-        const children = { userId: filter.userId, projectId: filter._id };
-        await Promise.all([
-          goals.deleteMany(children),
-          entries.deleteMany(children),
-          covers.deleteOne({ _id: filter._id, userId: filter.userId }),
-        ]);
-      }
-
-      return deletedCount === 1;
+      return [project.coverKey, ...postImages.map((post) => post.imageKey)].filter(
+        (key): key is string => key !== null,
+      );
     },
 
-    async saveCover(userId: string, projectId: string, cover: Cover, now: Date): Promise<boolean> {
+    async setCover(userId: string, projectId: string, image: StoredImage | null, now: Date): Promise<PreviousImageKey> {
       const filter = owned(userId, projectId);
-      const project = filter
-        ? await projects.findOneAndUpdate(filter, { $set: { coverVersion: now.getTime(), updatedAt: now } })
+      const before = filter
+        ? await projects.findOneAndUpdate(filter, {
+            $set: { coverUrl: image?.url ?? null, coverKey: image?.key ?? null, updatedAt: now },
+          })
         : null;
 
-      if (!project) {
-        return false;
-      }
-
-      await covers.replaceOne(
-        { _id: project._id },
-        {
-          userId: project.userId,
-          contentType: cover.contentType,
-          data: new Binary(cover.data),
-          updatedAt: now,
-        },
-        { upsert: true },
-      );
-
-      return true;
-    },
-
-    async removeCover(userId: string, projectId: string, now: Date): Promise<boolean> {
-      const filter = owned(userId, projectId);
-      const result = filter ? await projects.updateOne(filter, { $set: { coverVersion: null, updatedAt: now } }) : null;
-
-      if (!filter || result?.matchedCount !== 1) {
-        return false;
-      }
-
-      await covers.deleteOne({ _id: filter._id, userId: filter.userId });
-
-      return true;
-    },
-
-    async getCover(userId: string, projectId: string): Promise<Cover | null> {
-      const filter = owned(userId, projectId);
-      const cover = filter ? await covers.findOne(filter) : null;
-
-      return cover ? { contentType: cover.contentType, data: new Uint8Array(cover.data.buffer) } : null;
+      return before ? before.coverKey : false;
     },
 
     async listGoals(userId: string, projectId?: string): Promise<GoalView[]> {
@@ -303,6 +291,82 @@ export const createWritingRepository = (database: Db) => {
       const result = filter ? await entries.deleteOne(filter) : null;
 
       return result?.deletedCount === 1;
+    },
+
+    async listPosts(userId: string, projectId?: string): Promise<PostView[]> {
+      const owner = new ObjectId(userId);
+      const projectObjectId = projectId === undefined ? undefined : objectIdOrNull(projectId);
+
+      if (projectObjectId === null) {
+        return [];
+      }
+
+      const found = await posts
+        .find(projectObjectId ? { userId: owner, projectId: projectObjectId } : { userId: owner })
+        .sort({ createdAt: -1, _id: -1 })
+        .toArray();
+
+      return found.map(toPostView);
+    },
+
+    async getPost(userId: string, postId: string): Promise<PostView | null> {
+      const filter = owned(userId, postId);
+      const post = filter ? await posts.findOne(filter) : null;
+
+      return post ? toPostView(post) : null;
+    },
+
+    async createPost(
+      userId: string,
+      projectId: string,
+      input: PostInput,
+      image: StoredImage | null,
+      now: Date,
+    ): Promise<string | null> {
+      const filter = owned(userId, projectId);
+
+      if (!filter || (await projects.countDocuments(filter, { limit: 1 })) === 0) {
+        return null;
+      }
+
+      const { insertedId } = await posts.insertOne({
+        ...input,
+        userId: filter.userId,
+        projectId: filter._id,
+        imageUrl: image?.url ?? null,
+        imageKey: image?.key ?? null,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      return insertedId.toHexString();
+    },
+
+    async updatePost(
+      userId: string,
+      postId: string,
+      input: PostInput,
+      image: StoredImage | null | undefined,
+      now: Date,
+    ): Promise<PreviousImageKey> {
+      const filter = owned(userId, postId);
+      const imageChange = image === undefined ? {} : { imageUrl: image?.url ?? null, imageKey: image?.key ?? null };
+      const before = filter
+        ? await posts.findOneAndUpdate(filter, { $set: { ...input, ...imageChange, updatedAt: now } })
+        : null;
+
+      if (!before) {
+        return false;
+      }
+
+      return image === undefined ? null : before.imageKey;
+    },
+
+    async removePost(userId: string, postId: string): Promise<PreviousImageKey> {
+      const filter = owned(userId, postId);
+      const removed = filter ? await posts.findOneAndDelete(filter) : null;
+
+      return removed ? removed.imageKey : false;
     },
   };
 };

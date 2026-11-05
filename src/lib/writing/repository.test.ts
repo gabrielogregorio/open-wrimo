@@ -8,7 +8,7 @@ const WRITER = new ObjectId().toHexString();
 const STRANGER = new ObjectId().toHexString();
 const MISSING = new ObjectId().toHexString();
 
-const PROJECT: ProjectInput = {
+const PROJECT: Omit<ProjectInput, 'event'> = {
   title: 'Novo Livro ✨',
   status: 'in-progress',
   type: 'novel',
@@ -90,23 +90,51 @@ describe('createWritingRepository', () => {
     await expect(writing.setAwards(WRITER, 'bad', [], NOW)).resolves.toBe(false);
   });
 
-  it('saves, serves and removes a cover', async () => {
+  it('points to a cover and hands back the one it replaced', async () => {
     const projectId = await writing.createProject(WRITER, PROJECT, NOW);
-    const data = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]);
+    const first = { url: '/media/covers/a.png', key: 'covers/a.png' };
 
-    await expect(writing.saveCover(WRITER, projectId, { contentType: 'image/png', data }, NOW)).resolves.toBe(true);
-    expect((await writing.getProject(WRITER, projectId))?.coverUrl).toBe(`/api/covers/${projectId}?v=${NOW.getTime()}`);
-    await expect(writing.getCover(WRITER, projectId)).resolves.toEqual({ contentType: 'image/png', data });
-    await expect(writing.getCover(STRANGER, projectId)).resolves.toBeNull();
-    await expect(writing.getCover(WRITER, 'bad')).resolves.toBeNull();
-    await expect(writing.saveCover(STRANGER, projectId, { contentType: 'image/png', data }, NOW)).resolves.toBe(false);
-    await expect(writing.saveCover(WRITER, 'bad', { contentType: 'image/png', data }, NOW)).resolves.toBe(false);
-
-    await expect(writing.removeCover(STRANGER, projectId, NOW)).resolves.toBe(false);
-    await expect(writing.removeCover(WRITER, 'bad', NOW)).resolves.toBe(false);
-    await expect(writing.removeCover(WRITER, projectId, NOW)).resolves.toBe(true);
-    await expect(writing.getCover(WRITER, projectId)).resolves.toBeNull();
+    await expect(writing.setCover(WRITER, projectId, first, NOW)).resolves.toBeNull();
+    expect((await writing.getProject(WRITER, projectId))?.coverUrl).toBe(first.url);
+    await expect(writing.setCover(WRITER, projectId, null, NOW)).resolves.toBe('covers/a.png');
     expect((await writing.getProject(WRITER, projectId))?.coverUrl).toBeNull();
+    await expect(writing.setCover(STRANGER, projectId, first, NOW)).resolves.toBe(false);
+    await expect(writing.setCover(WRITER, 'bad', first, NOW)).resolves.toBe(false);
+  });
+
+  it('writes, edits and removes posts of a project', async () => {
+    const projectId = await writing.createProject(WRITER, PROJECT, NOW);
+    const image = { url: '/media/posts/p.png', key: 'posts/p.png' };
+    const older = await writing.createPost(WRITER, projectId, { title: 'Day one', body: 'Started.' }, null, NOW);
+    const postId = await writing.createPost(
+      WRITER,
+      projectId,
+      { title: 'Day two', body: 'A map.' },
+      image,
+      new Date(NOW.getTime() + 1000),
+    );
+
+    expect((await writing.listPosts(WRITER, projectId)).map((post) => post.id)).toEqual([postId, older]);
+    expect((await writing.listPosts(WRITER)).length).toBeGreaterThanOrEqual(2);
+    await expect(writing.listPosts(WRITER, 'bad')).resolves.toEqual([]);
+    await expect(writing.getPost(WRITER, postId!)).resolves.toMatchObject({ projectId, imageUrl: image.url });
+    await expect(writing.getPost(STRANGER, postId!)).resolves.toBeNull();
+    await expect(writing.getPost(WRITER, 'bad')).resolves.toBeNull();
+    await expect(writing.createPost(WRITER, MISSING, { title: 'x', body: 'y' }, null, NOW)).resolves.toBeNull();
+    await expect(writing.createPost(WRITER, 'bad', { title: 'x', body: 'y' }, null, NOW)).resolves.toBeNull();
+
+    await expect(
+      writing.updatePost(WRITER, postId!, { title: 'Day 2', body: 'A map.' }, undefined, NOW),
+    ).resolves.toBeNull();
+    expect((await writing.getPost(WRITER, postId!))?.imageUrl).toBe(image.url);
+    await expect(writing.updatePost(WRITER, postId!, { title: 'Day 2', body: 'A map.' }, null, NOW)).resolves.toBe(
+      'posts/p.png',
+    );
+    await expect(writing.updatePost(STRANGER, postId!, { title: 'x', body: 'y' }, null, NOW)).resolves.toBe(false);
+    await expect(writing.updatePost(WRITER, 'bad', { title: 'x', body: 'y' }, null, NOW)).resolves.toBe(false);
+    await expect(writing.removePost(STRANGER, postId!)).resolves.toBe(false);
+    await expect(writing.removePost(WRITER, 'bad')).resolves.toBe(false);
+    await expect(writing.removePost(WRITER, postId!)).resolves.toBeNull();
   });
 
   it('creates, lists, edits and removes goals', async () => {
@@ -159,18 +187,29 @@ describe('createWritingRepository', () => {
     await expect(writing.removeEntry(WRITER, first)).resolves.toBe(true);
   });
 
-  it('removes a project with its goals, entries and cover', async () => {
+  it('removes a project with its goals, entries and posts, and lists their images', async () => {
     const projectId = await writing.createProject(WRITER, PROJECT, NOW);
     await writing.createGoal(WRITER, projectId, GOAL, NOW);
     await writing.addEntry(WRITER, entryFor(projectId), NOW);
-    await writing.saveCover(WRITER, projectId, { contentType: 'image/gif', data: new Uint8Array([1]) }, NOW);
+    await writing.setCover(WRITER, projectId, { url: '/media/c.png', key: 'covers/c.png' }, NOW);
+    await writing.createPost(
+      WRITER,
+      projectId,
+      { title: 'a', body: 'b' },
+      { url: '/media/p.gif', key: 'posts/p.gif' },
+      NOW,
+    );
+    await writing.createPost(WRITER, projectId, { title: 'c', body: 'd' }, null, NOW);
 
-    await expect(writing.removeProject(STRANGER, projectId)).resolves.toBe(false);
-    await expect(writing.removeProject(WRITER, 'bad')).resolves.toBe(false);
-    await expect(writing.removeProject(WRITER, projectId)).resolves.toBe(true);
+    await expect(writing.removeProject(STRANGER, projectId)).resolves.toBeNull();
+    await expect(writing.removeProject(WRITER, 'bad')).resolves.toBeNull();
+    await expect(writing.removeProject(WRITER, projectId)).resolves.toEqual(['covers/c.png', 'posts/p.gif']);
     await expect(writing.listGoals(WRITER, projectId)).resolves.toEqual([]);
     await expect(writing.listEntries(WRITER, { projectId })).resolves.toEqual([]);
-    await expect(writing.getCover(WRITER, projectId)).resolves.toBeNull();
-    await expect(writing.removeProject(WRITER, projectId)).resolves.toBe(false);
+    await expect(writing.listPosts(WRITER, projectId)).resolves.toEqual([]);
+    await expect(writing.removeProject(WRITER, projectId)).resolves.toBeNull();
+
+    const bare = await writing.createProject(WRITER, PROJECT, NOW);
+    await expect(writing.removeProject(WRITER, bare)).resolves.toEqual([]);
   });
 });

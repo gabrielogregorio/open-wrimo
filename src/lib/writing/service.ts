@@ -1,40 +1,48 @@
 import { fieldErrorsFrom, type FormState } from '@/lib/form';
+import { checkImage } from '@/lib/storage/images';
+import type { ImageStorage, StoredImage } from '@/lib/storage/storage';
 import { onlyPersonalBadges } from './badges';
 import { localDate, localHour } from './dates';
+import { eventGoal } from './events';
 import { entriesForGoal } from './goals';
 import type { WritingRepository } from './repository';
-import { entryInputSchema, goalInputSchema, projectInputSchema } from './schema';
+import { entryInputSchema, goalInputSchema, postInputSchema, projectInputSchema } from './schema';
 
 export const PROJECT_NOT_FOUND = 'This project is not in your notebook.';
 export const GOAL_NOT_FOUND = 'This goal no longer exists.';
-export const COVER_TOO_BIG = 'Use an image up to 2 MB.';
-export const COVER_WRONG_TYPE = 'Use a PNG, JPEG, WebP or GIF image.';
 const NOTHING_TO_ADD = 'Enter how much you wrote.';
+export const POST_NOT_FOUND = 'This post no longer exists.';
 
-export const MAX_COVER_BYTES = 2 * 1024 * 1024;
-
-export type WritingContext = { writing: WritingRepository; userId: string; now: Date; timeZone: string };
+export type WritingContext = {
+  writing: WritingRepository;
+  storage: ImageStorage;
+  userId: string;
+  now: Date;
+  timeZone: string;
+  translate?: (text: string, values: Record<string, string | number>) => string;
+};
 export type WritingResult = FormState & { id?: string };
 
-const SIGNATURES: { contentType: string; matches: (bytes: Uint8Array) => boolean }[] = [
-  {
-    contentType: 'image/png',
-    matches: (bytes) => [0x89, 0x50, 0x4e, 0x47].every((byte, index) => bytes[index] === byte),
-  },
-  { contentType: 'image/jpeg', matches: (bytes) => bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff },
-  { contentType: 'image/gif', matches: (bytes) => String.fromCharCode(...bytes.slice(0, 4)) === 'GIF8' },
-  {
-    contentType: 'image/webp',
-    matches: (bytes) =>
-      String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP',
-  },
-];
+const fillIn = (text: string, values: Record<string, string | number>): string =>
+  text.replace(/\{(\w+)\}/g, (_match, name: string) => String(values[name]));
 
-export const coverTypeOf = (bytes: Uint8Array): string | null =>
-  SIGNATURES.find((signature) => signature.matches(bytes))?.contentType ?? null;
+const storeImage = async (
+  storage: ImageStorage,
+  bytes: Uint8Array,
+  folder: string,
+  field: string,
+): Promise<{ image: StoredImage } | { fieldErrors: Record<string, string> }> => {
+  const checked = checkImage(bytes);
+
+  if (checked.error !== undefined) {
+    return { fieldErrors: { [field]: checked.error } };
+  }
+
+  return { image: await storage.save({ bytes, kind: checked.kind, folder }) };
+};
 
 export const saveProject = async (
-  { writing, userId, now }: WritingContext,
+  { writing, userId, now, timeZone, translate = fillIn }: WritingContext,
   input: Record<string, unknown>,
   projectId?: string,
 ): Promise<WritingResult> => {
@@ -44,33 +52,133 @@ export const saveProject = async (
     return { fieldErrors: fieldErrorsFrom(parsed.error) };
   }
 
-  if (!projectId) {
-    return { id: await writing.createProject(userId, parsed.data, now) };
+  const { event, ...project } = parsed.data;
+
+  if (projectId) {
+    return (await writing.updateProject(userId, projectId, project, now))
+      ? { id: projectId }
+      : { error: PROJECT_NOT_FOUND };
   }
 
-  return (await writing.updateProject(userId, projectId, parsed.data, now))
-    ? { id: projectId }
-    : { error: PROJECT_NOT_FOUND };
+  const id = await writing.createProject(userId, project, now);
+
+  if (event) {
+    await writing.createGoal(userId, id, eventGoal(event, localDate(now, timeZone), translate), now);
+  }
+
+  return { id };
 };
 
 export const saveCover = async (
-  { writing, userId, now }: WritingContext,
+  { writing, storage, userId, now }: WritingContext,
   projectId: string,
-  bytes: Uint8Array,
+  bytes: Uint8Array | null,
 ): Promise<WritingResult> => {
-  if (bytes.byteLength > MAX_COVER_BYTES) {
-    return { fieldErrors: { cover: COVER_TOO_BIG } };
+  let image: StoredImage | null = null;
+
+  if (bytes) {
+    const stored = await storeImage(storage, bytes, 'covers', 'cover');
+
+    if ('fieldErrors' in stored) {
+      return stored;
+    }
+
+    image = stored.image;
   }
 
-  const contentType = coverTypeOf(bytes);
+  const previousKey = await writing.setCover(userId, projectId, image, now);
 
-  if (!contentType) {
-    return { fieldErrors: { cover: COVER_WRONG_TYPE } };
+  if (previousKey === false) {
+    await (image ? storage.remove(image.key) : Promise.resolve());
+
+    return { error: PROJECT_NOT_FOUND };
   }
 
-  return (await writing.saveCover(userId, projectId, { contentType, data: bytes }, now))
-    ? { id: projectId, saved: true }
-    : { error: PROJECT_NOT_FOUND };
+  if (previousKey) {
+    await storage.remove(previousKey);
+  }
+
+  return { id: projectId, saved: true };
+};
+
+export const removeProject = async (
+  { writing, storage, userId }: WritingContext,
+  projectId: string,
+): Promise<boolean> => {
+  const imageKeys = await writing.removeProject(userId, projectId);
+
+  if (!imageKeys) {
+    return false;
+  }
+
+  await Promise.all(imageKeys.map((key) => storage.remove(key)));
+
+  return true;
+};
+
+export const savePost = async (
+  { writing, storage, userId, now }: WritingContext,
+  projectId: string,
+  input: Record<string, unknown>,
+  options: { image?: Uint8Array | null; removeImage?: boolean; postId?: string } = {},
+): Promise<WritingResult> => {
+  const parsed = postInputSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
+
+  let image: StoredImage | null | undefined = options.removeImage ? null : undefined;
+
+  if (options.image) {
+    const stored = await storeImage(storage, options.image, 'posts', 'image');
+
+    if ('fieldErrors' in stored) {
+      return stored;
+    }
+
+    image = stored.image;
+  }
+
+  const discardNewImage = async (): Promise<void> => {
+    await (image ? storage.remove(image.key) : Promise.resolve());
+  };
+
+  if (!options.postId) {
+    const created = await writing.createPost(userId, projectId, parsed.data, image ?? null, now);
+
+    if (!created) {
+      await discardNewImage();
+
+      return { error: PROJECT_NOT_FOUND };
+    }
+
+    return { id: created };
+  }
+
+  const previousKey = await writing.updatePost(userId, options.postId, parsed.data, image, now);
+
+  if (previousKey === false) {
+    await discardNewImage();
+
+    return { error: POST_NOT_FOUND };
+  }
+
+  if (previousKey) {
+    await storage.remove(previousKey);
+  }
+
+  return { id: options.postId };
+};
+
+export const removePost = async ({ writing, storage, userId }: WritingContext, postId: string): Promise<boolean> => {
+  const imageKey = await writing.removePost(userId, postId);
+
+  if (imageKey) {
+    await storage.remove(imageKey);
+  }
+
+  return imageKey !== false;
 };
 
 export const saveGoal = async (
@@ -155,11 +263,12 @@ export const setPersonalBadges = async (
     : { error: PROJECT_NOT_FOUND };
 
 export const exportNotebook = async ({ writing, userId }: WritingContext) => {
-  const [projects, goals, entries] = await Promise.all([
+  const [projects, goals, entries, posts] = await Promise.all([
     writing.listProjects(userId),
     writing.listGoals(userId),
     writing.listEntries(userId),
+    writing.listPosts(userId),
   ]);
 
-  return { exportedFrom: 'Open Wrimo', version: 1, projects, goals, entries };
+  return { exportedFrom: 'Open Wrimo', version: 1, projects, goals, entries, posts };
 };

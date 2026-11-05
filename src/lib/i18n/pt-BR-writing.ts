@@ -1,6 +1,7 @@
 export const ptBRWriting: Record<string, string> = {
   'Choose a project status.': 'Escolha o status do projeto.',
   'Choose a project type.': 'Escolha o tipo de projeto.',
+  'Choose an event from the list.': 'Escolha um evento da lista.',
   'Choose how it felt.': 'Escolha como foi.',
   'Choose to add or to set the total.': 'Escolha somar ou definir o total.',
   'Choose what the goal counts.': 'Escolha o que a meta conta.',
@@ -17,6 +18,8 @@ export const ptBRWriting: Record<string, string> = {
   'Keep the summary under 2000 characters.': 'Use até 2000 caracteres no resumo.',
   'Name the goal in up to 120 characters.': 'Dê um nome à meta com até 120 caracteres.',
   'Pick up to 10 genres.': 'Escolha até 10 gêneros.',
+  'This post no longer exists.': 'Esse post não existe mais.',
+  'Write the post in up to 20000 characters.': 'Escreva o post com até 20000 caracteres.',
   'This goal no longer exists.': 'Essa meta não existe mais.',
   'This project is not in your notebook.': 'Esse projeto não está no seu caderno.',
   'Use a PNG, JPEG, WebP or GIF image.': 'Use uma imagem PNG, JPEG, WebP ou GIF.',

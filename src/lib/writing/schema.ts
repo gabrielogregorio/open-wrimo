@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isIsoDate } from './dates';
+import { EVENT_IDS } from './events';
 
 export const PROJECT_STATUSES = ['planning', 'in-progress', 'drafted', 'completed', 'published'] as const;
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
@@ -73,6 +74,23 @@ export const projectInputSchema = z.object({
   pinterestUrl: optionalUrl('Enter an https:// address.'),
   playlistUrl: optionalUrl('Enter an https:// address.'),
   featured: z.preprocess((value) => value === 'on' || value === true, z.boolean()),
+  event: z.preprocess(
+    (value) => (value === undefined || value === '' ? null : value),
+    z.enum(EVENT_IDS, { error: 'Choose an event from the list.' }).nullable(),
+  ),
+});
+
+export const postInputSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, { error: 'Enter a title up to 200 characters.' })
+    .max(200, { error: 'Enter a title up to 200 characters.' }),
+  body: z
+    .string()
+    .trim()
+    .min(1, { error: 'Write the post in up to 20000 characters.' })
+    .max(20000, { error: 'Write the post in up to 20000 characters.' }),
 });
 
 const count = (maximum: number, message: string) =>
@@ -120,6 +138,7 @@ export const entryInputSchema = z.object({
 export type ProjectInput = z.infer<typeof projectInputSchema>;
 export type GoalInput = z.infer<typeof goalInputSchema>;
 export type EntryInput = z.infer<typeof entryInputSchema>;
+export type PostInput = z.infer<typeof postInputSchema>;
 
 export const PROJECT_FIELDS = [
   'title',
@@ -131,6 +150,8 @@ export const PROJECT_FIELDS = [
   'pinterestUrl',
   'playlistUrl',
   'featured',
+  'event',
 ] as const;
+export const POST_FIELDS = ['title', 'body'] as const;
 export const GOAL_FIELDS = ['name', 'unit', 'target', 'startDate', 'endDate'] as const;
 export const ENTRY_FIELDS = ['mode', 'count', 'date', 'mood', 'place'] as const;

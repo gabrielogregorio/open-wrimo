@@ -1,4 +1,4 @@
-import type { Binary, Db, ObjectId, WithId } from 'mongodb';
+import type { Db, ObjectId, WithId } from 'mongodb';
 import type { BookStatus } from '@/lib/books/schema';
 import type { GoalUnit, Mood, ProjectStatus, ProjectType } from '@/lib/writing/schema';
 
@@ -55,7 +55,8 @@ export type ProjectDocument = {
   playlistUrl: string;
   featured: boolean;
   awards: string[];
-  coverVersion: number | null;
+  coverUrl: string | null;
+  coverKey: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -84,10 +85,14 @@ export type EntryDocument = {
   createdAt: Date;
 };
 
-export type CoverDocument = {
+export type PostDocument = {
   userId: ObjectId;
-  contentType: string;
-  data: Binary;
+  projectId: ObjectId;
+  title: string;
+  body: string;
+  imageUrl: string | null;
+  imageKey: string | null;
+  createdAt: Date;
   updatedAt: Date;
 };
 
@@ -96,6 +101,7 @@ export type StoredBook = WithId<BookDocument>;
 export type StoredProject = WithId<ProjectDocument>;
 export type StoredGoal = WithId<GoalDocument>;
 export type StoredEntry = WithId<EntryDocument>;
+export type StoredPost = WithId<PostDocument>;
 
 export const collections = (database: Db) => ({
   users: database.collection<UserDocument>('users'),
@@ -105,11 +111,11 @@ export const collections = (database: Db) => ({
   projects: database.collection<ProjectDocument>('projects'),
   goals: database.collection<GoalDocument>('goals'),
   entries: database.collection<EntryDocument>('entries'),
-  covers: database.collection<CoverDocument>('covers'),
+  posts: database.collection<PostDocument>('posts'),
 });
 
 export const ensureIndexes = async (database: Db): Promise<void> => {
-  const { users, sessions, rateLimits, books, projects, goals, entries } = collections(database);
+  const { users, sessions, rateLimits, books, projects, goals, entries, posts } = collections(database);
 
   await Promise.all([
     users.createIndex({ email: 1 }, { unique: true }),
@@ -121,5 +127,7 @@ export const ensureIndexes = async (database: Db): Promise<void> => {
     projects.createIndex({ userId: 1, updatedAt: -1 }),
     goals.createIndex({ userId: 1, projectId: 1, startDate: -1 }),
     entries.createIndex({ userId: 1, projectId: 1, unit: 1, date: 1 }),
+    posts.createIndex({ userId: 1, createdAt: -1 }),
+    posts.createIndex({ userId: 1, projectId: 1, createdAt: -1 }),
   ]);
 };

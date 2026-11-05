@@ -3,7 +3,8 @@ import { join } from 'node:path';
 import { STATUS_LABELS } from '@/components/book-status';
 import { EMAIL_TAKEN, INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS } from '@/lib/auth/service';
 import { BOOK_NOT_FOUND } from '@/lib/books/service';
-import { COVER_TOO_BIG, COVER_WRONG_TYPE, GOAL_NOT_FOUND, PROJECT_NOT_FOUND } from '@/lib/writing/service';
+import { IMAGE_TOO_BIG, IMAGE_WRONG_TYPE } from '@/lib/storage/images';
+import { GOAL_NOT_FOUND, POST_NOT_FOUND, PROJECT_NOT_FOUND } from '@/lib/writing/service';
 import { ptBR } from './pt-BR';
 import { translate, translator } from './translate';
 
@@ -54,7 +55,7 @@ describe('pt-BR dictionary', () => {
   const libraryFiles = files.filter((file) => file.includes(`${join('src', 'lib')}`));
   const keys = new Set([
     ...keysIn(TRANSLATE_CALL, files),
-    ...keysIn(ERROR_MESSAGE, libraryFiles).filter((key) => !key.startsWith('must ')),
+    ...keysIn(ERROR_MESSAGE, libraryFiles).filter((key) => !key.startsWith('must ') && !key.startsWith('is required')),
     ...keysIn(PAGE_MESSAGE, libraryFiles),
     ...keysIn(PAGE_NUMBER_MESSAGE, libraryFiles),
     ...keysIn(HELPER_MESSAGE, libraryFiles),
@@ -65,8 +66,9 @@ describe('pt-BR dictionary', () => {
     BOOK_NOT_FOUND,
     PROJECT_NOT_FOUND,
     GOAL_NOT_FOUND,
-    COVER_TOO_BIG,
-    COVER_WRONG_TYPE,
+    IMAGE_TOO_BIG,
+    IMAGE_WRONG_TYPE,
+    POST_NOT_FOUND,
     'Enter how much you wrote.',
   ]);
 
