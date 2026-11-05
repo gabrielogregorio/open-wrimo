@@ -1,0 +1,58 @@
+name: check lint
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint (ESLint, TypeScript, Prettier, audit)
+    timeout-minutes: 8
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-environment
+
+      - name: ESLint and TypeScript
+        run: pnpm run lint
+
+      - name: Prettier (also parses the workflow files)
+        run: pnpm run format:check
+
+      - name: Docker compose file is valid
+        run: docker compose config --quiet
+
+      - name: No known vulnerability in what ships to the browser
+        run: pnpm audit --prod
+
+      - name: No high vulnerability in the tooling (accepted risks in docs/security.md)
+        run: pnpm audit --audit-level high
+
+      - name: Actions are pinned to a commit hash
+        run: |
+          bad=$(grep -rnE '^\s*(- )?uses:\s' .github | grep -vE 'uses:\s+\./' | grep -vE '@[0-9a-f]{40}( |$)' || true)
+          if [[ -n "$bad" ]]; then
+            echo "$bad" | while IFS=: read -r f l _; do echo "::error file=$f,line=$l::pin this action to a full commit hash (# vX.Y.Z as comment)"; done
+            exit 1
+          fi
+
+      - name: Jobs that write to the repository do not leave the token to the build
+        run: |
+          bad=$(grep -lE 'contents: write' .github/workflows/*.yml | xargs -r grep -lE 'setup-environment|pnpm (install|run)' | xargs -r grep -LE 'persist-credentials: false' || true)
+          if [[ -n "$bad" ]]; then
+            echo "$bad" | while read -r f; do echo "::error file=$f::set persist-credentials: false on the checkout of this workflow"; done
+            exit 1
+          fi
+
+      - name: Scripts are executable in git
+        run: |
+          bad=$(git ls-files -s scripts/*.sh .github/scripts/*.sh | grep -v '^100755' || true)
+          if [[ -n "$bad" ]]; then
+            echo "::error::these scripts are not executable: $bad"
+            exit 1
+          fi

@@ -1,0 +1,41 @@
+name: Bug report
+description: Something on Folio looks wrong, a form fails or a page shows an error
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Include the error shown on the screen or in the browser console.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a book from the shelf
+        2. Type a page and click Update
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      placeholder: Chrome 140 on Android
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: Page language
+      options:
+        - Português (Brasil)
+        - English

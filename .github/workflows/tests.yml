@@ -1,0 +1,59 @@
+name: Tests Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Unit Tests (100% coverage)
+    timeout-minutes: 10
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-environment
+
+      - name: Run unit tests with coverage thresholds
+        run: pnpm run unit:coverage
+
+      - name: Release script refuses bad branches
+        run: .github/scripts/release-version.test.sh
+
+  e2e:
+    name: E2E Tests (Playwright, axe, Lighthouse and resource usage)
+    needs: unit
+    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup-environment
+        with:
+          e2e: 'true'
+
+      - uses: ./.github/actions/build-app
+
+      - name: Run the production build against Playwright, Lighthouse and the resource monitor
+        run: pnpm run e2e:built
+
+      - name: Upload the failure report
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-report
+          path: |
+            playwright-report
+            test-results
+            lighthouseReport.html
+            resourceUsageReport.json
+          if-no-files-found: ignore
+          retention-days: 14

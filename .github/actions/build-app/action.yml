@@ -1,0 +1,8 @@
+name: 'Build App'
+description: 'Builds the app for the test environment, with no production values'
+runs:
+  using: 'composite'
+  steps:
+    - name: Build the app
+      shell: bash
+      run: pnpm run build
