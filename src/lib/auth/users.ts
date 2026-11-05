@@ -7,6 +7,7 @@ export type NewUser = UserDocument;
 
 export type UserRepository = {
   findByEmail: (email: string) => Promise<StoredUser | null>;
+  findByUsername: (username: string) => Promise<StoredUser | null>;
   insert: (user: NewUser) => Promise<ObjectId | null>;
 };
 
@@ -15,6 +16,7 @@ export const createUserRepository = (database: Db): UserRepository => {
 
   return {
     findByEmail: (email) => users.findOne({ email }),
+    findByUsername: (username) => users.findOne({ username }),
     async insert(user) {
       try {
         const { insertedId } = await users.insertOne(user);

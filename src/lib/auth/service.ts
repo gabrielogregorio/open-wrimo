@@ -8,6 +8,7 @@ import type { UserRepository } from './users';
 export const INVALID_CREDENTIALS = 'Invalid email or password.';
 export const TOO_MANY_ATTEMPTS = 'Too many attempts. Try again in {minutes} minutes.';
 export const EMAIL_TAKEN = 'This email is already registered.';
+export const USERNAME_TAKEN = 'This username is taken.';
 
 export type AuthDependencies = {
   users: UserRepository;
@@ -111,9 +112,15 @@ export const signUp = async (
     return limited;
   }
 
-  const { name, email, password } = parsed.data;
+  const { name, username, email, password } = parsed.data;
+
+  if (await dependencies.users.findByUsername(username)) {
+    return { ok: false, fieldErrors: { username: USERNAME_TAKEN } };
+  }
+
   const userId = await dependencies.users.insert({
     name,
+    username,
     email,
     passwordHash: await hashPassword(password),
     createdAt: now,

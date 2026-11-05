@@ -6,7 +6,7 @@ export const SESSION_COOKIE = 'openwrimo-session';
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const TOKEN_BYTES = 32;
 
-export type SessionUser = { id: string; name: string; email: string };
+export type SessionUser = { id: string; name: string; email: string; username: string };
 
 export const generateSessionToken = (): string => randomBytes(TOKEN_BYTES).toString('base64url');
 
@@ -40,13 +40,13 @@ export const createSessionRepository = (database: Db): SessionRepository => {
         return null;
       }
 
-      const user = await users.findOne({ _id: session.userId }, { projection: { name: 1, email: 1 } });
+      const user = await users.findOne({ _id: session.userId }, { projection: { name: 1, email: 1, username: 1 } });
 
       if (!user) {
         return null;
       }
 
-      return { id: user._id.toHexString(), name: user.name, email: user.email };
+      return { id: user._id.toHexString(), name: user.name, email: user.email, username: user.username };
     },
     async revoke(token) {
       await sessions.deleteOne({ tokenHash: hashSessionToken(token) });

@@ -6,6 +6,7 @@ import type { FormState } from '@/lib/form';
 import { FormAlert } from './form-alert';
 import { FormField } from './form-field';
 import { useI18n } from './i18n-provider';
+import { UsernameInput } from './username-input';
 import { SubmitButton } from './submit-button';
 
 type AuthFormProps = {
@@ -36,6 +37,14 @@ export function AuthForm({ mode, action, next }: AuthFormProps) {
           defaultValue={state.values?.name}
           error={fieldError('name')}
           required
+        />
+      ) : null}
+      {isSignUp ? (
+        <UsernameInput
+          label={t('Username')}
+          hint={t('Your public address: /u/username')}
+          defaultValue={state.values?.username}
+          error={fieldError('username')}
         />
       ) : null}
       <FormField

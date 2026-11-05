@@ -32,10 +32,10 @@ export async function signInAction(_previous: FormState, formData: FormData): Pr
 }
 
 export async function signUpAction(_previous: FormState, formData: FormData): Promise<FormState> {
-  const input = formValues(formData, ['name', 'email', 'password']);
+  const input = formValues(formData, ['name', 'username', 'email', 'password']);
   const result = await signUp(await authDependencies(), input, await clientAddress());
 
-  return finish(result, { name: input.name, email: input.email }, '/write');
+  return finish(result, { name: input.name, username: input.username, email: input.email }, '/write');
 }
 
 export async function signOutAction(): Promise<void> {
