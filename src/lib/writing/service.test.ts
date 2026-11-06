@@ -10,6 +10,7 @@ import {
   GOAL_NOT_FOUND,
   POST_NOT_FOUND,
   PROJECT_NOT_FOUND,
+  IMAGE_NOT_STORED,
   UPLOADS_TOO_FAST,
   exportNotebook,
   logProgress,
@@ -409,5 +410,19 @@ describe('writing service', () => {
     await expect(
       saveProfile(context, { ...form, username: 'someone-else' }, { bytes: null, remove: false }),
     ).resolves.toEqual({ fieldErrors: { username: 'This username is taken.' } });
+  });
+
+  it('turns a storage failure into a form error instead of a crash', async () => {
+    const projectId = await newProject();
+    const broken = {
+      save: vi.fn(async () => Promise.reject(new Error('Cloudinary upload failed with status 401'))),
+      remove: storage.remove,
+    };
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await expect(saveCover({ ...context, storage: broken }, projectId, PNG)).resolves.toEqual({
+      fieldErrors: { cover: IMAGE_NOT_STORED },
+    });
+    expect(quiet).toHaveBeenCalledWith('Image storage failed', expect.any(Error));
   });
 });

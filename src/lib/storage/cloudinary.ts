@@ -53,7 +53,10 @@ export const createCloudinaryStorage = ({
     const response = await fetch(endpoint(action), { method: 'POST', body });
 
     if (!response.ok) {
-      throw new Error(`Cloudinary ${action} failed with status ${response.status}`);
+      const body = (await response.json().catch(() => ({}))) as { error?: { message?: unknown } };
+      const reason = typeof body.error?.message === 'string' ? `: ${body.error.message}` : '';
+
+      throw new Error(`Cloudinary ${action} failed with status ${response.status}${reason}`);
     }
 
     return (await response.json()) as Record<string, unknown>;

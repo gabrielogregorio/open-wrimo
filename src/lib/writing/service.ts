@@ -17,6 +17,7 @@ const NOTHING_TO_ADD = 'Enter how much you wrote.';
 const PERIOD_GOAL_NAMES = { daily: 'Daily goal', monthly: 'Monthly goal', yearly: 'Yearly goal' } as const;
 export const USERNAME_TAKEN_HERE = 'This username is taken.';
 export const POST_NOT_FOUND = 'This post no longer exists.';
+export const IMAGE_NOT_STORED = 'The image could not be stored right now. Try again in a moment.';
 export const UPLOADS_TOO_FAST = 'Wait a second before sending another image.';
 
 export type WritingContext = {
@@ -49,7 +50,13 @@ const storeImage = async (
     return { fieldErrors: { [field]: prepared.error } };
   }
 
-  return { image: await storage.save({ bytes: prepared.image.bytes, kind: prepared.image.kind, folder }) };
+  try {
+    return { image: await storage.save({ bytes: prepared.image.bytes, kind: prepared.image.kind, folder }) };
+  } catch (error) {
+    console.error('Image storage failed', error);
+
+    return { fieldErrors: { [field]: IMAGE_NOT_STORED } };
+  }
 };
 
 export const saveProject = async (

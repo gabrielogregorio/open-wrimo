@@ -58,6 +58,20 @@ describe('Cloudinary storage', () => {
     const storage = createCloudinaryStorage({ ...CREDENTIALS, folder: 'f', fetch: respond({}, 401) });
 
     await expect(storage.remove('x')).rejects.toThrow('Cloudinary destroy failed with status 401');
+    const explained = createCloudinaryStorage({
+      ...CREDENTIALS,
+      folder: 'f',
+      fetch: respond({ error: { message: 'Invalid Signature 1a2b. String to sign - timestamp=1' } }, 401),
+    });
+    await expect(explained.remove('x')).rejects.toThrow(
+      'Cloudinary destroy failed with status 401: Invalid Signature 1a2b. String to sign - timestamp=1',
+    );
+    const unreadable = createCloudinaryStorage({
+      ...CREDENTIALS,
+      folder: 'f',
+      fetch: vi.fn<typeof fetch>(async () => new Response('<html>', { status: 500 })),
+    });
+    await expect(unreadable.remove('x')).rejects.toThrow('Cloudinary destroy failed with status 500');
   });
 
   it('uses the global fetch and clock by default', async () => {
