@@ -1,4 +1,5 @@
 export const ptBRWriting: Record<string, string> = {
+  'Delete the novel with its goals and progress?': 'Excluir o romance com metas e progresso?',
   'Goal beaten!': 'Meta batida!',
   'New goal': 'Nova meta',
   'Goals of this novel': 'Metas deste romance',

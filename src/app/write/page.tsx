@@ -59,9 +59,6 @@ export default async function WritingDeskPage() {
           <Link href="/write/stats" className="rounded-sm border border-rule px-4 py-2 hover:bg-paper-deep">
             {t('Stats')}
           </Link>
-          <Link href="/write/posts" className="rounded-sm border border-rule px-4 py-2 hover:bg-paper-deep">
-            {t('Posts')}
-          </Link>
         </div>
       </div>
 

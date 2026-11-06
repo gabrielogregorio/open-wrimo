@@ -208,17 +208,14 @@ export const PARTICIPATION_BADGES: Badge[] = [
   { id: 'first-goal', label: 'Goal set', description: 'Gave a novel its first goal.', glyph: 'target' },
   { id: 'joined-event', label: 'Joined an event', description: 'Took part in a writing event.', glyph: 'calendar' },
   { id: 'cover-art', label: 'Cover art', description: 'Gave a novel a cover.', glyph: 'image' },
-  { id: 'first-post', label: 'Dear diary', description: 'Wrote the first post about a novel.', glyph: 'letter' },
 ];
 
 export const earnedParticipationBadges = ({
   projects,
   goals,
-  posts,
 }: {
   projects: { coverUrl: string | null }[];
   goals: { eventId?: string | null }[];
-  posts: number;
 }): Set<string> => {
   const earned = new Set<string>();
   const rules: [string, boolean][] = [
@@ -226,7 +223,6 @@ export const earnedParticipationBadges = ({
     ['first-goal', goals.length > 0],
     ['joined-event', goals.some((goal) => Boolean(goal.eventId))],
     ['cover-art', projects.some((project) => project.coverUrl !== null)],
-    ['first-post', posts > 0],
   ];
 
   rules.filter(([, met]) => met).forEach(([id]) => earned.add(id));

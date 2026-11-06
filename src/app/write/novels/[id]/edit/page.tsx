@@ -69,7 +69,7 @@ export default async function EditNovelPage({ params, searchParams }: PageProps<
       <ConfirmDelete
         action={deleteNovelAction.bind(null, novel.id)}
         label={t('Delete this novel')}
-        question={t('Delete the novel with its goals, progress and posts?')}
+        question={t('Delete the novel with its goals and progress?')}
         confirmLabel={t('Yes, delete it')}
       />
     </div>

@@ -48,7 +48,7 @@ export const allEarnedBadges = (notebook: Notebook): string[] => {
 };
 
 export const participationBadges = (notebook: Notebook): Set<string> =>
-  earnedParticipationBadges({ projects: notebook.projects, goals: notebook.goals, posts: notebook.postCount });
+  earnedParticipationBadges({ projects: notebook.projects, goals: notebook.goals });
 
 export const badgeById = new Map(
   [...WRITING_BADGES, ...LIFETIME_BADGES, ...PERSONAL_BADGES, ...PARTICIPATION_BADGES].map((badge) => [

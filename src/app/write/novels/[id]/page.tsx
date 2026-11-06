@@ -15,9 +15,9 @@ import { getLocale, getTranslator } from '@/server/i18n';
 import { loadNotebook, projectBadges, wordsFor } from '@/server/notebook';
 import { NovelCard } from '../../novel-card';
 
-const TABS = ['details', 'goals', 'badges', 'posts'] as const;
+const TABS = ['details', 'goals', 'badges'] as const;
 type Tab = (typeof TABS)[number];
-const TAB_LABELS: Record<Tab, string> = { details: 'Details', goals: 'Goals', badges: 'Badges', posts: 'Posts' };
+const TAB_LABELS: Record<Tab, string> = { details: 'Details', goals: 'Goals', badges: 'Badges' };
 
 export async function generateMetadata({ params }: PageProps<'/write/novels/[id]'>): Promise<Metadata> {
   const { id } = await params;
@@ -43,7 +43,6 @@ export default async function NovelPage({ params, searchParams }: PageProps<'/wr
   const show: GoalFilter = GOAL_FILTERS.includes(query.show as GoalFilter) ? (query.show as GoalFilter) : 'all';
   const goals = notebook.goals.filter((goal) => goal.projectId === id);
   const earned = projectBadges(notebook, id);
-  const posts = tab === 'posts' ? await notebook.context.writing.listPosts(notebook.context.userId, id) : [];
   const tabHref = (next: Tab): string => `/write/novels/${id}?tab=${next}`;
 
   return (
@@ -170,34 +169,6 @@ export default async function NovelPage({ params, searchParams }: PageProps<'/wr
           <div className="sheet rounded-sm p-6">
             <PersonalBadgesForm action={setPersonalBadgesAction.bind(null, id)} awarded={novel.awards} />
           </div>
-        </section>
-      ) : null}
-
-      {tab === 'posts' ? (
-        <section className="flex flex-col gap-6">
-          <Link
-            href={`/write/novels/${id}/posts/new`}
-            className="w-fit rounded-sm bg-accent px-4 py-2 font-display text-sm font-semibold text-accent-ink hover:brightness-110">
-            {t('Write a post')}
-          </Link>
-          {posts.length === 0 ? <p className="text-center text-ink-soft italic">{t('No posts yet.')}</p> : null}
-          {posts.map((post) => (
-            <article key={post.id} className="sheet flex flex-col gap-3 rounded-sm p-6">
-              <header className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="font-display text-2xl">{post.title}</h2>
-                <p className="text-sm text-ink-soft">{formatDay(locale, post.createdAt.slice(0, 10))}</p>
-              </header>
-              {post.imageUrl ? (
-                <img src={post.imageUrl} alt="" className="max-h-96 w-fit rounded-sm object-contain" />
-              ) : null}
-              <RichText html={post.body} />
-              <Link
-                href={`/write/posts/${post.id}/edit`}
-                className="w-fit text-sm text-ink-soft underline underline-offset-4">
-                {t('Edit post')}
-              </Link>
-            </article>
-          ))}
         </section>
       ) : null}
     </div>

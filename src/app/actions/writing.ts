@@ -4,15 +4,13 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { PROFILE_SECTIONS, type ProfileSection } from '@/lib/db/collections';
 import { formValues, type FormState } from '@/lib/form';
-import { ENTRY_FIELDS, GOAL_FIELDS, POST_FIELDS, PROFILE_FIELDS, PROJECT_FIELDS } from '@/lib/writing/schema';
+import { ENTRY_FIELDS, GOAL_FIELDS, PROFILE_FIELDS, PROJECT_FIELDS } from '@/lib/writing/schema';
 import {
   logProgress,
-  removePost,
   removeProject,
   saveCover,
   saveGoal,
   saveProfile,
-  savePost,
   saveProject,
   setPersonalBadges,
 } from '@/lib/writing/service';
@@ -128,33 +126,6 @@ export async function setPersonalBadgesAction(
   revalidatePath(novelPath(projectId));
 
   return result;
-}
-
-export async function savePostAction(
-  projectId: string,
-  postId: string | undefined,
-  _previous: FormState,
-  formData: FormData,
-): Promise<FormState> {
-  const values = formValues(formData, POST_FIELDS);
-  const result = await savePost(await writingContext(), projectId, values, {
-    image: await imageFrom(formData, 'image'),
-    removeImage: formData.get('removeImage') === 'on',
-    postId,
-  });
-
-  if (!result.id) {
-    return { ...result, values };
-  }
-
-  revalidatePath('/write/posts');
-  redirect(novelPath(projectId, 'posts'));
-}
-
-export async function deletePostAction(projectId: string, postId: string): Promise<void> {
-  await removePost(await writingContext(), postId);
-  revalidatePath('/write/posts');
-  redirect(novelPath(projectId, 'posts'));
 }
 
 export async function updateProfileAction(_previous: FormState, formData: FormData): Promise<FormState> {
