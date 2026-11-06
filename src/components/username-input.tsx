@@ -3,19 +3,14 @@
 import { useState } from 'react';
 import { FormField } from './form-field';
 
-const trimDashes = (value: string): string => {
-  let start = 0;
+const withoutTrailingDashes = (value: string): string => {
   let end = value.length;
 
-  while (value[start] === '-') {
-    start += 1;
-  }
-
-  while (end > start && value[end - 1] === '-') {
+  while (end > 0 && value[end - 1] === '-') {
     end -= 1;
   }
 
-  return value.slice(start, end);
+  return value.slice(0, end);
 };
 
 const leadingTrimmed = (value: string): string => {
@@ -53,7 +48,7 @@ export function UsernameInput({ label, hint, defaultValue = '', error }: Usernam
       maxLength={20}
       value={value}
       onChange={(event) => setValue(toUsername(event.target.value))}
-      onBlur={() => setValue(trimDashes(value))}
+      onBlur={() => setValue(withoutTrailingDashes(value))}
       hint={hint}
       error={error}
       required

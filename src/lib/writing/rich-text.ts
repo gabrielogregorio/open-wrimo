@@ -30,5 +30,3 @@ export const sanitizeRichText = (html: string): string =>
       a: sanitizeHtml.simpleTransform('a', { target: '_blank', rel: 'noopener noreferrer nofollow' }),
     },
   }).trim();
-
-export const looksLikeHtml = (text: string): boolean => /^\s*<(p|h2|h3|ul|ol|blockquote|img)[\s>]/.test(text);
