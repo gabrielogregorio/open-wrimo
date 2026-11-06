@@ -71,7 +71,9 @@ const createMonitor = (chromePid: number) => {
   const lastTicksByPid = new Map<number, number>();
   let lastSampleAt = performance.now();
 
-  const sample = () => {
+  // While a page is replaced the old and the new renderer live together for a moment, so the site
+  // memory is only recorded once the screen has settled; the interval samples feed CPU and Chrome.
+  const sample = (screenSettled = false) => {
     const now = performance.now();
     let siteMemoryInMb = 0;
     let chromeMemoryInMb = 0;
@@ -91,7 +93,10 @@ const createMonitor = (chromePid: number) => {
     const elapsedSeconds = (now - lastSampleAt) / 1000;
 
     usage.cpuSeconds += cpuSeconds;
-    usage.peakSiteMemoryInMb = Math.max(usage.peakSiteMemoryInMb, siteMemoryInMb);
+    if (screenSettled) {
+      usage.peakSiteMemoryInMb = Math.max(usage.peakSiteMemoryInMb, siteMemoryInMb);
+    }
+
     usage.peakChromeMemoryInMb = Math.max(usage.peakChromeMemoryInMb, chromeMemoryInMb);
     usage.peakCpuPercent = Math.max(usage.peakCpuPercent, (cpuSeconds / elapsedSeconds) * 100);
     lastSampleAt = now;
@@ -100,7 +105,12 @@ const createMonitor = (chromePid: number) => {
   return { sample, usage };
 };
 
-const settle = (): Promise<void> => wait(TIME_FOR_THE_SCREEN_TO_SETTLE_IN_MS);
+let measureSettledScreen = (): void => {};
+
+const settle = async (): Promise<void> => {
+  await wait(TIME_FOR_THE_SCREEN_TO_SETTLE_IN_MS);
+  measureSettledScreen();
+};
 
 const signUp = async (page: Page): Promise<void> => {
   const id = Date.now() % 1_000_000;
@@ -138,7 +148,14 @@ const unexpectedHosts = new Set<string>();
 const server = await chromium.launchServer({
   executablePath: Launcher.getFirstInstallation(),
   headless: true,
-  args: ['--no-sandbox', '--disable-gpu', '--lang=pt-BR'],
+  // The back-forward cache and the spare renderer keep pages the writer already left alive, which
+  // measures Chrome's caches instead of the page being used.
+  args: [
+    '--no-sandbox',
+    '--disable-gpu',
+    '--lang=pt-BR',
+    '--disable-features=BackForwardCache,SpareRendererForSitePerProcess',
+  ],
 });
 const browser = await chromium.connect(server.wsEndpoint());
 
@@ -149,6 +166,7 @@ if (!chromePid) {
 }
 
 const { sample, usage } = createMonitor(chromePid);
+measureSettledScreen = () => sample(true);
 const sampling = setInterval(sample, SAMPLE_INTERVAL_IN_MS);
 const startedAt = performance.now();
 let idleCpuSeconds = 0;
@@ -178,11 +196,11 @@ try {
   // Idle CPU shows animations that run forever, which the flow above hides.
   const cpuBeforeIdle = usage.cpuSeconds;
   await wait(IDLE_TIME_IN_MS);
-  sample();
+  sample(true);
   idleCpuSeconds = usage.cpuSeconds - cpuBeforeIdle;
 } finally {
   clearInterval(sampling);
-  sample();
+  sample(true);
   await browser.close();
   await server.close();
 }
