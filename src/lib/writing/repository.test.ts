@@ -1,14 +1,21 @@
 import { ObjectId } from 'mongodb';
+import { collections } from '@/lib/db/collections';
 import { startTestDatabase, type TestDatabase } from '@/test/mongo';
-import { createWritingRepository, type NewEntry, type WritingRepository } from './repository';
-import type { GoalInput, ProjectInput } from './schema';
+import {
+  COMMUNITY_PAGE_SIZE,
+  EMPTY_PROFILE,
+  createWritingRepository,
+  type NewEntry,
+  type WritingRepository,
+} from './repository';
+import type { GoalInput, ProjectFields } from './schema';
 
 const NOW = new Date('2026-11-05T12:00:00.000Z');
 const WRITER = new ObjectId().toHexString();
 const STRANGER = new ObjectId().toHexString();
 const MISSING = new ObjectId().toHexString();
 
-const PROJECT: Omit<ProjectInput, 'event'> = {
+const PROJECT: ProjectFields = {
   title: 'Novo Livro ✨',
   status: 'in-progress',
   type: 'novel',
@@ -18,6 +25,7 @@ const PROJECT: Omit<ProjectInput, 'event'> = {
   pinterestUrl: '',
   playlistUrl: 'https://example.com/playlist',
   featured: false,
+  isPublic: false,
 };
 
 const GOAL: GoalInput = {
@@ -26,6 +34,7 @@ const GOAL: GoalInput = {
   target: 50000,
   startDate: '2026-11-01',
   endDate: '2026-11-30',
+  period: null,
 };
 
 const entryFor = (projectId: string, overrides: Partial<NewEntry> = {}): NewEntry => ({
@@ -211,5 +220,192 @@ describe('createWritingRepository', () => {
 
     const bare = await writing.createProject(WRITER, PROJECT, NOW);
     await expect(writing.removeProject(WRITER, bare)).resolves.toEqual([]);
+  });
+
+  const addWriter = async (name: string, username: string): Promise<string> => {
+    const { insertedId } = await collections(testDatabase.database).users.insertOne({
+      name,
+      username,
+      email: `${username}@example.com`,
+      passwordHash: 'scrypt$hash',
+      createdAt: NOW,
+    });
+
+    return insertedId.toHexString();
+  };
+
+  const PROFILE = {
+    bio: 'Escrevo de madrugada.',
+    location: 'Café',
+    writingTime: 'À noite',
+    favoriteBooks: 'Dom Casmurro',
+    favoriteAuthors: 'Clarice',
+    isPublic: true,
+  };
+  const ALL_SECTIONS = { bio: true, stats: true, favorites: true, badges: true };
+
+  it('starts with an empty private profile and saves the name, username and sections', async () => {
+    const userId = await addWriter('Lia', 'lia');
+
+    await expect(writing.getProfile(userId)).resolves.toEqual(EMPTY_PROFILE);
+    await collections(testDatabase.database).profiles.insertOne({
+      userId: new ObjectId(userId),
+      bio: '',
+      location: '',
+      writingTime: '',
+      favoriteBooks: '',
+      favoriteAuthors: '',
+      avatarUrl: null,
+      avatarKey: null,
+      updatedAt: NOW,
+    });
+    await expect(writing.getProfile(userId)).resolves.toEqual(EMPTY_PROFILE);
+    await expect(
+      writing.saveProfile(
+        userId,
+        { ...PROFILE, name: 'Lia Souza', username: 'lia-souza' },
+        { ...ALL_SECTIONS, stats: false },
+        NOW,
+      ),
+    ).resolves.toBe(true);
+    await expect(writing.getProfile(userId)).resolves.toEqual({
+      ...PROFILE,
+      avatarUrl: null,
+      shown: { ...ALL_SECTIONS, stats: false },
+    });
+    await expect(collections(testDatabase.database).users.findOne({ username: 'lia-souza' })).resolves.toMatchObject({
+      name: 'Lia Souza',
+    });
+  });
+
+  it('refuses a username another writer has', async () => {
+    const taken = await addWriter('Taken', 'taken-name');
+    const other = await addWriter('Other', 'other-name');
+
+    await expect(
+      writing.saveProfile(other, { ...PROFILE, name: 'Other', username: 'taken-name' }, ALL_SECTIONS, NOW),
+    ).resolves.toBe(false);
+    await expect(
+      writing.saveProfile(taken, { ...PROFILE, name: 'Taken', username: 'taken-name' }, ALL_SECTIONS, NOW),
+    ).resolves.toBe(true);
+  });
+
+  it('sets an avatar before or after the profile exists and returns the old key', async () => {
+    const userId = await addWriter('Avatar', 'avatar');
+
+    await expect(
+      writing.setAvatar(userId, { url: '/media/avatars/a.webp', key: 'avatars/a.webp' }, NOW),
+    ).resolves.toBeNull();
+    expect((await writing.getProfile(userId)).avatarUrl).toBe('/media/avatars/a.webp');
+    await expect(writing.setAvatar(userId, null, NOW)).resolves.toBe('avatars/a.webp');
+    expect((await writing.getProfile(userId)).avatarUrl).toBeNull();
+  });
+
+  it('marks a not started novel as in progress only once', async () => {
+    const projectId = await writing.createProject(WRITER, { ...PROJECT, status: 'not-started' }, NOW);
+    const hiatus = await writing.createProject(WRITER, { ...PROJECT, status: 'on-hiatus' }, NOW);
+
+    await writing.markStarted(WRITER, projectId, NOW);
+    await writing.markStarted(WRITER, hiatus, NOW);
+    await writing.markStarted(WRITER, 'bad', NOW);
+
+    expect((await writing.getProject(WRITER, projectId))?.status).toBe('in-progress');
+    expect((await writing.getProject(WRITER, hiatus))?.status).toBe('on-hiatus');
+  });
+
+  it('shows an unknown stored status as in progress', async () => {
+    const projectId = await writing.createProject(WRITER, PROJECT, NOW);
+    await collections(testDatabase.database).projects.updateOne(
+      { _id: new ObjectId(projectId) },
+      { $set: { status: 'drafted' as never }, $unset: { isPublic: '' } },
+    );
+
+    expect(await writing.getProject(WRITER, projectId)).toMatchObject({ status: 'in-progress', isPublic: false });
+  });
+
+  it('finds a public writer by username and hides private ones', async () => {
+    const open = await addWriter('Aberta', 'aberta');
+    await addWriter('Fechada', 'fechada');
+    await writing.saveProfile(open, { ...PROFILE, name: 'Aberta', username: 'aberta' }, ALL_SECTIONS, NOW);
+
+    await expect(writing.findPublicWriter('aberta')).resolves.toEqual({
+      userId: open,
+      name: 'Aberta',
+      username: 'aberta',
+    });
+    await expect(writing.findPublicWriter('fechada')).resolves.toBeNull();
+    await expect(writing.findPublicWriter('ninguem')).resolves.toBeNull();
+  });
+
+  it('lists public writers with their public novels, words and last day', async () => {
+    const database = collections(testDatabase.database);
+    await database.profiles.updateMany({}, { $set: { isPublic: false } });
+    const busy = await addWriter('Zélia Busy', 'zelia-busy');
+    const quiet = await addWriter('Ana Quiet', 'ana-quiet');
+    const hidden = await addWriter('Hidden', 'hidden-one');
+
+    for (const [userId, username] of [
+      [busy, 'zelia-busy'],
+      [quiet, 'ana-quiet'],
+    ]) {
+      await writing.saveProfile(userId, { ...PROFILE, name: username, username }, ALL_SECTIONS, NOW);
+    }
+
+    await writing.saveProfile(
+      hidden,
+      { ...PROFILE, isPublic: false, name: 'Hidden', username: 'hidden-one' },
+      ALL_SECTIONS,
+      NOW,
+    );
+    const shown = await writing.createProject(
+      busy,
+      { ...PROJECT, title: 'Pública', isPublic: true, featured: true },
+      NOW,
+    );
+    const secret = await writing.createProject(busy, { ...PROJECT, title: 'Secreta', isPublic: false }, NOW);
+    await writing.addEntry(busy, entryFor(shown, { count: 900, date: '2026-10-01' }), NOW);
+    await writing.addEntry(busy, entryFor(secret, { count: 5000, date: '2026-11-04' }), NOW);
+
+    const legacy = await addWriter('Legacy', 'legacy-one');
+    await database.profiles.insertOne({
+      userId: new ObjectId(legacy),
+      isPublic: true,
+      avatarUrl: null,
+      avatarKey: null,
+      updatedAt: NOW,
+    } as never);
+    const byWords = await writing.listCommunity({ query: '', sort: 'words', page: 1 });
+
+    expect(byWords.total).toBe(3);
+    expect(byWords.writers.find((writer) => writer.username === 'legacy-one')).toMatchObject({ location: '' });
+    expect(byWords.writers[0]).toEqual({
+      username: 'zelia-busy',
+      name: 'zelia-busy',
+      avatarUrl: null,
+      location: 'Café',
+      novels: 1,
+      words: 900,
+      lastWrote: '2026-10-01',
+      featured: { title: 'Pública', coverUrl: null },
+    });
+    expect(byWords.writers.find((writer) => writer.username === 'ana-quiet')).toMatchObject({
+      words: 0,
+      lastWrote: null,
+      featured: null,
+    });
+    expect((await writing.listCommunity({ query: '', sort: 'recent', page: 1 })).writers[0].username).toBe(
+      'zelia-busy',
+    );
+    expect(
+      (await writing.listCommunity({ query: '', sort: 'name', page: 1 })).writers.map((writer) => writer.username),
+    ).toEqual(['ana-quiet', 'legacy-one', 'zelia-busy']);
+    expect(
+      (await writing.listCommunity({ query: 'QUIET', sort: 'words', page: 1 })).writers.map(
+        (writer) => writer.username,
+      ),
+    ).toEqual(['ana-quiet']);
+    expect((await writing.listCommunity({ query: '(.*', sort: 'words', page: 1 })).total).toBe(0);
+    expect((await writing.listCommunity({ query: '', sort: 'words', page: 2 })).writers).toEqual([]);
+    expect(COMMUNITY_PAGE_SIZE).toBe(24);
   });
 });

@@ -3,6 +3,7 @@ import { startTestDatabase, type TestDatabase } from '@/test/mongo';
 import { createWritingRepository, type WritingRepository } from './repository';
 import sharp from 'sharp';
 import { createRateLimiter } from '@/lib/auth/rate-limit';
+import { collections } from '@/lib/db/collections';
 import { IMAGE_UPLOAD_TOO_BIG, IMAGE_WRONG_TYPE, MAX_UPLOAD_BYTES } from '@/lib/storage/images';
 import type { ImageStorage } from '@/lib/storage/storage';
 import {
@@ -14,6 +15,8 @@ import {
   logProgress,
   removePost,
   removeProject,
+  saveInlineImage,
+  saveProfile,
   saveCover,
   saveGoal,
   savePost,
@@ -206,7 +209,7 @@ describe('writing service', () => {
     const form = { title: 'Title', body: 'Body' };
 
     await expect(savePost(context, projectId, { ...form, body: ' ' })).resolves.toEqual({
-      fieldErrors: { body: 'Write the post in up to 20000 characters.' },
+      fieldErrors: { body: 'Write something in the post.' },
     });
     await expect(savePost(context, projectId, form, { image: new Uint8Array([1]) })).resolves.toEqual({
       fieldErrors: { image: IMAGE_WRONG_TYPE },
@@ -296,11 +299,11 @@ describe('writing service', () => {
   it('keeps only known personal badges', async () => {
     const projectId = await newProject();
 
-    await expect(setPersonalBadges(context, projectId, ['planned-plot', 'winner', 'planned-plot'])).resolves.toEqual({
+    await expect(setPersonalBadges(context, projectId, ['planner', 'winner', 'planner'])).resolves.toEqual({
       id: projectId,
       saved: true,
     });
-    expect((await writing.getProject(WRITER, projectId))?.awards).toEqual(['planned-plot']);
+    expect((await writing.getProject(WRITER, projectId))?.awards).toEqual(['planner']);
     await expect(setPersonalBadges(context, new ObjectId().toHexString(), [])).resolves.toEqual({
       error: PROJECT_NOT_FOUND,
     });
@@ -314,5 +317,97 @@ describe('writing service', () => {
     expect(notebook.goals.length).toBeGreaterThan(0);
     expect(notebook.entries.length).toBeGreaterThan(0);
     expect(notebook.posts.length).toBeGreaterThan(0);
+  });
+
+  it('creates the repeating goal asked for together with the novel', async () => {
+    const { id } = await saveProject(context, { ...PROJECT_FORM, period: 'daily', periodTarget: '1667' });
+
+    await expect(writing.listGoals(WRITER, id)).resolves.toEqual([
+      expect.objectContaining({ name: 'Daily goal', target: 1667, period: 'daily', startDate: '2026-11-05' }),
+    ]);
+    const { id: withoutTarget } = await saveProject(context, { ...PROJECT_FORM, period: 'monthly', periodTarget: '' });
+    await expect(writing.listGoals(WRITER, withoutTarget)).resolves.toEqual([]);
+  });
+
+  it('moves a not started novel to in progress on its first words', async () => {
+    const projectId = (await saveProject(context, { ...PROJECT_FORM, status: 'not-started' })).id!;
+    const goalId = await newGoal(projectId);
+    const form = { mode: 'add', count: '10', date: '2026-11-05', mood: '', place: '' };
+
+    await logProgress(context, goalId, { ...form, mode: 'set', count: '0' });
+    expect((await writing.getProject(WRITER, projectId))?.status).toBe('not-started');
+    await logProgress(context, goalId, form);
+    expect((await writing.getProject(WRITER, projectId))?.status).toBe('in-progress');
+    await writing.updateProject(
+      WRITER,
+      projectId,
+      { ...(await writing.getProject(WRITER, projectId))!, status: 'not-started' },
+      NOW,
+    );
+    await expect(logProgress(context, goalId, { ...form, mode: 'set', count: '4' })).resolves.toMatchObject({
+      saved: true,
+    });
+    expect((await writing.getProject(WRITER, projectId))?.status).toBe('not-started');
+  });
+
+  it('stores an image dropped in the editor or explains why not', async () => {
+    await expect(saveInlineImage(context, PNG)).resolves.toEqual({ url: expect.stringMatching(/^\/media\/inline\//) });
+    await expect(saveInlineImage(context, new TextEncoder().encode('<svg/>'))).resolves.toEqual({
+      error: IMAGE_WRONG_TYPE,
+    });
+  });
+
+  it('saves the profile with name, username, sections and avatar', async () => {
+    await collections(testDatabase.database).users.insertOne({
+      _id: new ObjectId(WRITER),
+      name: 'Writer',
+      username: 'writer',
+      email: 'writer@example.com',
+      passwordHash: 'scrypt$hash',
+      createdAt: NOW,
+    });
+    const form = { name: 'Bia', username: 'Bia-Escreve', isPublic: 'on', bio: 'Oi', location: '', writingTime: '' };
+    const shown = { bio: true, stats: false, favorites: true, badges: true };
+
+    await expect(saveProfile(context, form, { bytes: PNG, remove: false }, shown)).resolves.toEqual({ saved: true });
+    const firstKey = (await storage.save.mock.results[0].value).key;
+    await expect(writing.getProfile(WRITER)).resolves.toMatchObject({
+      isPublic: true,
+      shown,
+      avatarUrl: expect.any(String),
+    });
+    await expect(
+      collections(testDatabase.database).users.findOne({ _id: new ObjectId(WRITER) }),
+    ).resolves.toMatchObject({
+      name: 'Bia',
+      username: 'bia-escreve',
+    });
+
+    await saveProfile(context, form, { bytes: PNG, remove: false });
+    expect(storage.remove).toHaveBeenCalledWith(firstKey);
+    await saveProfile(context, form, { bytes: null, remove: true });
+    expect((await writing.getProfile(WRITER)).avatarUrl).toBeNull();
+    await expect(saveProfile(context, form, { bytes: null, remove: false })).resolves.toEqual({ saved: true });
+  });
+
+  it('refuses a broken profile, a bad avatar and a taken username', async () => {
+    await collections(testDatabase.database).users.insertOne({
+      name: 'Other',
+      username: 'someone-else',
+      email: 'other@example.com',
+      passwordHash: 'scrypt$hash',
+      createdAt: NOW,
+    });
+    const form = { name: 'Bia', username: 'bia-escreve', bio: '', location: '', writingTime: '' };
+
+    await expect(saveProfile(context, { ...form, username: 'x' }, { bytes: null, remove: false })).resolves.toEqual({
+      fieldErrors: { username: 'Use 3 to 20 lowercase letters, numbers and dashes.' },
+    });
+    await expect(saveProfile(context, form, { bytes: new Uint8Array([1, 2]), remove: false })).resolves.toEqual({
+      fieldErrors: { avatar: IMAGE_WRONG_TYPE },
+    });
+    await expect(
+      saveProfile(context, { ...form, username: 'someone-else' }, { bytes: null, remove: false }),
+    ).resolves.toEqual({ fieldErrors: { username: 'This username is taken.' } });
   });
 });

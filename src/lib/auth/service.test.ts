@@ -1,7 +1,15 @@
 import { collections } from '@/lib/db/collections';
 import { startTestDatabase, type TestDatabase } from '@/test/mongo';
 import { LOGIN_RULES, createRateLimiter } from './rate-limit';
-import { EMAIL_TAKEN, INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS, signIn, signUp, type AuthDependencies } from './service';
+import {
+  EMAIL_TAKEN,
+  INVALID_CREDENTIALS,
+  TOO_MANY_ATTEMPTS,
+  USERNAME_TAKEN,
+  signIn,
+  signUp,
+  type AuthDependencies,
+} from './service';
 import { createSessionRepository } from './session';
 import { createUserRepository } from './users';
 
@@ -40,27 +48,52 @@ describe('auth service', () => {
     await testDatabase.stop();
   });
 
-  const register = (email: string, address: string | null = null) =>
-    signUp(dependencies, { name: 'Clara', email, password: PASSWORD }, address);
+  const usernameFor = (email: string): string =>
+    email
+      .trim()
+      .toLowerCase()
+      .split('@')[0]
+      .replace(/[^a-z0-9]+/g, '-');
+
+  const register = (email: string, address: string | null = null, username = usernameFor(email)) =>
+    signUp(dependencies, { name: 'Clara', username, email, password: PASSWORD }, address);
+  const session = { ok: true, refreshToken: expect.stringMatching(/^[\w-]{43}$/), userId: expect.any(String) };
 
   it('signs up with a normalized email and opens a session', async () => {
     const result = await register('  Clara@Example.com ');
 
-    expect(result).toEqual({ ok: true, token: expect.stringMatching(/^[\w-]{43}$/) });
+    expect(result).toEqual({ ...session, username: 'clara' });
     expect((await dependencies.users.findByEmail('clara@example.com'))?.name).toBe('Clara');
   });
 
   it('refuses the same email twice', async () => {
     await register('twice@example.com');
 
-    await expect(register('TWICE@example.com')).resolves.toEqual({ ok: false, fieldErrors: { email: EMAIL_TAKEN } });
+    await expect(register('TWICE@example.com', null, 'twice-again')).resolves.toEqual({
+      ok: false,
+      fieldErrors: { email: EMAIL_TAKEN },
+    });
+  });
+
+  it('refuses a username that is taken and keeps it lowercase', async () => {
+    await expect(register('first@example.com', null, '  Same-Name ')).resolves.toMatchObject({
+      ok: true,
+      username: 'same-name',
+    });
+    await expect(register('second@example.com', null, 'same-name')).resolves.toEqual({
+      ok: false,
+      fieldErrors: { username: USERNAME_TAKEN },
+    });
   });
 
   it('reports every invalid sign up field', async () => {
-    await expect(signUp(dependencies, { name: '', email: 'not-an-email', password: 'short' }, null)).resolves.toEqual({
+    await expect(
+      signUp(dependencies, { name: '', username: 'no spaces!', email: 'not-an-email', password: 'short' }, null),
+    ).resolves.toEqual({
       ok: false,
       fieldErrors: {
         name: 'Enter a name up to 80 characters.',
+        username: 'Use 3 to 20 lowercase letters, numbers and dashes.',
         email: 'Enter a valid email address.',
         password: 'Use 10 to 128 characters.',
       },
@@ -77,8 +110,8 @@ describe('auth service', () => {
     await register('right@example.com');
 
     await expect(signIn(dependencies, { email: 'RIGHT@example.com', password: PASSWORD }, null)).resolves.toEqual({
-      ok: true,
-      token: expect.any(String),
+      ...session,
+      username: 'right',
     });
   });
 

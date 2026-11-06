@@ -15,6 +15,7 @@ describe('eventGoal', () => {
       target: 50000,
       startDate: '2026-11-01',
       endDate: '2026-11-30',
+      period: null,
     });
     expect(eventGoal('april-camp', '2026-01-10', plain)).toMatchObject({
       startDate: '2026-04-01',

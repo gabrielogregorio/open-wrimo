@@ -1,8 +1,8 @@
-import { entryInputSchema, goalInputSchema, projectInputSchema } from './schema';
+import { entryInputSchema, goalInputSchema, profileInputSchema, projectInputSchema } from './schema';
 
 const PROJECT = {
   title: 'Livro',
-  status: 'planning',
+  status: 'not-started',
   type: 'memoir',
   genres: '',
   summary: '',
@@ -67,5 +67,29 @@ describe('entry input', () => {
     [{ count: '100001' }, 'Enter a number from 0 to 100000.'],
   ])('refuses %o', (change, message) => {
     expect(firstError(entryInputSchema.safeParse({ ...ENTRY, ...change }))).toBe(message);
+  });
+});
+
+describe('profile input', () => {
+  it('lowercases the username, reads the public flag and fills missing texts', () => {
+    expect(profileInputSchema.parse({ name: ' Bia ', username: 'Bia-Escreve', isPublic: 'on' })).toEqual({
+      name: 'Bia',
+      username: 'bia-escreve',
+      isPublic: true,
+      bio: '',
+      location: '',
+      writingTime: '',
+      favoriteBooks: '',
+      favoriteAuthors: '',
+    });
+  });
+
+  it.each([
+    [{ username: 'ab' }, 'Use 3 to 20 lowercase letters, numbers and dashes.'],
+    [{ username: 'a'.repeat(21) }, 'Use 3 to 20 lowercase letters, numbers and dashes.'],
+    [{ username: 'no_underscore' }, 'Use 3 to 20 lowercase letters, numbers and dashes.'],
+    [{ name: '' }, 'Enter a name up to 80 characters.'],
+  ])('refuses %o', (change, message) => {
+    expect(firstError(profileInputSchema.safeParse({ name: 'Bia', username: 'bia', ...change }))).toBe(message);
   });
 });

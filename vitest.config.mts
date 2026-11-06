@@ -6,6 +6,7 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   test: {
     globals: true,
+    env: { JWT_SECRET: 'unit-test-secret-that-is-at-least-32-chars' },
     restoreMocks: true,
     projects: [
       {

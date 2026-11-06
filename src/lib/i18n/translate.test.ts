@@ -1,8 +1,19 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { STATUS_LABELS } from '@/components/book-status';
-import { EMAIL_TAKEN, INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS } from '@/lib/auth/service';
-import { BOOK_NOT_FOUND } from '@/lib/books/service';
+import {
+  EVENT_LABELS,
+  GENRE_SUGGESTIONS,
+  GOAL_FILTER_LABELS,
+  MOOD_LABELS,
+  PERIOD_LABELS,
+  PERIOD_SUFFIX,
+  PROJECT_STATUS_LABELS,
+  PROJECT_TYPE_LABELS,
+  UNIT_LABELS,
+} from '@/components/writing-labels';
+import { EMAIL_TAKEN, INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS, USERNAME_TAKEN } from '@/lib/auth/service';
+import { LIFETIME_BADGES, PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
+import { EVENTS } from '@/lib/writing/events';
 import { IMAGE_STILL_TOO_BIG, IMAGE_UNREADABLE, IMAGE_UPLOAD_TOO_BIG, IMAGE_WRONG_TYPE } from '@/lib/storage/images';
 import { GOAL_NOT_FOUND, POST_NOT_FOUND, PROJECT_NOT_FOUND, UPLOADS_TOO_FAST } from '@/lib/writing/service';
 import { ptBR } from './pt-BR';
@@ -12,6 +23,9 @@ const SOURCE_ROOT = join(process.cwd(), 'src');
 const TRANSLATE_CALL = /\bt\(\s*'([^']+)'/g;
 const ERROR_MESSAGE = /error: '([^']+)'/g;
 const PAGE_MESSAGE = /^const PAGE_\w+ = '([^']+)'/gm;
+const LABEL_MAP = /_(?:LABELS|NAMES)\b[^=\n]*=\s*\{([^}]*)\}/g;
+const MAP_VALUE = /:\s*'([^']+)'/g;
+const ERROR_CONSTANT = /^const \w+_ERROR = '([^']+)'/gm;
 const PAGE_NUMBER_MESSAGE = /pageNumber\(\d+, '([^']+)'\)/g;
 const HELPER_MESSAGE = /\b(?:text\(\d+|optionalUrl\(|isoDate\(|count\(\w+),?\s*'([^']+)'\)/g;
 
@@ -26,6 +40,13 @@ const sourceFiles = (directory: string): string[] =>
     return /\.tsx?$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name) ? [path] : [];
   });
 
+const mapValuesIn = (files: string[]): string[] =>
+  files.flatMap((file) =>
+    [...readFileSync(file, 'utf8').matchAll(LABEL_MAP)].flatMap((map) =>
+      [...map[1].matchAll(MAP_VALUE)].map((match) => match[1]),
+    ),
+  );
+
 const keysIn = (pattern: RegExp, files: string[]): string[] =>
   files.flatMap((file) => [...readFileSync(file, 'utf8').matchAll(pattern)].map((match) => match[1]));
 
@@ -39,9 +60,7 @@ describe('translate', () => {
   });
 
   it('fills placeholders and keeps unknown ones visible', () => {
-    expect(translate('pt-BR', 'Page {page} of {total} · {percent}%', { page: 3, total: 10, percent: 30 })).toBe(
-      'Página 3 de 10 · 30%',
-    );
+    expect(translate('pt-BR', 'Page {page} of {total}', { page: 3, total: 10 })).toBe('Página 3 de 10');
     expect(translate('en-US', 'Hello, {name}')).toBe('Hello, {name}');
   });
 
@@ -59,11 +78,23 @@ describe('pt-BR dictionary', () => {
     ...keysIn(PAGE_MESSAGE, libraryFiles),
     ...keysIn(PAGE_NUMBER_MESSAGE, libraryFiles),
     ...keysIn(HELPER_MESSAGE, libraryFiles),
-    ...Object.values(STATUS_LABELS),
+    ...keysIn(ERROR_CONSTANT, libraryFiles),
+    ...mapValuesIn(files),
+    ...[PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, UNIT_LABELS, MOOD_LABELS, EVENT_LABELS, GOAL_FILTER_LABELS].flatMap(
+      (labels) => Object.values(labels),
+    ),
+    ...Object.values(PERIOD_LABELS),
+    ...Object.values(PERIOD_SUFFIX),
+    ...GENRE_SUGGESTIONS,
+    ...EVENTS.map((event) => event.name),
+    ...[...WRITING_BADGES, ...LIFETIME_BADGES, ...PERSONAL_BADGES, ...PARTICIPATION_BADGES].flatMap((badge) => [
+      badge.label,
+      badge.description,
+    ]),
     INVALID_CREDENTIALS,
     TOO_MANY_ATTEMPTS,
     EMAIL_TAKEN,
-    BOOK_NOT_FOUND,
+    USERNAME_TAKEN,
     PROJECT_NOT_FOUND,
     GOAL_NOT_FOUND,
     IMAGE_UPLOAD_TOO_BIG,

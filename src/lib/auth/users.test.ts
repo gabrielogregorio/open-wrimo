@@ -3,7 +3,13 @@ import { startTestDatabase, type TestDatabase } from '@/test/mongo';
 import { createUserRepository } from './users';
 
 const NOW = new Date('2026-03-01T10:00:00.000Z');
-const NEW_USER = { email: 'bruno@example.com', name: 'Bruno', passwordHash: 'scrypt$hash', createdAt: NOW };
+const NEW_USER = {
+  email: 'bruno@example.com',
+  username: 'bruno',
+  name: 'Bruno',
+  passwordHash: 'scrypt$hash',
+  createdAt: NOW,
+};
 
 describe('createUserRepository', () => {
   let testDatabase: TestDatabase;
@@ -21,6 +27,8 @@ describe('createUserRepository', () => {
     const userId = await users.insert(NEW_USER);
 
     expect((await users.findByEmail('bruno@example.com'))?._id).toEqual(userId);
+    expect((await users.findByUsername('bruno'))?._id).toEqual(userId);
+    await expect(users.findByUsername('nobody')).resolves.toBeNull();
   });
 
   it('returns null for an email that is already registered', async () => {

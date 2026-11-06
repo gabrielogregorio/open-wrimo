@@ -1,4 +1,14 @@
-import { PERSONAL_BADGES, WRITING_BADGES, earnedWritingBadges, laurels, onlyPersonalBadges } from './badges';
+import {
+  LIFETIME_BADGES,
+  PARTICIPATION_BADGES,
+  PERSONAL_BADGES,
+  WRITING_BADGES,
+  earnedLifetimeBadges,
+  earnedParticipationBadges,
+  earnedWritingBadges,
+  laurels,
+  onlyPersonalBadges,
+} from './badges';
 import type { EntryView, GoalView } from './repository';
 
 const PROJECT = 'p1';
@@ -30,7 +40,9 @@ const goal = (overrides: Partial<GoalView> = {}): GoalView => ({
 
 describe('writing badges', () => {
   it('has unique ids', () => {
-    const ids = [...WRITING_BADGES, ...PERSONAL_BADGES].map((badge) => badge.id);
+    const ids = [...WRITING_BADGES, ...LIFETIME_BADGES, ...PERSONAL_BADGES, ...PARTICIPATION_BADGES].map(
+      (badge) => badge.id,
+    );
 
     expect(new Set(ids).size).toBe(ids.length);
   });
@@ -101,7 +113,7 @@ describe('writing badges', () => {
   });
 
   it('keeps only personal badge ids', () => {
-    expect(onlyPersonalBadges(['made-me-cry', 'goal-met', 'made-me-cry'])).toEqual(['made-me-cry']);
+    expect(onlyPersonalBadges(['in-my-eye', 'goal-met', 'in-my-eye'])).toEqual(['in-my-eye']);
   });
 
   it('gives one laurel per goal reached', () => {
@@ -114,5 +126,18 @@ describe('writing badges', () => {
         '2026-11-05',
       ),
     ).toBe(2);
+  });
+
+  it('counts words across all novels for the lifetime badges', () => {
+    expect(earnedLifetimeBadges(99_999)).toEqual(new Set());
+    expect(earnedLifetimeBadges(1_000_000)).toEqual(new Set(['lifetime-100000', 'lifetime-1000000']));
+  });
+
+  it('earns participation badges from novels, goals and covers', () => {
+    expect(earnedParticipationBadges({ projects: [], goals: [] })).toEqual(new Set());
+    expect(earnedParticipationBadges({ projects: [{ coverUrl: null }], goals: [] })).toEqual(new Set(['first-novel']));
+    expect(earnedParticipationBadges({ projects: [{ coverUrl: '/media/c.webp' }], goals: [{}] })).toEqual(
+      new Set(['first-novel', 'first-goal', 'cover-art']),
+    );
   });
 });
