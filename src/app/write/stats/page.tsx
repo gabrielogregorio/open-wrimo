@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ProgressRing } from '@/components/progress-ring';
+import { StatsShelf, type StatsBook } from '@/components/stats-shelf';
 import { WritingChart } from '@/components/writing-chart';
-import { UNIT_LABELS } from '@/components/writing-labels';
+import { PROJECT_STATUS_LABELS, UNIT_LABELS } from '@/components/writing-labels';
 import { formatDay, formatMonth, formatNumber, formatShortDay } from '@/lib/i18n/format';
 import { entriesForGoal } from '@/lib/writing/goals';
 import { monthlyTotals, writingPace } from '@/lib/writing/stats';
 import { getLocale, getTranslator } from '@/server/i18n';
 import { loadNotebook } from '@/server/notebook';
-import { fieldClasses } from '@/components/form-field';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslator();
@@ -21,7 +21,26 @@ export default async function StatsPage({ searchParams }: PageProps<'/write/stat
   const t = await getTranslator();
   const locale = await getLocale();
   const wanted = (await searchParams).goal;
-  const titles = new Map(notebook.projects.map((project) => [project.id, project.title]));
+  const lastActivity = (projectId: string, fallback: string): string =>
+    notebook.entries.find((entry) => entry.projectId === projectId)?.createdAt ?? fallback;
+  const shelfBooks: StatsBook[] = notebook.projects
+    .map((project) => ({
+      projectId: project.id,
+      title: project.title,
+      coverUrl: project.coverUrl,
+      statusLabel: t(PROJECT_STATUS_LABELS[project.status]),
+      completed: project.status === 'completed',
+      activity: lastActivity(project.id, project.updatedAt),
+      goals: notebook.goals
+        .filter((item) => item.projectId === project.id)
+        .map((item) => ({ id: item.id, label: item.name })),
+    }))
+    .filter((book) => book.goals.length > 0)
+    .sort(
+      (first, second) =>
+        Number(first.completed) - Number(second.completed) || second.activity.localeCompare(first.activity),
+    )
+    .map(({ completed: _completed, activity: _activity, ...book }) => book);
   const goal =
     notebook.goals.find((item) => item.id === wanted) ??
     notebook.goals.find((item) => item.stats.state === 'active') ??
@@ -66,23 +85,7 @@ export default async function StatsPage({ searchParams }: PageProps<'/write/stat
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4 rounded-sm bg-paper-deep p-5">
         <h1 className="font-display text-4xl font-semibold">{t('Stats')}</h1>
-        <form className="flex flex-wrap items-end gap-3">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="stats-goal" className="text-sm text-ink-soft">
-              {t('Goal')}
-            </label>
-            <select id="stats-goal" name="goal" defaultValue={goal.id} className={`${fieldClasses} min-w-64`}>
-              {notebook.goals.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {titles.get(item.projectId)} · {item.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button type="submit" className="rounded-sm border border-rule px-4 py-2 font-display text-sm hover:bg-paper">
-            {t('Show')}
-          </button>
-        </form>
+        <StatsShelf books={shelfBooks} goalId={goal.id} />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
