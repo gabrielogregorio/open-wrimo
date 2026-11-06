@@ -11,7 +11,7 @@ import { NumberInput } from './number-input';
 import { SubmitButton } from './submit-button';
 import { MOOD_LABELS } from './writing-labels';
 
-export type GoalChoice = { id: string; label: string; unitLabel: string; total: number };
+export type GoalChoice = { id: string; label: string; detail?: string; unitLabel: string; total: number };
 export type BookChoice = ShelfBook & { goals: GoalChoice[] };
 
 type UpdateFormProps = {
@@ -62,11 +62,15 @@ export function UpdateForm({ action, books, selectedGoal, today, fixedCount, com
                 onChange={() => setGoalId(choice.id)}
               />
               {choice.label}
+              {choice.detail ? <span className="opacity-80"> · {choice.detail}</span> : null}
             </label>
           ))}
         </fieldset>
       ) : (
-        <p className="text-center text-sm text-ink-soft">{goal.label}</p>
+        <p className="text-center text-sm text-ink-soft">
+          {t('Goal: {name}', { name: goal.label })}
+          {goal.detail ? ` · ${goal.detail}` : ''}
+        </p>
       )}
       <fieldset className="flex flex-wrap gap-4 text-sm">
         <legend className="mb-1 font-display text-sm font-semibold">{t('How do you want to update?')}</legend>

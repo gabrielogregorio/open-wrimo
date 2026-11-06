@@ -53,7 +53,7 @@ export function CoverShelf({ books, selected, onSelect }: CoverShelfProps) {
                 opacity: distance > 3 ? 0 : 1,
                 filter: offset === 0 ? 'none' : 'brightness(0.82) saturate(0.85)',
               }}>
-              <BookMockup title={book.title} coverUrl={book.coverUrl} tilted={false} />
+              <BookMockup title={book.title} coverUrl={book.coverUrl} tilted={offset === 0} />
             </button>
           );
         })}

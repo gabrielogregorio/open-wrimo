@@ -1,5 +1,6 @@
 import type { BookChoice } from '@/components/update-form';
 import { PROJECT_STATUS_LABELS, UNIT_LABELS } from '@/components/writing-labels';
+import { formatNumber, formatShortDay } from '@/lib/i18n/format';
 import type { Translate } from '@/lib/i18n/translate';
 import type { Notebook } from '@/server/notebook';
 
@@ -17,7 +18,17 @@ export const bookChoices = (notebook: Notebook, t: Translate): BookChoice[] => {
       activity: lastActivity(project.id, project.updatedAt),
       goals: notebook.goals
         .filter((goal) => goal.projectId === project.id && goal.stats.state !== 'ended')
-        .map((goal) => ({ id: goal.id, label: goal.name, unitLabel: UNIT_LABELS[goal.unit], total: goal.stats.total })),
+        .map((goal) => ({
+          id: goal.id,
+          label: goal.name,
+          detail: t('{target} {unit} by {date}', {
+            target: formatNumber('pt-BR', goal.target),
+            unit: t(UNIT_LABELS[goal.unit]),
+            date: formatShortDay('pt-BR', goal.stats.daily.at(-1)?.date ?? goal.endDate),
+          }),
+          unitLabel: UNIT_LABELS[goal.unit],
+          total: goal.stats.total,
+        })),
     }))
     .filter((book) => book.goals.length > 0)
     .sort(
