@@ -203,7 +203,6 @@ export const earnedLifetimeBadges = (totalWords: number): Set<string> =>
 export const PARTICIPATION_BADGES: Badge[] = [
   { id: 'first-novel', label: 'New novel', description: 'Created a novel.', glyph: 'book' },
   { id: 'first-goal', label: 'Goal set', description: 'Gave a novel its first goal.', glyph: 'target' },
-  { id: 'joined-event', label: 'Joined an event', description: 'Took part in a writing event.', glyph: 'calendar' },
   { id: 'cover-art', label: 'Cover art', description: 'Gave a novel a cover.', glyph: 'image' },
 ];
 
@@ -212,13 +211,12 @@ export const earnedParticipationBadges = ({
   goals,
 }: {
   projects: { coverUrl: string | null }[];
-  goals: { eventId?: string | null }[];
+  goals: unknown[];
 }): Set<string> => {
   const earned = new Set<string>();
   const rules: [string, boolean][] = [
     ['first-novel', projects.length > 0],
     ['first-goal', goals.length > 0],
-    ['joined-event', goals.some((goal) => Boolean(goal.eventId))],
     ['cover-art', projects.some((project) => project.coverUrl !== null)],
   ];
 
