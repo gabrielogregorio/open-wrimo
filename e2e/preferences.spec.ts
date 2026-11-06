@@ -1,39 +1,21 @@
 import { expect, test } from './fixtures';
 
-test('?lang=pt-BR translates the page and is remembered', async ({ page }) => {
-  await page.goto('/login?lang=pt-BR');
+test('every page is in Brazilian Portuguese on paper, even on a dark English system', async ({ browser }) => {
+  const context = await browser.newContext({ locale: 'en-US', colorScheme: 'dark' });
+  const page = await context.newPage();
+  await page.goto('/login');
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR');
-  await expect(page.getByRole('heading', { name: 'Que bom te ver de novo' })).toBeVisible();
-
-  await page.goto('/register');
-  await expect(page.getByRole('button', { name: 'Criar conta' })).toBeVisible();
-});
-
-test('the browser language is used when nothing was chosen', async ({ browser }) => {
-  const context = await browser.newContext({ locale: 'pt-BR' });
-  const page = await context.newPage();
-  await page.goto('/');
-
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Um lugar sereno para os livros que você lê.');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Que bom te ver de novo');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(247, 241, 227)');
   await context.close();
 });
 
-test('the language switcher changes the text and survives a reload', async ({ page }) => {
-  await page.goto('/login');
-  await page.getByLabel('Language').selectOption('pt-BR');
+test('the browser time zone is remembered for the writing day', async ({ writerPage: page, context }) => {
+  await page.goto('/write');
 
-  await expect(page.getByRole('heading', { name: 'Que bom te ver de novo' })).toBeVisible();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR');
+  await page.waitForFunction(() => document.cookie.includes('openwrimo-time-zone='));
+  const zone = (await context.cookies()).find((cookie) => cookie.name === 'openwrimo-time-zone');
 
-  await page.reload();
-  await expect(page.getByLabel('Idioma')).toHaveValue('pt-BR');
-});
-
-test('every page uses the paper theme, even on a dark system', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto('/login');
-
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(247, 241, 227)');
-  await expect(page.getByLabel('Theme')).toHaveCount(0);
+  expect(zone?.value).toBe(encodeURIComponent('America/Sao_Paulo'));
 });

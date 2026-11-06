@@ -103,31 +103,32 @@ const createMonitor = (chromePid: number) => {
 const settle = (): Promise<void> => wait(TIME_FOR_THE_SCREEN_TO_SETTLE_IN_MS);
 
 const signUp = async (page: Page): Promise<void> => {
+  const id = Date.now() % 1_000_000;
   await page.goto(`${BASE_URL}/register`, { waitUntil: 'networkidle' });
-  await page.getByLabel('Name').fill('Resource Reader');
-  await page.getByLabel('Email').fill(`resources-${Date.now()}@example.com`);
-  await page.getByLabel('Password').fill('a long enough secret');
-  await page.getByRole('button', { name: 'Create account' }).click();
-  await page.waitForURL('**/shelf');
+  await page.getByLabel('Nome', { exact: true }).fill('Resource Writer');
+  await page.getByLabel('Nome de usuário').fill(`resources-${id}`);
+  await page.getByLabel('E-mail').fill(`resources-${id}@example.com`);
+  await page.getByLabel('Senha').fill('a long enough secret');
+  await page.getByRole('button', { name: 'Criar conta' }).click();
+  await page.waitForURL('**/write');
 };
 
-const readABook = async (page: Page, round: number): Promise<void> => {
-  await page.getByRole('link', { name: 'Add a book' }).first().click();
-  await page.getByLabel('Title').fill(`Round ${round}: The Long Afternoon`);
-  await page.getByLabel('Author').fill('Resource Reader');
-  await page.getByLabel('Total pages').fill('320');
-  await page.getByRole('button', { name: 'Add to shelf' }).click();
-  await page.waitForURL(/\/shelf\/[0-9a-f]{24}$/);
-  await page.getByLabel('I am on page').fill(String(40 + round));
-  await page.getByRole('button', { name: 'Update' }).click();
-  await page.getByText('Progress saved.').waitFor();
-  await page.getByLabel('Bookmark page').fill('12');
-  await page.getByRole('button', { name: 'Add bookmark' }).click();
-  await page.getByRole('button', { name: 'Remove bookmark on page 12' }).waitFor();
+const writeABook = async (page: Page, round: number): Promise<void> => {
+  await page.goto(`${BASE_URL}/write/novels/new`, { waitUntil: 'networkidle' });
+  await page.locator('#field-title').fill(`Round ${round}: The Long Afternoon`);
+  await page.getByLabel('Com que frequência').selectOption('daily');
+  await page.locator('#field-periodTarget').fill('1000');
+  await page.getByRole('button', { name: 'Criar romance' }).click();
+  await page.waitForURL(/\/write\/novels\/[0-9a-f]{24}$/);
   await settle();
-  await page.getByRole('link', { name: 'My shelf' }).click();
-  await page.waitForURL('**/shelf');
-  await page.getByRole('link', { name: /^Reading/ }).click();
+  await page.getByRole('link', { name: 'Atualizar minhas palavras' }).click();
+  await page.locator('#field-count').fill(String(400 + round * 300));
+  await page.getByRole('button', { name: 'Atualizar', exact: true }).click();
+  await page.getByText('Progresso salvo.').waitFor();
+  await settle();
+  await page.goto(`${BASE_URL}/write/stats`, { waitUntil: 'networkidle' });
+  await settle();
+  await page.goto(`${BASE_URL}/write`, { waitUntil: 'networkidle' });
   await settle();
 };
 
@@ -137,7 +138,7 @@ const unexpectedHosts = new Set<string>();
 const server = await chromium.launchServer({
   executablePath: Launcher.getFirstInstallation(),
   headless: true,
-  args: ['--no-sandbox', '--disable-gpu', '--lang=en-US'],
+  args: ['--no-sandbox', '--disable-gpu', '--lang=pt-BR'],
 });
 const browser = await chromium.connect(server.wsEndpoint());
 
@@ -171,7 +172,7 @@ try {
   await signUp(page);
 
   for (let round = 0; round < ROUNDS_OF_USE; round += 1) {
-    await readABook(page, round);
+    await writeABook(page, round);
   }
 
   // Idle CPU shows animations that run forever, which the flow above hides.

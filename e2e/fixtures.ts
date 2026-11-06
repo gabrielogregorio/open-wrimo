@@ -1,33 +1,70 @@
 import AxeBuilder from '@axe-core/playwright';
 import { randomUUID } from 'node:crypto';
 import { test as base, expect, type Page } from '@playwright/test';
+import sharp from 'sharp';
 
 export const PASSWORD = 'a long enough secret';
 const WCAG_AA_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost']);
 
-export type Reader = { name: string; email: string };
+export type Writer = { name: string; username: string; email: string };
 
-export const uniqueEmail = (label: string): string => `${label}-${randomUUID()}@example.com`;
+export const uniqueWriter = (label: string): Writer => {
+  const id = randomUUID().slice(0, 8);
 
-export const signUp = async (page: Page, reader: Reader): Promise<void> => {
+  return {
+    name: `${label} ${id}`,
+    username: `${label}-${id}`.toLowerCase().slice(0, 20),
+    email: `${label}-${id}@example.com`,
+  };
+};
+
+export const signUp = async (page: Page, writer: Writer): Promise<void> => {
   await page.goto('/register');
-  await page.getByLabel('Name').fill(reader.name);
-  await page.getByLabel('Email').fill(reader.email);
-  await page.getByLabel('Password').fill(PASSWORD);
-  await page.getByRole('button', { name: 'Create account' }).click();
+  await page.getByLabel('Nome', { exact: true }).fill(writer.name);
+  await page.getByLabel('Nome de usuário').fill(writer.username);
+  await page.getByLabel('E-mail').fill(writer.email);
+  await page.getByLabel('Senha').fill(PASSWORD);
+  await page.getByRole('button', { name: 'Criar conta' }).click();
   await expect(page).toHaveURL('/write');
 };
 
-export type NewBook = { title: string; author: string; totalPages: number };
+export const signIn = async (page: Page, email: string, password = PASSWORD): Promise<void> => {
+  await page.getByLabel('E-mail').fill(email);
+  await page.getByLabel('Senha').fill(password);
+  await page.getByRole('button', { name: 'Entrar' }).click();
+};
 
-export const addBook = async (page: Page, book: NewBook): Promise<string> => {
-  await page.goto('/shelf/new');
-  await page.getByLabel('Title').fill(book.title);
-  await page.getByLabel('Author').fill(book.author);
-  await page.getByLabel('Total pages').fill(String(book.totalPages));
-  await page.getByRole('button', { name: 'Add to shelf' }).click();
-  await expect(page).toHaveURL(/\/shelf\/[0-9a-f]{24}$/);
+export const pngImage = async (width = 600, height = 900, color = '#1f3a5f'): Promise<Buffer> =>
+  sharp({ create: { width, height, channels: 3, background: color } })
+    .png()
+    .toBuffer();
+
+export type NewNovel = { title: string; cover?: Buffer; daily?: number; event?: string; isPublic?: boolean };
+
+export const createNovel = async (page: Page, novel: NewNovel): Promise<string> => {
+  await page.goto('/write/novels/new');
+  await page.locator('#field-title').fill(novel.title);
+
+  if (novel.cover) {
+    await page.locator('#field-cover').setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: novel.cover });
+  }
+
+  if (novel.isPublic) {
+    await page.getByLabel('Quanta privacidade você deseja?').selectOption('on');
+  }
+
+  if (novel.daily) {
+    await page.getByLabel('Com que frequência').selectOption('daily');
+    await page.locator('#field-periodTarget').fill(String(novel.daily));
+  }
+
+  if (novel.event) {
+    await page.getByLabel('Participar de um evento').selectOption(novel.event);
+  }
+
+  await page.getByRole('button', { name: 'Criar romance' }).click();
+  await expect(page).toHaveURL(/\/write\/novels\/[0-9a-f]{24}$/);
 
   return page.url();
 };
@@ -50,7 +87,7 @@ export const axeViolations = async (page: Page) => {
   return (await new AxeBuilder({ page }).withTags(WCAG_AA_TAGS).analyze()).violations;
 };
 
-export const test = base.extend<{ readerPage: Page; writerPage: Page }>({
+export const test = base.extend<{ writerPage: Page; writer: Writer }>({
   context: async ({ context }, use) => {
     await context.route('**/*', async (route) => {
       const url = new URL(route.request().url());
@@ -63,15 +100,16 @@ export const test = base.extend<{ readerPage: Page; writerPage: Page }>({
 
       await route.abort('blockedbyclient');
     });
+    await context.addInitScript(() => {
+      window.localStorage.setItem('openwrimo-sound', 'off');
+    });
     await use(context);
   },
-  readerPage: async ({ page }, use, testInfo) => {
-    await signUp(page, { name: 'Lia', email: uniqueEmail(`reader-${testInfo.workerIndex}`) });
-    await page.goto('/shelf');
-    await use(page);
+  writer: async ({}, use, testInfo) => {
+    await use(uniqueWriter(`w${testInfo.workerIndex}`));
   },
-  writerPage: async ({ page }, use, testInfo) => {
-    await signUp(page, { name: 'Clara', email: uniqueEmail(`writer-${testInfo.workerIndex}`) });
+  writerPage: async ({ page, writer }, use) => {
+    await signUp(page, writer);
     await use(page);
   },
 });

@@ -1,24 +1,34 @@
-import { addBook, axeViolations, expect, test } from './fixtures';
+import { axeViolations, createNovel, expect, test } from './fixtures';
 
 test('public pages have no WCAG A or AA violations', async ({ page }) => {
-  await page.goto('/');
-  expect(await axeViolations(page)).toEqual([]);
-  await page.goto('/login');
-  expect(await axeViolations(page)).toEqual([]);
-  await page.goto('/register');
-  await page.getByRole('button', { name: 'Create account' }).click();
-  await page.getByLabel('Name').and(page.locator('[aria-invalid="true"]')).waitFor();
+  for (const path of ['/', '/login', '/register']) {
+    await page.goto(path);
+    expect(await axeViolations(page)).toEqual([]);
+  }
+
+  await page.getByRole('button', { name: 'Criar conta' }).click();
+  await page.getByLabel('Nome', { exact: true }).and(page.locator('[aria-invalid="true"]')).waitFor();
   expect(await axeViolations(page)).toEqual([]);
 });
 
-test('the shelf and a book page have no WCAG A or AA violations', async ({ readerPage: page }) => {
+test('the writing pages have no WCAG A or AA violations', async ({ writerPage: page }) => {
   expect(await axeViolations(page)).toEqual([]);
-  await addBook(page, { title: 'Memórias Póstumas de Brás Cubas', author: 'Machado de Assis', totalPages: 368 });
-  await page.getByLabel('Bookmark page').fill('7');
-  await page.getByRole('button', { name: 'Add bookmark' }).click();
-  await page.getByRole('button', { name: 'Remove bookmark on page 7' }).waitFor();
-  expect(await axeViolations(page)).toEqual([]);
-  await page.getByRole('link', { name: 'My shelf' }).click();
-  await page.getByRole('region', { name: 'Books on the shelf' }).waitFor();
-  expect(await axeViolations(page)).toEqual([]);
+  const url = await createNovel(page, { title: 'Acessível', daily: 500 });
+
+  for (const path of [
+    url,
+    `${url}?tab=goals`,
+    `${url}?tab=badges`,
+    `${url}/edit`,
+    '/write/novels/new',
+    '/write/update',
+    '/write/stats',
+    '/write/sprint',
+    '/write/profile',
+    '/write/profile/edit',
+    '/write/community',
+  ]) {
+    await page.goto(path);
+    expect(await axeViolations(page), path).toEqual([]);
+  }
 });
