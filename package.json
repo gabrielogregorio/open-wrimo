@@ -16,6 +16,7 @@
     "start": "next start --port 8920",
     "db:up": "docker compose up -d --wait mongo",
     "db:down": "docker compose down",
+    "seed:mock": "node scripts/seed-mock-writers.mts",
     "lint": "eslint . && next typegen && tsc -p .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
