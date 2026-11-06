@@ -1,9 +1,12 @@
+import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { AchievementWatcher, type EarnedAchievement } from '@/components/achievement-watcher';
 import { GoalCelebration, type BeatenGoal } from '@/components/goal-celebration';
 import { LIFETIME_BADGES, PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
 import { getTranslator } from '@/server/i18n';
 import { lifetimeBadges, loadNotebook, participationBadges, projectBadges } from '@/server/notebook';
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function WritingLayout({ children }: { children: ReactNode }) {
   const notebook = await loadNotebook();

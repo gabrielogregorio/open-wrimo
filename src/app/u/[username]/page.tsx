@@ -16,6 +16,7 @@ import { withStats } from '@/lib/writing/goals';
 import { createWritingRepository } from '@/lib/writing/repository';
 import { writingPace } from '@/lib/writing/stats';
 import { getLocale, getTranslator } from '@/server/i18n';
+import { SITE_DESCRIPTION, absoluteUrl, jsonLd } from '@/server/seo';
 import { getTimeZone } from '@/server/session';
 import { NovelCard } from '../../write/novel-card';
 
@@ -29,8 +30,46 @@ const loadWriter = async (username: string) => {
 export async function generateMetadata({ params }: PageProps<'/u/[username]'>): Promise<Metadata> {
   const found = await loadWriter((await params).username);
 
-  return found ? { title: found.writer.name, robots: { index: false } } : { robots: { index: false } };
+  if (!found) {
+    return { robots: { index: false } };
+  }
+
+  const t = await getTranslator();
+  const { writer, writing } = found;
+  const profile = await writing.getProfile(writer.userId);
+  const title = t('{name} on Open Wrimo', { name: writer.name });
+  const description = profile.shown.bio && profile.bio ? profile.bio.slice(0, 160) : t(SITE_DESCRIPTION);
+  const path = `/u/${writer.username}`;
+
+  return {
+    title: writer.name,
+    description,
+    alternates: { canonical: path },
+    openGraph: { type: 'profile', title, description, url: path, username: writer.username },
+    twitter: { card: 'summary_large_image', title, description },
+  };
 }
+
+const profileStructuredData = (
+  writer: { name: string; username: string },
+  profile: { bio: string; avatarUrl: string | null; shown: { bio: boolean } },
+) => {
+  const description = profile.shown.bio && profile.bio ? { description: profile.bio } : {};
+  const image = profile.avatarUrl ? { image: absoluteUrl(profile.avatarUrl) } : {};
+
+  return jsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    url: absoluteUrl(`/u/${writer.username}`),
+    mainEntity: {
+      '@type': 'Person',
+      name: writer.name,
+      alternateName: `@${writer.username}`,
+      ...description,
+      ...image,
+    },
+  });
+};
 
 export default async function PublicProfilePage({ params }: PageProps<'/u/[username]'>) {
   const found = await loadWriter((await params).username);
@@ -79,8 +118,11 @@ export default async function PublicProfilePage({ params }: PageProps<'/u/[usern
       .filter((entry) => entry.projectId === projectId && entry.unit === 'words')
       .reduce((sum, entry) => sum + entry.count, 0);
 
+  const structuredData = profileStructuredData(writer, profile);
+
   return (
     <div className="flex flex-col gap-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={structuredData} />
       <section className="sheet flex flex-wrap items-center gap-6 rounded-sm p-6">
         {profile.avatarUrl ? (
           <img

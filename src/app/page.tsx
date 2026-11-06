@@ -1,6 +1,8 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getTranslator } from '@/server/i18n';
+import { SITE_DESCRIPTION, SITE_NAME, absoluteUrl, jsonLd } from '@/server/seo';
 import { getCurrentUser } from '@/server/session';
 
 const DECORATIVE_SPINES = [
@@ -14,6 +16,8 @@ const DECORATIVE_SPINES = [
   { tone: 6, width: 2.6, height: 12.5 },
 ] as const;
 
+export const metadata: Metadata = { alternates: { canonical: '/' } };
+
 export default async function HomePage() {
   if (await getCurrentUser()) {
     redirect('/write');
@@ -21,8 +25,21 @@ export default async function HomePage() {
 
   const t = await getTranslator();
 
+  const structuredData = jsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: SITE_NAME,
+    url: absoluteUrl('/'),
+    description: t(SITE_DESCRIPTION),
+    applicationCategory: 'LifestyleApplication',
+    operatingSystem: 'Web',
+    inLanguage: 'pt-BR',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' },
+  });
+
   return (
     <div className="grid items-center gap-12 md:grid-cols-[1.1fr_1fr]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={structuredData} />
       <div className="flex flex-col gap-6">
         <p className="font-display text-sm tracking-[0.3em] text-accent uppercase">{t('Your writing notebook')}</p>
         <h1 className="font-display text-4xl leading-tight font-semibold text-balance sm:text-5xl">
