@@ -11,7 +11,7 @@ writing sprints, achievements with sound and confetti, and a public profile only
 ![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript 5](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS 4](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
-![MongoDB 8](https://img.shields.io/badge/MongoDB-8-47A248?logo=mongodb&logoColor=white)
+![MongoDB 9](https://img.shields.io/badge/MongoDB-9-47A248?logo=mongodb&logoColor=white)
 ![JWT](https://img.shields.io/badge/Auth-JWT_+_refresh-000000?logo=jsonwebtokens&logoColor=white)
 ![Playwright](https://img.shields.io/badge/Playwright-1.64-2EAD33?logo=playwright&logoColor=white)
 ![License MIT](https://img.shields.io/badge/License-MIT-blue)
@@ -124,9 +124,9 @@ Allow your address in the cluster network settings. Indexes are created on the f
   components run in jsdom with Testing Library. The gate asks for 100% of `src/lib` and `src/components`.
 - **E2E** (`e2e/`): Playwright on the production build, served on port 8921 by `scripts/serve-e2e.mts` with a
   throwaway database, with axe on the main pages.
-- **Current state**: the writing features, the JWT sign in and the API were built fast and their tests are still to be
-  written; several older specs describe the reading log that came before and fail. `pnpm run check:all` is red until
-  that catch-up is done.
+- **Lighthouse and memory**: after the E2E specs, Lighthouse scores the home and sign in pages and
+  `scripts/resource-usage.mts` drives five rounds of writing in Chrome, failing if the site's renderers go over 300 MB
+  once the screen settles.
 
 Locally, `PLAYWRIGHT_CHANNEL=chrome` reuses an installed Chrome instead of downloading Chromium.
 

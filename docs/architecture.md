@@ -14,7 +14,7 @@ experience comes first; a public profile and a community page are opt-in.
 | Framework  | Next.js 16, App Router, server actions      | Pages and forms in one unit; server actions for the site, `/api/v1` for other clients  |
 | Language   | TypeScript, strict                          | Shared types from the stored document to the form                                      |
 | Styles     | Tailwind CSS 4 with CSS variables           | One paper theme defined as tokens in `globals.css`                                     |
-| Database   | MongoDB 8 with the official driver          | Novels, goals and entries are plain documents; no ORM between the code and the queries |
+| Database   | MongoDB 9 with the official driver          | Novels, goals and entries are plain documents; no ORM between the code and the queries |
 | Auth       | JWT access tokens (jose) + refresh tokens   | Stateless checks on every request, revocable sessions through the refresh token family |
 | Images     | sharp + a storage wrapper                   | Every upload becomes a WebP; local disk or Cloudinary behind the same two functions    |
 | Editor     | Tiptap, sanitized with sanitize-html        | Rich text with images dropped inline; only an allowlist of tags reaches the database   |
