@@ -187,9 +187,6 @@ export const PERSONAL_BADGES: Badge[] = [
 export const LIFETIME_MILESTONES = [
   [100_000, '100k'],
   [1_000_000, '1M'],
-  [10_000_000, '10M'],
-  [100_000_000, '100M'],
-  [1_000_000_000, '1B'],
 ] as const;
 
 export const LIFETIME_BADGES: Badge[] = LIFETIME_MILESTONES.map(([words, mark]) => ({
