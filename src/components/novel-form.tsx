@@ -56,7 +56,7 @@ function SelectField({
       <label htmlFor={`field-${name}`} className="font-display text-sm font-semibold">
         {label}
       </label>
-      <select id={`field-${name}`} name={name} defaultValue={value} className={fieldClasses}>
+      <select key={value} id={`field-${name}`} name={name} defaultValue={value} className={fieldClasses}>
         {options.map(([optionValue, optionLabel]) => (
           <option key={optionValue} value={optionValue}>
             {optionLabel}

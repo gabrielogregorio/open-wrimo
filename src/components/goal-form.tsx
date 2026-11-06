@@ -72,6 +72,7 @@ export function GoalForm({ action, today, defaultName, goal, cancelHref, onDone 
           error={fieldError('target')}
         />
         <select
+          key={values.unit}
           name="unit"
           aria-label={t('Counted in')}
           defaultValue={values.unit}
