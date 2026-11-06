@@ -12,4 +12,8 @@ allowBuilds:
   mongodb-memory-server: false
 
 # Security overrides. Keep the reason next to each one and drop it once the parent updates.
-overrides: {}
+overrides:
+  # GHSA-3g3m-2fjr-6pw4, through lighthouse > @sentry/bundler-plugins. Drop when lighthouse ships glob >=14.0.2.
+  'glob@>=9.0.0 <14.0.2': 14.0.3
+  # GHSA-g3hv-75wg-m249, through eslint-config-next > typescript-eslint. Drop when it ships minimatch >=11.0.1.
+  'minimatch@>=7.0.0 <11.0.1': 11.0.4
