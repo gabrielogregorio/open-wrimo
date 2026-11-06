@@ -282,27 +282,71 @@
   }
 
   .book-mock {
+    --book-depth: 1.6rem;
     position: relative;
     display: block;
-    rotate: -3deg;
-    margin: 0.4rem 1rem 1.2rem 0.4rem;
+    perspective: 900px;
+    margin: 0.4rem 1.2rem 1.4rem 0;
   }
 
-  .book-mock-cover {
+  .book-mock-body {
     position: relative;
     display: block;
     aspect-ratio: 2 / 3;
     width: 100%;
+    transform-style: preserve-3d;
+    transform: rotateY(-28deg) rotateX(4deg);
+  }
+
+  .book-mock.is-flat .book-mock-body {
+    transform: none;
+  }
+
+  .book-mock-cover {
+    position: absolute;
+    inset: 0;
+    display: block;
     overflow: hidden;
-    border-radius: 0.15rem 0.4rem 0.4rem 0.15rem;
-    box-shadow:
-      3px 3px 0 -1px #f7f1e3,
-      4px 4px 0 -1px #cdbf9f,
-      6px 6px 0 -1px #f7f1e3,
-      7px 7px 0 -1px #cdbf9f,
-      9px 9px 0 -1px #f2ead6,
-      10px 10px 0 -1px #c4b592,
-      16px 20px 26px -10px rgb(60 40 20 / 0.55);
+    border-radius: 0.15rem 0.35rem 0.35rem 0.15rem;
+    transform: translateZ(calc(var(--book-depth) / 2));
+    box-shadow: inset 3px 0 5px -2px rgb(0 0 0 / 0.35);
+  }
+
+  .book-mock-pages {
+    position: absolute;
+    top: 0.25rem;
+    bottom: 0.25rem;
+    left: calc(100% - var(--book-depth) / 2 - 0.12rem);
+    width: var(--book-depth);
+    transform: rotateY(90deg);
+    background-color: #f6efdf;
+    background-image:
+      repeating-linear-gradient(90deg, rgb(120 100 70 / 0.2) 0 1px, transparent 1px 3px),
+      linear-gradient(90deg, rgb(0 0 0 / 0.1), transparent 30%, transparent 70%, rgb(0 0 0 / 0.2));
+  }
+
+  .book-mock-back {
+    position: absolute;
+    inset: 0;
+    border-radius: 0.35rem 0.15rem 0.15rem 0.35rem;
+    background-color: var(--wood-dark);
+    transform: translateZ(calc(var(--book-depth) / -2));
+  }
+
+  .book-mock::after {
+    content: '';
+    position: absolute;
+    left: 6%;
+    right: -6%;
+    bottom: -1rem;
+    height: 1.4rem;
+    background: radial-gradient(ellipse at center, rgb(60 40 20 / 0.45), transparent 70%);
+    filter: blur(2px);
+    z-index: -1;
+  }
+
+  .book-mock.is-flat::after {
+    display: none;
   }
 
   .book-mock-cover::after {
