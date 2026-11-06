@@ -1,7 +1,6 @@
 # JSON API (`/api/v1`)
 
-The site uses server actions; this API exists for scripts and other clients, such as the mock writers seed
-(`scripts/seed-mock-writers.mts`). Every body is JSON unless noted, and every error has the shape
+The site uses server actions; this API exists for scripts and other clients. Every body is JSON unless noted, and every error has the shape
 `{ "error"?: string, "fieldErrors"?: { field: message } }`.
 
 ## Tokens

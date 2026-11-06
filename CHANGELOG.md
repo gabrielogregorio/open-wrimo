@@ -12,7 +12,7 @@
 - Profile with picture, username and laurels, an optional public page at `/u/<username>`, and a community page.
 - JWT access tokens with rotating refresh tokens, and a `/api/v1` JSON API.
 - Image storage on the local disk or Cloudinary, with WebP conversion and size and rate limits.
-- Mock writers seed through the API, and JSON export of everything a writer logged.
+- JSON export of everything a writer logged.
 - Brazilian Portuguese only; the reading shelf, posts and the dark and night themes were removed.
 
 ## 0.1.0

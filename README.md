@@ -75,14 +75,7 @@ pnpm run db:up
 pnpm run dev
 ```
 
-Open http://localhost:8920 and create an account. To look around with data, fill the app with 30 mock writers:
-
-```bash
-pnpm run seed:mock -- --pool <folder with covers/ and avatars/ images>
-```
-
-The seed signs every writer up through the JSON API and logs in with `<username>@mock.openwrimo.test` and the password
-it prints. `pnpm run seed:mock -- --reset` removes only those writers and their images.
+Open http://localhost:8920 and create an account.
 
 Outside the repository: `.env.local`, the `mongo-data` docker volume, the uploaded images in `public/uploads` and the
 MongoDB binary that the tests download once into `~/.cache/mongodb-binaries`.
@@ -119,7 +112,6 @@ Allow your address in the cluster network settings. Indexes are created on the f
 | `pnpm run dev`                              | Development server on port 8920                              |
 | `pnpm run build` / `pnpm run start`         | Production build and server on port 8920                     |
 | `pnpm run db:up` / `pnpm run db:down`       | Start or stop the local MongoDB container                    |
-| `pnpm run seed:mock`                        | 30 mock writers through the API, history from 2025 until now |
 | `pnpm run lint`                             | ESLint, route types and TypeScript                           |
 | `pnpm run format` / `pnpm run format:check` | Prettier                                                     |
 | `pnpm run unit` / `pnpm run unit:coverage`  | Vitest, with the 100% gate in the second                     |
@@ -158,7 +150,7 @@ src/server       current user, tokens, writing context and API helpers
 src/lib          schemas, services, repositories, stats, badges, storage, auth, i18n
 src/components   React components (book mockup, cover shelf, editor, forms, rings, chart)
 e2e/             Playwright specs
-scripts/         E2E server, Lighthouse, memory check and the mock writers seed
+scripts/         E2E server, Lighthouse and memory check
 docs/            architecture, API, security, accessibility, support and the demo GIFs
 ```
 
