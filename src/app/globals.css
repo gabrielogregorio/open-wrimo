@@ -456,6 +456,11 @@
     animation: toast-in 450ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
   }
 
+  .alarm-ringing {
+    animation: alarm-shake 120ms linear 0s 24 alternate;
+    transform-origin: 50% 60%;
+  }
+
   .pending-ink {
     position: absolute;
     right: 0.75rem;
@@ -600,6 +605,15 @@
   100% {
     opacity: 0;
     transform: scaleX(1);
+  }
+}
+
+@keyframes alarm-shake {
+  from {
+    rotate: -9deg;
+  }
+  to {
+    rotate: 9deg;
   }
 }
 

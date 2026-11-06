@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { FormState } from '@/lib/form';
+import { playAlarmRing } from './alarm-sound';
 import { useI18n } from './i18n-provider';
 import { UpdateForm, type BookChoice } from './update-form';
 
@@ -46,6 +47,7 @@ export function SprintTimer({ action, books, selectedGoal, today }: SprintTimerP
 
       if (kind === 'timer' && seconds >= total) {
         setPhase('done');
+        void playAlarmRing();
       }
     };
     const interval = window.setInterval(tick, 250);
@@ -107,6 +109,22 @@ export function SprintTimer({ action, books, selectedGoal, today }: SprintTimerP
             ))}
           </div>
         ) : null}
+        <svg
+          viewBox="0 0 64 64"
+          className={`h-14 w-14 text-accent ${phase === 'done' && kind === 'timer' ? 'alarm-ringing' : ''}`}
+          aria-hidden="true"
+          focusable="false">
+          <circle cx="32" cy="36" r="20" fill="var(--paper)" stroke="currentColor" strokeWidth="4" />
+          <path d="M32 24v12l8 5" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+          <path
+            d="M10 18a10 10 0 0 1 14-10M54 18A10 10 0 0 0 40 8"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
+          <path d="M18 56l-4 5M46 56l4 5" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+        </svg>
         <p className="font-display text-7xl font-semibold tabular-nums" aria-hidden="true">
           {clockText(shown)}
         </p>
