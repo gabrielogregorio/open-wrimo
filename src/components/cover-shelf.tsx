@@ -2,7 +2,7 @@
 
 import type { KeyboardEvent } from 'react';
 import { useI18n } from './i18n-provider';
-import { LogoMark } from './logo';
+import { BookMockup } from './book-mockup';
 
 export type ShelfBook = { projectId: string; title: string; coverUrl: string | null; statusLabel: string };
 
@@ -27,12 +27,15 @@ export function CoverShelf({ books, selected, onSelect }: CoverShelfProps) {
     <div className="flex flex-col gap-3">
       <div
         role="radiogroup"
+        tabIndex={-1}
         aria-label={t('Which book did you write in?')}
         onKeyDown={onKeyDown}
         className="cover-shelf relative h-72 overflow-hidden rounded-sm">
         {books.map((book, index) => {
           const offset = index - selected;
           const distance = Math.abs(offset);
+          const turn = offset < 0 ? 42 : -42;
+          const angle = offset === 0 ? 0 : turn;
 
           return (
             <button
@@ -45,21 +48,12 @@ export function CoverShelf({ books, selected, onSelect }: CoverShelfProps) {
               onClick={() => onSelect(index)}
               className="cover-shelf-book absolute top-4 left-1/2 aspect-[2/3] w-36"
               style={{
-                transform: `translateX(calc(-50% + ${offset * STEP_REM}rem)) translateZ(${-distance * 90}px) rotateY(${offset === 0 ? 0 : offset < 0 ? 42 : -42}deg) scale(${offset === 0 ? 1.08 : 0.9})`,
+                transform: `translateX(calc(-50% + ${offset * STEP_REM}rem)) translateZ(${-distance * 90}px) rotateY(${angle}deg) scale(${offset === 0 ? 1.08 : 0.9})`,
                 zIndex: books.length - distance,
                 opacity: distance > 3 ? 0 : 1,
                 filter: offset === 0 ? 'none' : 'brightness(0.82) saturate(0.85)',
               }}>
-              <span className="block h-full w-full overflow-hidden rounded-sm shadow-xl">
-                {book.coverUrl ? (
-                  <img src={book.coverUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <span className="book-cover-plain flex h-full w-full flex-col items-center justify-center gap-2 p-3 text-center">
-                    <LogoMark className="h-8 w-8" />
-                    <span className="font-display text-sm font-semibold">{book.title}</span>
-                  </span>
-                )}
-              </span>
+              <BookMockup title={book.title} coverUrl={book.coverUrl} tilted={false} />
             </button>
           );
         })}

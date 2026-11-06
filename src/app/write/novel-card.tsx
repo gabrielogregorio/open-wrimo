@@ -32,7 +32,7 @@ export async function NovelCard({
         {novel.featured ? t('Featured') : t(PROJECT_STATUS_LABELS[novel.status])}
       </span>
       <div className="flex flex-wrap items-start gap-6">
-        <CoverCard title={novel.title} coverUrl={novel.coverUrl} summary={novel.summary} excerpt={novel.excerpt} />
+        <CoverCard title={novel.title} coverUrl={novel.coverUrl} />
         <div className="flex min-w-48 flex-1 flex-col gap-2">
           <Heading className="font-display text-3xl leading-tight font-semibold text-balance">
             {readOnly ? (
@@ -65,13 +65,14 @@ export async function NovelCard({
             </div>
           ))}
         </div>
-      ) : readOnly ? null : (
+      ) : null}
+      {shown.length === 0 && !readOnly ? (
         <Link
           href={`/write/novels/${novel.id}/goals/new`}
           className="w-fit font-display text-accent underline underline-offset-4">
           {t('Set a goal for this novel')}
         </Link>
-      )}
+      ) : null}
     </article>
   );
 }

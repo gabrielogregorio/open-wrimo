@@ -281,25 +281,45 @@
       opacity 300ms ease;
   }
 
-  .cover-scene {
-    perspective: 1200px;
+  .book-mock {
+    position: relative;
+    display: block;
+    rotate: -3deg;
+    margin: 0.4rem 1rem 1.2rem 0.4rem;
   }
 
-  .cover-flip {
-    transform-style: preserve-3d;
-    transition: transform 600ms cubic-bezier(0.3, 0.7, 0.2, 1);
+  .book-mock-cover {
+    position: relative;
+    display: block;
+    aspect-ratio: 2 / 3;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 0.15rem 0.4rem 0.4rem 0.15rem;
+    box-shadow:
+      3px 3px 0 -1px #f7f1e3,
+      4px 4px 0 -1px #cdbf9f,
+      6px 6px 0 -1px #f7f1e3,
+      7px 7px 0 -1px #cdbf9f,
+      9px 9px 0 -1px #f2ead6,
+      10px 10px 0 -1px #c4b592,
+      16px 20px 26px -10px rgb(60 40 20 / 0.55);
   }
 
-  .cover-flip.is-flipped {
-    transform: rotateY(180deg);
-  }
-
-  .cover-face {
-    backface-visibility: hidden;
-  }
-
-  .cover-back {
-    transform: rotateY(180deg);
+  .book-mock-cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(
+        90deg,
+        rgb(0 0 0 / 0.38) 0,
+        rgb(255 255 255 / 0.25) 2.5%,
+        rgb(0 0 0 / 0.2) 4.5%,
+        rgb(255 255 255 / 0.08) 7%,
+        transparent 11%
+      ),
+      linear-gradient(120deg, rgb(255 255 255 / 0.2), transparent 30%, transparent 75%, rgb(0 0 0 / 0.14));
   }
 
   .book-cover-plain {
