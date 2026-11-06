@@ -12,6 +12,7 @@ type NumberInputProps = {
   hint?: string;
   error?: string;
   maxDigits?: number;
+  id?: string;
 };
 
 const digitsOf = (value: string, maxDigits: number): string =>
@@ -28,10 +29,11 @@ export function NumberInput({
   hint,
   error,
   maxDigits = 8,
+  id: givenId,
 }: NumberInputProps) {
   const { locale } = useI18n();
   const [digits, setDigits] = useState(() => digitsOf(defaultValue, maxDigits));
-  const id = `field-${name}`;
+  const id = givenId ?? `field-${name}`;
   const shown = digits ? new Intl.NumberFormat(locale).format(Number(digits)) : '';
   const describedBy = [hint ? `${id}-hint` : '', error ? `${id}-error` : ''].filter(Boolean).join(' ');
 

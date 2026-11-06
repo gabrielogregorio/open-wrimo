@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { MAX_UPLOAD_BYTES } from '@/lib/storage/limits';
+import { BookMockup } from './book-mockup';
 import { useI18n } from './i18n-provider';
 
 type ImageFieldProps = {
+  asBook?: boolean;
   name: string;
   label: string;
   currentUrl?: string | null;
@@ -12,7 +14,7 @@ type ImageFieldProps = {
   removeLabel?: string;
 };
 
-export function ImageField({ name, label, currentUrl, error, removeLabel }: ImageFieldProps) {
+export function ImageField({ asBook = false, name, label, currentUrl, error, removeLabel }: ImageFieldProps) {
   const { t } = useI18n();
   const [preview, setPreview] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -72,7 +74,12 @@ export function ImageField({ name, label, currentUrl, error, removeLabel }: Imag
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
         className={`flex flex-col items-start gap-3 rounded-sm border-2 border-dashed p-4 ${dragging ? 'border-accent bg-paper' : 'border-rule'}`}>
-        {shown ? (
+        {shown && asBook ? (
+          <span className="block w-36">
+            <BookMockup title={label} coverUrl={shown} />
+          </span>
+        ) : null}
+        {shown && !asBook ? (
           <img src={shown} alt="" className="max-h-48 w-fit rounded-sm border border-rule object-contain" />
         ) : null}
         <p className="text-sm text-ink-soft">{t('Drop an image here or choose a file.')}</p>

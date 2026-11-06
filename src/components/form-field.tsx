@@ -10,8 +10,8 @@ type FormFieldProps = InputHTMLAttributes<HTMLInputElement> & {
 export const fieldClasses =
   'w-full rounded-sm border border-rule bg-paper px-3 py-2 text-ink placeholder:text-ink-soft focus-visible:border-accent';
 
-export function FormField({ label, name, error, hint, ...inputProps }: FormFieldProps) {
-  const id = `field-${name}`;
+export function FormField({ label, name, error, hint, id: givenId, ...inputProps }: FormFieldProps) {
+  const id = givenId ?? `field-${name}`;
   const describedBy = [hint ? `${id}-hint` : '', error ? `${id}-error` : ''].filter(Boolean).join(' ');
 
   return (

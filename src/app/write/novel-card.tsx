@@ -1,11 +1,14 @@
 import Link from 'next/link';
+import { deleteGoalInlineAction, editGoalInlineAction } from '@/app/actions/writing';
 import { CoverCard } from '@/components/cover-card';
 import { GoalCard } from '@/components/goal-card';
 import { PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '@/components/writing-labels';
 import { currentGoal, type GoalWithStats } from '@/lib/writing/goals';
 import type { ProjectView } from '@/lib/writing/repository';
 import { formatNumber } from '@/lib/i18n/format';
+import { localDate } from '@/lib/writing/dates';
 import { getLocale, getTranslator } from '@/server/i18n';
+import { getTimeZone } from '@/server/session';
 
 export async function NovelCard({
   novel,
@@ -24,6 +27,7 @@ export async function NovelCard({
   const running = goals.filter((item) => item.stats.state === 'active');
   const shown = running.length > 0 ? running : [currentGoal(goals)].filter((item) => item !== null);
   const locale = await getLocale();
+  const today = localDate(new Date(), await getTimeZone());
   const Heading = headingLevel === 1 ? 'h1' : 'h2';
 
   return (
@@ -61,7 +65,13 @@ export async function NovelCard({
         <div className="flex flex-col gap-6 divide-y divide-rule">
           {shown.map((goal) => (
             <div key={goal.id} className="pt-4 first:pt-0">
-              <GoalCard goal={goal} readOnly={readOnly} />
+              <GoalCard
+                goal={goal}
+                readOnly={readOnly}
+                today={today}
+                editAction={readOnly ? undefined : editGoalInlineAction.bind(null, novel.id, goal.id)}
+                deleteAction={readOnly ? undefined : deleteGoalInlineAction.bind(null, goal.id)}
+              />
             </div>
           ))}
         </div>

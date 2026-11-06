@@ -120,6 +120,7 @@ export function NovelForm({ action, cancelHref, novel, initialError }: NovelForm
       <FormAlert message={state.error ? t(state.error) : initialError} />
       <FormField label={t('Title')} name="title" defaultValue={values.title} error={fieldError('title')} required />
       <ImageField
+        asBook
         name="cover"
         label={t('Cover')}
         currentUrl={novel?.coverUrl}

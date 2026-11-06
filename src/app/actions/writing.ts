@@ -177,3 +177,44 @@ export async function updateProfileAction(_previous: FormState, formData: FormDa
   revalidatePath('/', 'layout');
   redirect('/write/profile');
 }
+
+export async function editGoalInlineAction(
+  projectId: string,
+  goalId: string,
+  _previous: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const values = formValues(formData, GOAL_FIELDS);
+  const result = await saveGoal(await writingContext(), projectId, values, goalId);
+
+  if (!result.id) {
+    return { ...result, values };
+  }
+
+  revalidatePath('/write', 'layout');
+
+  return { saved: true };
+}
+
+export async function deleteGoalInlineAction(goalId: string): Promise<void> {
+  const { writing, userId } = await writingContext();
+  await writing.removeGoal(userId, goalId);
+  revalidatePath('/write', 'layout');
+}
+
+export async function createGoalInlineAction(
+  projectId: string,
+  _previous: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const values = formValues(formData, GOAL_FIELDS);
+  const result = await saveGoal(await writingContext(), projectId, values);
+
+  if (!result.id) {
+    return { ...result, values };
+  }
+
+  revalidatePath('/write', 'layout');
+
+  return { saved: true };
+}
