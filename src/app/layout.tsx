@@ -8,15 +8,24 @@ import { I18nProvider } from '@/components/i18n-provider';
 import { TimeZoneSync } from '@/components/time-zone-sync';
 import { TIME_ZONE_COOKIE } from '@/lib/writing/dates';
 import { getLocale, getTranslator } from '@/server/i18n';
+import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from '@/server/seo';
 import { SiteHeader } from './site-header';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslator();
 
+  const description = t(SITE_DESCRIPTION);
+
   return {
-    title: { default: 'Open Wrimo', template: '%s · Open Wrimo' },
-    description: t('Write your novel, track every word and keep the books you read.'),
-    applicationName: 'Open Wrimo',
+    metadataBase: siteUrl(),
+    title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
+    description,
+    applicationName: SITE_NAME,
+    keywords: ['escrita', 'romance', 'NaNoWriMo', 'metas de escrita', 'contador de palavras', 'escritores', 'sprint'],
+    formatDetection: { telephone: false, email: false, address: false },
+    openGraph: { type: 'website', siteName: SITE_NAME, locale: 'pt_BR', title: SITE_NAME, description, url: '/' },
+    twitter: { card: 'summary_large_image', title: SITE_NAME, description },
+    appleWebApp: { title: SITE_NAME, capable: true, statusBarStyle: 'default' },
   };
 }
 

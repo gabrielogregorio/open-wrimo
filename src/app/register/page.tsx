@@ -9,7 +9,11 @@ import { AuthCard } from '../auth-card';
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslator();
 
-  return { title: t('Create account') };
+  return {
+    title: t('Create account'),
+    description: t('Create your free account and start your novel with daily goals and word counts.'),
+    alternates: { canonical: '/register' },
+  };
 }
 
 export default async function RegisterPage() {
@@ -20,7 +24,7 @@ export default async function RegisterPage() {
   const t = await getTranslator();
 
   return (
-    <AuthCard title={t('Get a library card')} subtitle={t('Start a shelf that remembers every page.')}>
+    <AuthCard title={t('Start your notebook')} subtitle={t('A place that remembers every word you write.')}>
       <AuthForm mode="sign-up" action={signUpAction} />
     </AuthCard>
   );

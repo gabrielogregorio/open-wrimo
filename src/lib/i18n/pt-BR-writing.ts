@@ -1,4 +1,12 @@
 export const ptBRWriting: Record<string, string> = {
+  'The image could not be stored right now. Try again in a moment.':
+    'Não foi possível guardar a imagem agora. Tente de novo em instantes.',
+  'Create your free account and start your novel with daily goals and word counts.':
+    'Crie sua conta grátis e comece seu romance com metas diárias e contagem de palavras.',
+  'Start your notebook': 'Comece seu caderno',
+  'A place that remembers every word you write.': 'Um lugar que lembra cada palavra que você escreve.',
+  'Sign in to open your writing desk.': 'Entre para abrir sua escrivaninha.',
+  '{name} on Open Wrimo': '{name} no Open Wrimo',
   Romance: 'Romance',
   Fantasy: 'Fantasia',
   'Science fiction': 'Ficção científica',
@@ -340,8 +348,8 @@ export const ptBRWriting: Record<string, string> = {
   Words: 'Palavras',
   'Words by month': 'Palavras por mês',
   'Words written': 'Palavras escritas',
-  'Write your novel, track every word and keep the books you read.':
-    'Escreva seu romance, acompanhe cada palavra e guarde os livros que você lê.',
+  'Write your novel, track every word and meet your goals.':
+    'Escreva seu romance, acompanhe cada palavra e bata suas metas.',
   'Write {target} {unit}': 'Escreva {target} {unit}',
   'Writer wellness': 'Bem-estar de escritor',
   Writing: 'Escrita',

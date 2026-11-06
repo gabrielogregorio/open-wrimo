@@ -10,7 +10,7 @@ import { AuthCard } from '../auth-card';
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslator();
 
-  return { title: t('Sign in') };
+  return { title: t('Sign in'), alternates: { canonical: '/login' } };
 }
 
 export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
   const { next } = await searchParams;
 
   return (
-    <AuthCard title={t('Welcome back')} subtitle={t('Sign in to open your shelf.')}>
+    <AuthCard title={t('Welcome back')} subtitle={t('Sign in to open your writing desk.')}>
       <AuthForm mode="sign-in" action={signInAction} next={safeRedirectPath(next)} />
     </AuthCard>
   );

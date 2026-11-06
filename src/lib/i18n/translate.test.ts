@@ -15,7 +15,14 @@ import { EMAIL_TAKEN, INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS, USERNAME_TAKEN } f
 import { LIFETIME_BADGES, PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
 import { EVENTS } from '@/lib/writing/events';
 import { IMAGE_STILL_TOO_BIG, IMAGE_UNREADABLE, IMAGE_UPLOAD_TOO_BIG, IMAGE_WRONG_TYPE } from '@/lib/storage/images';
-import { GOAL_NOT_FOUND, POST_NOT_FOUND, PROJECT_NOT_FOUND, UPLOADS_TOO_FAST } from '@/lib/writing/service';
+import {
+  GOAL_NOT_FOUND,
+  IMAGE_NOT_STORED,
+  POST_NOT_FOUND,
+  PROJECT_NOT_FOUND,
+  UPLOADS_TOO_FAST,
+} from '@/lib/writing/service';
+import { SITE_DESCRIPTION } from '@/server/seo';
 import { ptBR } from './pt-BR';
 import { translate, translator } from './translate';
 
@@ -95,6 +102,7 @@ describe('pt-BR dictionary', () => {
     TOO_MANY_ATTEMPTS,
     EMAIL_TAKEN,
     USERNAME_TAKEN,
+    SITE_DESCRIPTION,
     PROJECT_NOT_FOUND,
     GOAL_NOT_FOUND,
     IMAGE_UPLOAD_TOO_BIG,
@@ -102,6 +110,7 @@ describe('pt-BR dictionary', () => {
     IMAGE_UNREADABLE,
     IMAGE_WRONG_TYPE,
     UPLOADS_TOO_FAST,
+    IMAGE_NOT_STORED,
     POST_NOT_FOUND,
     'Enter how much you wrote.',
   ]);
