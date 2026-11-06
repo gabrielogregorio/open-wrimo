@@ -2,10 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BadgeHex } from '@/components/badge-hex';
 import { formatNumber } from '@/lib/i18n/format';
-import { PARTICIPATION_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
+import { LIFETIME_BADGES, PARTICIPATION_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
 import { writingPace } from '@/lib/writing/stats';
 import { getLocale, getTranslator } from '@/server/i18n';
-import { allEarnedBadges, laurelCount, loadNotebook, participationBadges, wordsFor } from '@/server/notebook';
+import {
+  allEarnedBadges,
+  laurelCount,
+  loadNotebook,
+  participationBadges,
+  lifetimeBadges,
+  wordsFor,
+} from '@/server/notebook';
 import { bookRepository, requireUser } from '@/server/session';
 import { NovelCard } from './novel-card';
 
@@ -28,6 +35,7 @@ export default async function WritingDeskPage() {
   const favorites = shelf.books.filter((book) => book.rating === 5);
   const favoriteAuthors = [...new Set(favorites.map((book) => book.author))];
   const participation = participationBadges(notebook);
+  const lifetime = lifetimeBadges(notebook);
   const goalsOf = (projectId: string) => notebook.goals.filter((goal) => goal.projectId === projectId);
   const numbers = [
     [t('Words written'), formatNumber(locale, pace.total)],
@@ -107,6 +115,24 @@ export default async function WritingDeskPage() {
               label={t(badge.label, { count: badge.mark ?? '' })}
               description={t(badge.description, { count: badge.mark ?? '' })}
               statusText={earned.has(badge.id) ? t('Earned') : t('Not earned yet')}
+            />
+          ))}
+        </ul>
+      </section>
+
+      <section aria-labelledby="lifetime-badges" className="flex flex-col gap-4">
+        <h2 id="lifetime-badges" className="ornament font-display text-lg">
+          {t('Words in all novels')}
+        </h2>
+        <ul className="flex flex-wrap justify-center gap-4">
+          {LIFETIME_BADGES.map((badge) => (
+            <BadgeHex
+              key={badge.id}
+              badge={badge}
+              earned={lifetime.has(badge.id)}
+              label={t(badge.label, { count: badge.mark ?? '' })}
+              description={t(badge.description, { count: badge.mark ?? '' })}
+              statusText={lifetime.has(badge.id) ? t('Earned') : t('Not earned yet')}
             />
           ))}
         </ul>

@@ -2,10 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BadgeHex } from '@/components/badge-hex';
 import { formatNumber } from '@/lib/i18n/format';
-import { PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
+import { LIFETIME_BADGES, PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
 import { writingPace } from '@/lib/writing/stats';
 import { getLocale, getTranslator } from '@/server/i18n';
-import { allEarnedBadges, laurelCount, loadNotebook, participationBadges, wordsFor } from '@/server/notebook';
+import {
+  allEarnedBadges,
+  laurelCount,
+  loadNotebook,
+  lifetimeBadges,
+  participationBadges,
+  wordsFor,
+} from '@/server/notebook';
 import { bookRepository, requireUser } from '@/server/session';
 import { NovelCard } from '../novel-card';
 
@@ -37,7 +44,11 @@ export default async function ProfilePage() {
   const favoriteAuthors = [profile.favoriteAuthors, [...new Set(starred.map((book) => book.author))].join(', ')]
     .filter(Boolean)
     .join(', ');
-  const writingBadges = WRITING_BADGES.filter((badge) => earned.has(badge.id));
+  const lifetime = lifetimeBadges(notebook);
+  const writingBadges = [
+    ...LIFETIME_BADGES.filter((badge) => lifetime.has(badge.id)),
+    ...WRITING_BADGES.filter((badge) => earned.has(badge.id)),
+  ];
   const personalBadges = PERSONAL_BADGES.filter((badge) => earned.has(badge.id));
   const numbers: [string, string][] = [
     [t('Words written'), formatNumber(locale, pace.total)],

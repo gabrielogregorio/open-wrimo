@@ -184,6 +184,25 @@ export const PERSONAL_BADGES: Badge[] = [
   { id: 'shared-excerpt', label: 'Shared an excerpt', description: 'Someone read a piece of it.', glyph: 'quill' },
 ];
 
+export const LIFETIME_MILESTONES = [
+  [100_000, '100k'],
+  [1_000_000, '1M'],
+  [10_000_000, '10M'],
+  [100_000_000, '100M'],
+  [1_000_000_000, '1B'],
+] as const;
+
+export const LIFETIME_BADGES: Badge[] = LIFETIME_MILESTONES.map(([words, mark]) => ({
+  id: `lifetime-${words}`,
+  label: '{count} words in all',
+  description: 'Wrote {count} words across all novels.',
+  glyph: 'summit',
+  mark,
+}));
+
+export const earnedLifetimeBadges = (totalWords: number): Set<string> =>
+  new Set(LIFETIME_MILESTONES.filter(([words]) => totalWords >= words).map(([words]) => `lifetime-${words}`));
+
 export const PARTICIPATION_BADGES: Badge[] = [
   { id: 'first-novel', label: 'New novel', description: 'Created a novel.', glyph: 'book' },
   { id: 'first-goal', label: 'Goal set', description: 'Gave a novel its first goal.', glyph: 'target' },

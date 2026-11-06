@@ -1,4 +1,8 @@
 export const ptBRWriting: Record<string, string> = {
+  '{count} words in all': '{count} palavras no total',
+  'Wrote {count} words across all novels.': 'Escreveu {count} palavras somando todos os romances.',
+  'Words in all novels': 'Palavras em todos os romances',
+  'All novels': 'Todos os romances',
   Username: 'Nome de usuário',
   'Your public address: /u/username': 'Seu endereço público: /u/nome-de-usuario',
   'Use 3 to 20 lowercase letters, numbers and dashes.': 'Use de 3 a 20 letras minúsculas, números e hífens.',

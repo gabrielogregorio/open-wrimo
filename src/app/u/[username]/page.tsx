@@ -4,7 +4,13 @@ import { BadgeHex } from '@/components/badge-hex';
 import { RichText } from '@/components/rich-text';
 import { getDatabase } from '@/lib/db/client';
 import { formatNumber } from '@/lib/i18n/format';
-import { PERSONAL_BADGES, WRITING_BADGES, earnedWritingBadges } from '@/lib/writing/badges';
+import {
+  LIFETIME_BADGES,
+  PERSONAL_BADGES,
+  WRITING_BADGES,
+  earnedLifetimeBadges,
+  earnedWritingBadges,
+} from '@/lib/writing/badges';
 import { localDate } from '@/lib/writing/dates';
 import { withStats } from '@/lib/writing/goals';
 import { createWritingRepository } from '@/lib/writing/repository';
@@ -67,6 +73,7 @@ export default async function PublicProfilePage({ params }: PageProps<'/u/[usern
     ]),
   );
   const personalEarned = new Set(projects.flatMap((project) => project.awards));
+  earnedLifetimeBadges(pace.total).forEach((id) => writingEarned.add(id));
   const wordsOf = (projectId: string): number =>
     entries
       .filter((entry) => entry.projectId === projectId && entry.unit === 'words')
@@ -155,16 +162,18 @@ export default async function PublicProfilePage({ params }: PageProps<'/u/[usern
             {t('Badges earned')}
           </h2>
           <ul className="flex flex-wrap justify-center gap-4">
-            {WRITING_BADGES.filter((badge) => writingEarned.has(badge.id)).map((badge) => (
-              <BadgeHex
-                key={badge.id}
-                badge={badge}
-                earned
-                label={t(badge.label, { count: badge.mark ?? '' })}
-                description={t(badge.description, { count: badge.mark ?? '' })}
-                statusText={t('Earned')}
-              />
-            ))}
+            {[...LIFETIME_BADGES, ...WRITING_BADGES]
+              .filter((badge) => writingEarned.has(badge.id))
+              .map((badge) => (
+                <BadgeHex
+                  key={badge.id}
+                  badge={badge}
+                  earned
+                  label={t(badge.label, { count: badge.mark ?? '' })}
+                  description={t(badge.description, { count: badge.mark ?? '' })}
+                  statusText={t('Earned')}
+                />
+              ))}
             {PERSONAL_BADGES.filter((badge) => personalEarned.has(badge.id)).map((badge) => (
               <BadgeHex
                 key={badge.id}

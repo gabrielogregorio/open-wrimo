@@ -74,5 +74,5 @@ export const soundForBadge = (kind: 'writing' | 'personal' | 'participation', id
     return 'streak';
   }
 
-  return ['goal-met', 'par-every-day', 'halfway'].includes(id) ? 'goal' : 'milestone';
+  return ['goal-met', 'par-every-day', 'halfway'].includes(id) || id.startsWith('lifetime-') ? 'goal' : 'milestone';
 };

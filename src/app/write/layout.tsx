@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { AchievementWatcher, type EarnedAchievement } from '@/components/achievement-watcher';
-import { PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
+import { LIFETIME_BADGES, PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
 import { getTranslator } from '@/server/i18n';
-import { loadNotebook, participationBadges, projectBadges } from '@/server/notebook';
+import { lifetimeBadges, loadNotebook, participationBadges, projectBadges } from '@/server/notebook';
 
 export default async function WritingLayout({ children }: { children: ReactNode }) {
   const notebook = await loadNotebook();
@@ -32,6 +32,18 @@ export default async function WritingLayout({ children }: { children: ReactNode 
         novel: project.title,
       });
     }
+  }
+
+  const lifetime = lifetimeBadges(notebook);
+
+  for (const badge of LIFETIME_BADGES.filter((item) => lifetime.has(item.id))) {
+    earned.push({
+      key: `all:${badge.id}`,
+      kind: 'writing',
+      badge,
+      label: label(badge.label, badge.mark),
+      novel: t('All novels'),
+    });
   }
 
   const participation = participationBadges(notebook);
