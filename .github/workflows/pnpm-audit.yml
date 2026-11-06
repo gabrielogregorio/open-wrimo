@@ -1,0 +1,76 @@
+name: pnpm audit
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  schedule:
+    # Mondays at 09:00 UTC, so an advisory published on an untouched branch still shows up.
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pnpm-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: pnpm audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The audit reads the lockfile and asks the registry, so nothing needs to be installed.
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Audit what ships to the browser
+        run: pnpm audit --prod --json > audit-production.json || true
+
+      - name: Audit everything, tooling included
+        run: pnpm audit --json > audit-full.json || true
+
+      - name: Write the report and decide
+        id: report
+        run: node scripts/audit-report.mts audit-production.json audit-full.json audit-report.md
+
+      - name: Post or update the report on the pull request
+        if: ${{ always() && github.event_name == 'pull_request' && hashFiles('audit-report.md') != '' }}
+        # Pull requests from forks get a read-only token; the job result still tells the story.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          marker='<!-- open-wrimo-audit -->'
+          existing=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate \
+            --jq "[.[] | select(.body | startswith(\"$marker\")) | .id] | first")
+
+          if [[ -n "$existing" && "$existing" != "null" ]]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$existing" -F body=@audit-report.md > /dev/null
+          else
+            gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file audit-report.md
+          fi
+
+      - name: Keep the raw audit
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pnpm-audit
+          path: |
+            audit-production.json
+            audit-full.json
+            audit-report.md
+          retention-days: 30

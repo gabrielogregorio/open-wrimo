@@ -54,6 +54,10 @@ Accepted by alert id, so a new alert on the same package still counts. Review da
 
 ## Dependency rules
 
+- `pnpm-audit.yml` runs `pnpm audit` on every push, pull request and every Monday. Any vulnerability in production
+  fails, and so does a high or critical one in the tooling; moderate and low ones in the tooling are reported on the
+  pull request. An accepted risk goes in `auditConfig.ignoreGhsas` in `pnpm-workspace.yaml` and in the table above.
+- Overrides that patch a transitive package live in `pnpm-workspace.yaml`, each with the advisory and when to drop it.
 - New versions wait 3 days before they can be installed (`minimumReleaseAge` and Dependabot `cooldown`).
 - Every install is checked against the hashes in the lockfile (`pnpm install --frozen-lockfile`).
 - Install scripts are blocked except for the packages listed in `pnpm-workspace.yaml`.
