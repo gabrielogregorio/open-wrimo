@@ -103,11 +103,14 @@ function Toolbar({ editor, onPickImage, busy }: { editor: Editor; onPickImage: (
       <ToolbarButton label={t('Strikethrough')} active={state.strike} onClick={() => chain().toggleStrike().run()}>
         <s>S</s>
       </ToolbarButton>
-      <ToolbarButton label={t('Heading')} active={state.h2} onClick={() => chain().toggleHeading({ level: 2 }).run()}>
+      <ToolbarButton
+        label={`H2 ${t('Heading')}`}
+        active={state.h2}
+        onClick={() => chain().toggleHeading({ level: 2 }).run()}>
         H2
       </ToolbarButton>
       <ToolbarButton
-        label={t('Subheading')}
+        label={`H3 ${t('Subheading')}`}
         active={state.h3}
         onClick={() => chain().toggleHeading({ level: 3 }).run()}>
         H3
@@ -116,7 +119,7 @@ function Toolbar({ editor, onPickImage, busy }: { editor: Editor; onPickImage: (
         •
       </ToolbarButton>
       <ToolbarButton
-        label={t('Numbered list')}
+        label={`1. ${t('Numbered list')}`}
         active={state.ordered}
         onClick={() => chain().toggleOrderedList().run()}>
         1.

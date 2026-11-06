@@ -65,7 +65,7 @@ describe('RichTextEditor', () => {
 
     expect(hidden()).toBe('<p><strong><em><s><u>Hello</u></s></em></strong></p>');
 
-    for (const name of ['Heading', 'Subheading', 'Bulleted list', 'Numbered list', 'Quote']) {
+    for (const name of ['H2 Heading', 'H3 Subheading', 'Bulleted list', '1. Numbered list', 'Quote']) {
       await userEvent.click(screen.getByRole('button', { name }));
     }
 
