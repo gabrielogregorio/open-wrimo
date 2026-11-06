@@ -4,7 +4,8 @@ import { cache } from 'react';
 import { createRateLimiter } from '@/lib/auth/rate-limit';
 import { clientAddressFrom } from '@/lib/auth/request';
 import type { AuthDependencies } from '@/lib/auth/service';
-import { SESSION_COOKIE, createSessionRepository, type SessionUser } from '@/lib/auth/session';
+import { createSessionRepository, type SessionUser } from '@/lib/auth/session';
+import { ACCESS_COOKIE, verifyAccessToken } from '@/lib/auth/tokens';
 import { createUserRepository } from '@/lib/auth/users';
 import { getDatabase } from '@/lib/db/client';
 import { getEnvironment } from '@/lib/env';
@@ -30,13 +31,9 @@ export const clientAddress = async (): Promise<string | null> =>
   clientAddressFrom((await headers()).get('x-forwarded-for'), getEnvironment().TRUST_PROXY);
 
 export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  const claims = await verifyAccessToken((await cookies()).get(ACCESS_COOKIE)?.value, getEnvironment().JWT_SECRET);
 
-  if (!token) {
-    return null;
-  }
-
-  return createSessionRepository(await getDatabase()).findUser(token, new Date());
+  return claims ? createSessionRepository(await getDatabase()).findUserById(claims.userId) : null;
 });
 
 export const requireUser = async (): Promise<SessionUser> => {
@@ -70,6 +67,25 @@ export const writingContext = async (): Promise<WritingContext & { today: string
     storage: getImageStorage(),
     limiter: createRateLimiter(database),
     userId: user.id,
+    now,
+    timeZone,
+    today: localDate(now, timeZone),
+    translate: await getTranslator(),
+  };
+};
+
+export const writingContextFor = async (
+  userId: string,
+  timeZone = 'America/Sao_Paulo',
+): Promise<WritingContext & { today: string }> => {
+  const database = await getDatabase();
+  const now = new Date();
+
+  return {
+    writing: createWritingRepository(database),
+    storage: getImageStorage(),
+    limiter: createRateLimiter(database),
+    userId,
     now,
     timeZone,
     today: localDate(now, timeZone),

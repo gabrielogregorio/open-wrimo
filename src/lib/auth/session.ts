@@ -1,55 +1,98 @@
-import { createHash, randomBytes } from 'node:crypto';
-import type { Db, ObjectId } from 'mongodb';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { ObjectId, type Db } from 'mongodb';
 import { collections } from '@/lib/db/collections';
 
-export const SESSION_COOKIE = 'openwrimo-session';
-export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+export const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const TOKEN_BYTES = 32;
+export const REUSE_GRACE_MS = 30_000;
 
 export type SessionUser = { id: string; name: string; email: string; username: string };
+export type RotatedToken = { userId: string; username: string; refreshToken: string };
 
 export const generateSessionToken = (): string => randomBytes(TOKEN_BYTES).toString('base64url');
 
 export const hashSessionToken = (token: string): string => createHash('sha256').update(token).digest('hex');
 
 export type SessionRepository = {
-  create: (userId: ObjectId, now: Date) => Promise<string>;
-  findUser: (token: string, now: Date) => Promise<SessionUser | null>;
-  revoke: (token: string) => Promise<void>;
+  create: (userId: ObjectId, now: Date, familyId?: string) => Promise<string>;
+  rotate: (refreshToken: string, now: Date) => Promise<RotatedToken | null>;
+  findUserById: (userId: string) => Promise<SessionUser | null>;
+  revoke: (refreshToken: string) => Promise<void>;
 };
 
 export const createSessionRepository = (database: Db): SessionRepository => {
   const { sessions, users } = collections(database);
 
-  return {
-    async create(userId, now) {
-      const token = generateSessionToken();
-      await sessions.insertOne({
-        tokenHash: hashSessionToken(token),
-        userId,
-        createdAt: now,
-        expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
-      });
+  const create = async (userId: ObjectId, now: Date, familyId: string = randomUUID()): Promise<string> => {
+    const token = generateSessionToken();
+    await sessions.insertOne({
+      tokenHash: hashSessionToken(token),
+      userId,
+      familyId,
+      usedAt: null,
+      createdAt: now,
+      expiresAt: new Date(now.getTime() + REFRESH_TTL_MS),
+    });
 
-      return token;
-    },
-    async findUser(token, now) {
-      const session = await sessions.findOne({ tokenHash: hashSessionToken(token), expiresAt: { $gt: now } });
+    return token;
+  };
+
+  return {
+    create,
+
+    async rotate(refreshToken, now) {
+      const tokenHash = hashSessionToken(refreshToken);
+      const claimed = await sessions.findOneAndUpdate(
+        { tokenHash, usedAt: null, expiresAt: { $gt: now } },
+        { $set: { usedAt: now } },
+      );
+
+      const session = claimed ?? (await sessions.findOne({ tokenHash, expiresAt: { $gt: now } }));
 
       if (!session) {
         return null;
       }
 
-      const user = await users.findOne({ _id: session.userId }, { projection: { name: 1, email: 1, username: 1 } });
+      const concurrent = !claimed && session.usedAt && now.getTime() - session.usedAt.getTime() < REUSE_GRACE_MS;
+
+      if (!claimed && !concurrent) {
+        await sessions.deleteMany({ familyId: session.familyId });
+
+        return null;
+      }
+
+      const user = await users.findOne({ _id: session.userId }, { projection: { username: 1 } });
 
       if (!user) {
         return null;
       }
 
-      return { id: user._id.toHexString(), name: user.name, email: user.email, username: user.username };
+      return {
+        userId: user._id.toHexString(),
+        username: user.username,
+        refreshToken: await create(session.userId, now, session.familyId),
+      };
     },
-    async revoke(token) {
-      await sessions.deleteOne({ tokenHash: hashSessionToken(token) });
+
+    async findUserById(userId) {
+      if (!ObjectId.isValid(userId)) {
+        return null;
+      }
+
+      const user = await users.findOne(
+        { _id: new ObjectId(userId) },
+        { projection: { name: 1, email: 1, username: 1 } },
+      );
+
+      return user ? { id: user._id.toHexString(), name: user.name, email: user.email, username: user.username } : null;
+    },
+
+    async revoke(refreshToken) {
+      const session = await sessions.findOne({ tokenHash: hashSessionToken(refreshToken) });
+
+      if (session) {
+        await sessions.deleteMany({ familyId: session.familyId });
+      }
     },
   };
 };

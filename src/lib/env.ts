@@ -13,6 +13,7 @@ const environmentSchema = z
       .enum(['true', 'false'])
       .default('false')
       .transform((value) => value === 'true'),
+    JWT_SECRET: z.string().min(32, { error: 'must have at least 32 characters' }),
     STORAGE_DRIVER: z.enum(['local', 'cloudinary']).default('local'),
     LOCAL_UPLOADS_DIR: z.string().min(1).default('public/uploads'),
     CLOUDINARY_URL: z

@@ -13,6 +13,8 @@ export type UserDocument = {
 export type SessionDocument = {
   tokenHash: string;
   userId: ObjectId;
+  familyId: string;
+  usedAt: Date | null;
   createdAt: Date;
   expiresAt: Date;
 };
@@ -132,6 +134,7 @@ export const ensureIndexes = async (database: Db): Promise<void> => {
     users.createIndex({ email: 1 }, { unique: true }),
     users.createIndex({ username: 1 }, { unique: true, partialFilterExpression: { username: { $type: 'string' } } }),
     sessions.createIndex({ tokenHash: 1 }, { unique: true }),
+    sessions.createIndex({ familyId: 1 }),
     sessions.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     rateLimits.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     projects.createIndex({ userId: 1, updatedAt: -1 }),

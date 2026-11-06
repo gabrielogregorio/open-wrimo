@@ -18,7 +18,8 @@ export type AuthDependencies = {
 };
 
 export type AuthResult =
-  { ok: true; token: string } | { ok: false; error?: string; retryAfterMinutes?: number; fieldErrors?: FieldErrors };
+  | { ok: true; refreshToken: string; userId: string; username: string }
+  | { ok: false; error?: string; retryAfterMinutes?: number; fieldErrors?: FieldErrors };
 
 type Limit = { key: string; rule: RateRule };
 
@@ -84,7 +85,12 @@ export const signIn = async (
 
   await dependencies.limiter.reset(emailKey);
 
-  return { ok: true, token: await dependencies.sessions.create(user._id, now) };
+  return {
+    ok: true,
+    refreshToken: await dependencies.sessions.create(user._id, now),
+    userId: user._id.toHexString(),
+    username: user.username,
+  };
 };
 
 export const signUp = async (
@@ -130,5 +136,10 @@ export const signUp = async (
     return { ok: false, fieldErrors: { email: EMAIL_TAKEN } };
   }
 
-  return { ok: true, token: await dependencies.sessions.create(userId, now) };
+  return {
+    ok: true,
+    refreshToken: await dependencies.sessions.create(userId, now),
+    userId: userId.toHexString(),
+    username,
+  };
 };

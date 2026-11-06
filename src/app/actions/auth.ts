@@ -2,13 +2,14 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { safeRedirectPath, sessionCookieOptions } from '@/lib/auth/request';
+import { safeRedirectPath } from '@/lib/auth/request';
 import { signIn, signUp, type AuthResult } from '@/lib/auth/service';
-import { SESSION_COOKIE, SESSION_TTL_MS, createSessionRepository } from '@/lib/auth/session';
+import { createSessionRepository } from '@/lib/auth/session';
+import { REFRESH_COOKIE } from '@/lib/auth/tokens';
 import { getDatabase } from '@/lib/db/client';
-import { getEnvironment } from '@/lib/env';
 import { formValues, type FormState } from '@/lib/form';
 import { authDependencies, clientAddress } from '@/server/session';
+import { clearTokenCookies, storeTokenCookies, tokenPair } from '@/server/tokens';
 
 const finish = async (result: AuthResult, values: Record<string, string>, next: unknown): Promise<FormState> => {
   if (!result.ok) {
@@ -20,7 +21,7 @@ const finish = async (result: AuthResult, values: Record<string, string>, next: 
     };
   }
 
-  (await cookies()).set(SESSION_COOKIE, result.token, sessionCookieOptions(getEnvironment().APP_URL, SESSION_TTL_MS));
+  await storeTokenCookies(await tokenPair(result, result.refreshToken));
   redirect(safeRedirectPath(next));
 };
 
@@ -39,13 +40,12 @@ export async function signUpAction(_previous: FormState, formData: FormData): Pr
 }
 
 export async function signOutAction(): Promise<void> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  const token = (await cookies()).get(REFRESH_COOKIE)?.value;
 
   if (token) {
     await createSessionRepository(await getDatabase()).revoke(token);
   }
 
-  cookieStore.delete(SESSION_COOKIE);
+  await clearTokenCookies();
   redirect('/login');
 }
