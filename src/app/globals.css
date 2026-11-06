@@ -461,6 +461,16 @@
     transform-origin: 50% 60%;
   }
 
+  .goal-beaten {
+    background-image: linear-gradient(90deg, var(--accent), #c9892c 60%, #f3d27a);
+    background-size: 200% 100%;
+    animation: goal-shine 2.4s ease-in-out infinite;
+  }
+
+  .goal-banner {
+    animation: banner-pop 600ms cubic-bezier(0.3, 1.6, 0.5, 1) both;
+  }
+
   .pending-ink {
     position: absolute;
     right: 0.75rem;
@@ -614,6 +624,23 @@
   }
   to {
     rotate: 9deg;
+  }
+}
+
+@keyframes goal-shine {
+  0%,
+  100% {
+    background-position: 0% 0;
+  }
+  50% {
+    background-position: 100% 0;
+  }
+}
+
+@keyframes banner-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -1.5rem) scale(0.7);
   }
 }
 

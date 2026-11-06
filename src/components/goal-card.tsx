@@ -10,6 +10,32 @@ import { GoalForm } from './goal-form';
 import { useI18n } from './i18n-provider';
 import { PERIOD_SUFFIX, UNIT_LABELS } from './writing-labels';
 
+function GoalProgress({ label, percent, fullPercent }: { label: string; percent: number; fullPercent: number }) {
+  const beaten = fullPercent >= 100;
+
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+        aria-valuetext={`${fullPercent}%`}
+        className="h-3 flex-1 overflow-hidden rounded-full bg-rule">
+        <div
+          className={`ink-fill h-full rounded-full ${beaten ? 'goal-beaten' : 'bg-accent'}`}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <span
+        className={`min-w-14 text-right font-display text-lg font-semibold tabular-nums ${beaten ? 'text-[#a8641a]' : 'text-accent'}`}>
+        {fullPercent}%
+      </span>
+    </div>
+  );
+}
+
 export function GoalCard({
   goal,
   showName = true,
@@ -48,6 +74,7 @@ export function GoalCard({
 
   const unit = t(UNIT_LABELS[goal.unit]);
   const { stats } = goal;
+  const fullPercent = Math.floor((stats.total / goal.target) * 100);
 
   return (
     <div className="flex flex-col gap-3">
@@ -58,15 +85,11 @@ export function GoalCard({
           {goal.period ? ` ${t(PERIOD_SUFFIX[goal.period])}` : ''}
         </span>
       </p>
-      <div
-        role="progressbar"
-        aria-label={t('Progress in {title}', { title: goal.name })}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={stats.percent}
-        className="h-3 w-full overflow-hidden rounded-full bg-rule">
-        <div className="ink-fill h-full rounded-full bg-accent" style={{ width: `${stats.percent}%` }} />
-      </div>
+      <GoalProgress
+        label={t('Progress in {title}', { title: goal.name })}
+        percent={stats.percent}
+        fullPercent={fullPercent}
+      />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="font-display">
           <span className="text-accent">{formatNumber(locale, stats.total)}</span> / {formatNumber(locale, goal.target)}{' '}

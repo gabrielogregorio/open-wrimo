@@ -1,4 +1,5 @@
 export const ptBRWriting: Record<string, string> = {
+  'Goal beaten!': 'Meta batida!',
   'New goal': 'Nova meta',
   'Goals of this novel': 'Metas deste romance',
   'No goals yet.': 'Nenhuma meta ainda.',

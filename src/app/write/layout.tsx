@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { AchievementWatcher, type EarnedAchievement } from '@/components/achievement-watcher';
+import { GoalCelebration, type BeatenGoal } from '@/components/goal-celebration';
 import { LIFETIME_BADGES, PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
 import { getTranslator } from '@/server/i18n';
 import { lifetimeBadges, loadNotebook, participationBadges, projectBadges } from '@/server/notebook';
@@ -58,9 +59,20 @@ export default async function WritingLayout({ children }: { children: ReactNode 
     });
   }
 
+  const titles = new Map(notebook.projects.map((project) => [project.id, project.title]));
+  const beaten: BeatenGoal[] = notebook.goals
+    .filter((goal) => goal.stats.reached)
+    .map((goal) => ({
+      key: `${goal.id}:${goal.stats.daily[0]?.date ?? goal.startDate}`,
+      name: goal.name,
+      novel: titles.get(goal.projectId) ?? '',
+      percent: Math.floor((goal.stats.total / goal.target) * 100),
+    }));
+
   return (
     <>
       {children}
+      <GoalCelebration beaten={beaten} />
       <AchievementWatcher earned={earned} />
     </>
   );
