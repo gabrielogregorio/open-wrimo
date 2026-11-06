@@ -524,6 +524,40 @@ const createWriter = async (
   return { username, entries };
 };
 
+const rescaleWords = async (database: Db): Promise<void> => {
+  const users = await database
+    .collection('users')
+    .find({ email: { $regex: `@${MOCK_DOMAIN.replaceAll('.', '\\.')}$` } })
+    .toArray();
+  const projects = await database
+    .collection('projects')
+    .find({ userId: { $in: users.map((user) => user._id) } })
+    .toArray();
+
+  for (const project of projects) {
+    const goal = await database
+      .collection('goals')
+      .find({ projectId: project._id, period: { $in: [null, ''] } })
+      .sort({ createdAt: 1 })
+      .limit(1)
+      .next();
+    const entries = await database.collection('entries').find({ projectId: project._id }).toArray();
+    const sum = entries.reduce((total, entry) => total + (entry.count as number), 0);
+
+    if (!goal || sum === 0) {
+      continue;
+    }
+
+    const factor = ((goal.target as number) * (0.3 + random() * 1.3)) / sum;
+
+    for (const entry of entries) {
+      await database
+        .collection('entries')
+        .updateOne({ _id: entry._id }, { $set: { count: Math.max(50, Math.round((entry.count as number) * factor)) } });
+    }
+  }
+};
+
 const spreadDates = async (database: Db, today: string): Promise<void> => {
   const users = await database
     .collection('users')
@@ -608,6 +642,7 @@ const main = async (): Promise<void> => {
   );
 
   console.log('Spreading dates from 2025 until today in the database...');
+  await rescaleWords(database);
   await spreadDates(database, today);
   await client.close();
   console.log(

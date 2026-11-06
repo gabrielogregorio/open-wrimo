@@ -66,6 +66,25 @@ export const EMPTY_PROFILE: ProfileView = {
   shown: ALL_SHOWN,
 };
 
+export const COMMUNITY_SORTS = ['words', 'recent', 'name'] as const;
+export type CommunitySort = (typeof COMMUNITY_SORTS)[number];
+export const COMMUNITY_PAGE_SIZE = 24;
+
+export type CommunityWriter = {
+  username: string;
+  name: string;
+  avatarUrl: string | null;
+  location: string;
+  novels: number;
+  words: number;
+  lastWrote: string | null;
+  featured: { title: string; coverUrl: string | null } | null;
+};
+
+export type CommunityPage = { writers: CommunityWriter[]; total: number };
+
+const escapeRegex = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 export type PreviousImageKey = string | null | false;
 export type NewEntry = Omit<EntryView, 'id' | 'createdAt'>;
 export type PostView = PostInput & {
@@ -486,6 +505,67 @@ export const createWritingRepository = (database: Db) => {
       const profile = await profiles.findOne({ userId: user._id, isPublic: true }, { projection: { _id: 1 } });
 
       return profile ? { userId: user._id.toHexString(), name: user.name, username: user.username } : null;
+    },
+
+    async listCommunity(options: { query: string; sort: CommunitySort; page: number }): Promise<CommunityPage> {
+      const publicProfiles = await profiles
+        .find({ isPublic: true }, { projection: { userId: 1, avatarUrl: 1, location: 1 } })
+        .toArray();
+      const profileOf = new Map(publicProfiles.map((profile) => [profile.userId.toHexString(), profile]));
+      const search = options.query.trim();
+      const matcher = search ? new RegExp(escapeRegex(search), 'i') : null;
+      const people = await users
+        .find(
+          {
+            _id: { $in: publicProfiles.map((profile) => profile.userId) },
+            ...(matcher ? { $or: [{ name: matcher }, { username: matcher }] } : {}),
+          },
+          { projection: { name: 1, username: 1 } },
+        )
+        .toArray();
+      const ids = people.map((person) => person._id);
+      const publicNovels = await projects
+        .find(
+          { userId: { $in: ids }, isPublic: true },
+          { projection: { userId: 1, title: 1, coverUrl: 1, featured: 1, updatedAt: 1 } },
+        )
+        .sort({ featured: -1, updatedAt: -1 })
+        .toArray();
+      const totals = await entries
+        .aggregate<{ _id: ObjectId; words: number; lastWrote: string }>([
+          {
+            $match: { userId: { $in: ids }, projectId: { $in: publicNovels.map((novel) => novel._id) }, unit: 'words' },
+          },
+          { $group: { _id: '$userId', words: { $sum: '$count' }, lastWrote: { $max: '$date' } } },
+        ])
+        .toArray();
+      const totalOf = new Map(totals.map((total) => [total._id.toHexString(), total]));
+      const writers: CommunityWriter[] = people.map((person) => {
+        const id = person._id.toHexString();
+        const novels = publicNovels.filter((novel) => novel.userId.equals(person._id));
+        const profile = profileOf.get(id);
+        const total = totalOf.get(id);
+
+        return {
+          username: person.username,
+          name: person.name,
+          avatarUrl: profile?.avatarUrl ?? null,
+          location: profile?.location ?? '',
+          novels: novels.length,
+          words: total?.words ?? 0,
+          lastWrote: total?.lastWrote ?? null,
+          featured: novels[0] ? { title: novels[0].title, coverUrl: novels[0].coverUrl } : null,
+        };
+      });
+      const order: Record<CommunitySort, (first: CommunityWriter, second: CommunityWriter) => number> = {
+        words: (first, second) => second.words - first.words,
+        recent: (first, second) => (second.lastWrote ?? '').localeCompare(first.lastWrote ?? ''),
+        name: (first, second) => first.name.localeCompare(second.name, 'pt-BR'),
+      };
+      const sorted = writers.sort(order[options.sort]);
+      const start = (options.page - 1) * COMMUNITY_PAGE_SIZE;
+
+      return { writers: sorted.slice(start, start + COMMUNITY_PAGE_SIZE), total: sorted.length };
     },
   };
 };

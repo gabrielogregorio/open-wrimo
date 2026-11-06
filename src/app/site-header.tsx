@@ -21,6 +21,9 @@ export async function SiteHeader() {
             <Link href="/write" className="underline-offset-4 hover:underline">
               {t('Writing')}
             </Link>
+            <Link href="/write/community" className="underline-offset-4 hover:underline">
+              {t('Community')}
+            </Link>
             <Link href="/write/profile" className="underline-offset-4 hover:underline">
               {t('Profile')}
             </Link>
