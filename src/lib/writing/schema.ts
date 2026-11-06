@@ -41,14 +41,15 @@ export const MAX_GOAL_TARGET = 10_000_000;
 export const MAX_ENTRY_COUNT = 100_000;
 const GENRE_MAX_LENGTH = 40;
 
-const text = (maximum: number, message: string) => z.string().trim().max(maximum, { error: message });
+const text = (maximum: number, message: string) => z.string().trim().max(maximum, { error: message }).default('');
 
 const optionalUrl = (message: string) =>
   z
     .string()
     .trim()
     .max(500, { error: message })
-    .refine((value) => value === '' || /^https:\/\/[^\s]+$/i.test(value), { error: message });
+    .refine((value) => value === '' || /^https:\/\/[^\s]+$/i.test(value), { error: message })
+    .default('');
 
 const isoDate = (message: string) => z.string().trim().refine(isIsoDate, { error: message });
 
