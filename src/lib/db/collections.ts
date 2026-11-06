@@ -1,5 +1,4 @@
 import type { Db, ObjectId, WithId } from 'mongodb';
-import type { BookStatus } from '@/lib/books/schema';
 import type { EventId } from '@/lib/writing/events';
 import type { GoalPeriod, GoalUnit, Mood, ProjectStatus, ProjectType } from '@/lib/writing/schema';
 
@@ -22,27 +21,6 @@ export type RateLimitDocument = {
   _id: string;
   count: number;
   expiresAt: Date;
-};
-
-export type BookmarkDocument = {
-  id: ObjectId;
-  page: number;
-  note: string;
-  createdAt: Date;
-};
-
-export type BookDocument = {
-  userId: ObjectId;
-  title: string;
-  author: string;
-  totalPages: number;
-  currentPage: number;
-  status: BookStatus;
-  rating: number | null;
-  notes: string;
-  bookmarks: BookmarkDocument[];
-  createdAt: Date;
-  updatedAt: Date;
 };
 
 export type ProjectDocument = {
@@ -119,7 +97,6 @@ export const PROFILE_SECTIONS = ['bio', 'stats', 'favorites', 'badges'] as const
 export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
 
 export type StoredUser = WithId<UserDocument>;
-export type StoredBook = WithId<BookDocument>;
 export type StoredProject = WithId<ProjectDocument>;
 export type StoredGoal = WithId<GoalDocument>;
 export type StoredEntry = WithId<EntryDocument>;
@@ -129,7 +106,6 @@ export const collections = (database: Db) => ({
   users: database.collection<UserDocument>('users'),
   sessions: database.collection<SessionDocument>('sessions'),
   rateLimits: database.collection<RateLimitDocument>('rate_limits'),
-  books: database.collection<BookDocument>('books'),
   projects: database.collection<ProjectDocument>('projects'),
   goals: database.collection<GoalDocument>('goals'),
   entries: database.collection<EntryDocument>('entries'),
@@ -150,7 +126,7 @@ const migrateUsernames = async (database: Db): Promise<void> => {
 
 export const ensureIndexes = async (database: Db): Promise<void> => {
   await migrateUsernames(database);
-  const { users, sessions, rateLimits, books, projects, goals, entries, posts, profiles } = collections(database);
+  const { users, sessions, rateLimits, projects, goals, entries, posts, profiles } = collections(database);
 
   await Promise.all([
     users.createIndex({ email: 1 }, { unique: true }),
@@ -158,8 +134,6 @@ export const ensureIndexes = async (database: Db): Promise<void> => {
     sessions.createIndex({ tokenHash: 1 }, { unique: true }),
     sessions.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     rateLimits.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
-    books.createIndex({ userId: 1, updatedAt: -1 }),
-    books.createIndex({ userId: 1, status: 1, updatedAt: -1 }),
     projects.createIndex({ userId: 1, updatedAt: -1 }),
     goals.createIndex({ userId: 1, projectId: 1, startDate: -1 }),
     entries.createIndex({ userId: 1, projectId: 1, unit: 1, date: 1 }),

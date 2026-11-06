@@ -8,7 +8,7 @@ import {
   normalizeLocale,
 } from '@/lib/i18n/locales';
 
-const PROTECTED_PREFIXES = ['/shelf', '/write'];
+const PROTECTED_PREFIXES = ['/write'];
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;

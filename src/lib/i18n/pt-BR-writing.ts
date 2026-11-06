@@ -1,4 +1,6 @@
 export const ptBRWriting: Record<string, string> = {
+  'Goal: {name}': 'Meta: {name}',
+  '{target} {unit} by {date}': '{target} {unit} até {date}',
   '{count} words in all': '{count} palavras no total',
   'Wrote {count} words across all novels.': 'Escreveu {count} palavras somando todos os romances.',
   'Words in all novels': 'Palavras em todos os romances',

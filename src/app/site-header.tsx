@@ -24,9 +24,6 @@ export async function SiteHeader() {
             <Link href="/write/profile" className="underline-offset-4 hover:underline">
               {t('Profile')}
             </Link>
-            <Link href="/shelf" className="underline-offset-4 hover:underline">
-              {t('My reading')}
-            </Link>
             <span className="flex overflow-hidden rounded-sm border border-accent">
               <Link
                 href="/write/update"

@@ -13,7 +13,7 @@ import {
   lifetimeBadges,
   wordsFor,
 } from '@/server/notebook';
-import { bookRepository, requireUser } from '@/server/session';
+import { requireUser } from '@/server/session';
 import { NovelCard } from './novel-card';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -31,9 +31,6 @@ export default async function WritingDeskPage() {
   const words = notebook.entries.filter((entry) => entry.unit === 'words');
   const pace = writingPace(words, notebook.today);
   const earned = new Set(allEarnedBadges(notebook).map((key) => key.split(':')[1]));
-  const shelf = await (await bookRepository()).list(user.id, { page: 1 });
-  const favorites = shelf.books.filter((book) => book.rating === 5);
-  const favoriteAuthors = [...new Set(favorites.map((book) => book.author))];
   const participation = participationBadges(notebook);
   const lifetime = lifetimeBadges(notebook);
   const goalsOf = (projectId: string) => notebook.goals.filter((goal) => goal.projectId === projectId);
@@ -155,20 +152,6 @@ export default async function WritingDeskPage() {
             />
           ))}
         </ul>
-      </section>
-
-      <section aria-labelledby="favorites" className="sheet flex flex-col gap-3 rounded-sm p-6">
-        <h2 id="favorites" className="font-display text-lg tracking-wide uppercase">
-          {t('Favorites')}
-        </h2>
-        <p className="text-ink-soft italic">
-          {favorites.length > 0
-            ? favorites.map((book) => book.title).join(' · ')
-            : t('No favorite books. Rate a book with 5 stars on your shelf.')}
-        </p>
-        <p className="text-ink-soft italic">
-          {favoriteAuthors.length > 0 ? favoriteAuthors.join(' · ') : t('No favorite authors')}
-        </p>
       </section>
 
       <p className="text-center text-sm">

@@ -13,7 +13,7 @@ import {
   participationBadges,
   wordsFor,
 } from '@/server/notebook';
-import { bookRepository, requireUser } from '@/server/session';
+import { requireUser } from '@/server/session';
 import { NovelCard } from '../novel-card';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -36,14 +36,8 @@ export default async function ProfilePage() {
   const earned = new Set(earnedKeys.map((key) => key.split(':')[1]));
   const participation = participationBadges(notebook);
   const laurels = laurelCount(notebook);
-  const shelf = await (await bookRepository()).list(user.id, { page: 1 });
-  const starred = shelf.books.filter((book) => book.rating === 5);
-  const favoriteBooks = [profile.favoriteBooks, starred.map((book) => book.title).join(', ')]
-    .filter(Boolean)
-    .join(', ');
-  const favoriteAuthors = [profile.favoriteAuthors, [...new Set(starred.map((book) => book.author))].join(', ')]
-    .filter(Boolean)
-    .join(', ');
+  const favoriteBooks = profile.favoriteBooks;
+  const favoriteAuthors = profile.favoriteAuthors;
   const lifetime = lifetimeBadges(notebook);
   const writingBadges = [
     ...LIFETIME_BADGES.filter((badge) => lifetime.has(badge.id)),

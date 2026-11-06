@@ -6,7 +6,6 @@ import { clientAddressFrom } from '@/lib/auth/request';
 import type { AuthDependencies } from '@/lib/auth/service';
 import { SESSION_COOKIE, createSessionRepository, type SessionUser } from '@/lib/auth/session';
 import { createUserRepository } from '@/lib/auth/users';
-import { createBookRepository } from '@/lib/books/repository';
 import { getDatabase } from '@/lib/db/client';
 import { getEnvironment } from '@/lib/env';
 import { storageFor } from '@/lib/storage';
@@ -26,8 +25,6 @@ export const authDependencies = async (): Promise<AuthDependencies> => {
     now: () => new Date(),
   };
 };
-
-export const bookRepository = async () => createBookRepository(await getDatabase());
 
 export const clientAddress = async (): Promise<string | null> =>
   clientAddressFrom((await headers()).get('x-forwarded-for'), getEnvironment().TRUST_PROXY);
