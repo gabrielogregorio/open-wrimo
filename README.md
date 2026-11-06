@@ -134,7 +134,8 @@ Locally, `PLAYWRIGHT_CHANNEL=chrome` reuses an installed Chrome instead of downl
 
 | Workflow                     | When                           | What                                                                      |
 | ---------------------------- | ------------------------------ | ------------------------------------------------------------------------- |
-| `check-quality.yml`          | push and PR to `main` or `dev` | ESLint, types, Prettier, compose file, `pnpm audit`, pinned actions       |
+| `check-quality.yml`          | push and PR to `main` or `dev` | ESLint, types, Prettier, compose file, pinned actions                     |
+| `pnpm-audit.yml`             | push, PR and weekly            | `pnpm audit` of production and tooling, report on the PR, raw JSON kept   |
 | `tests.yml`                  | PR to `main` and merge         | Unit with coverage gate, then E2E, Lighthouse and memory on a fresh build |
 | `codeql-analysis.yml`        | PR, merge and weekly           | CodeQL for TypeScript and workflows                                       |
 | `auto-complete-fields.yml`   | PR to `main`                   | Assigns, labels, fills the changelog, validates release branches          |
