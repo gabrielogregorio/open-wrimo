@@ -72,8 +72,11 @@ export default async function ProfilePage() {
         <div className="flex min-w-48 flex-1 flex-col gap-2">
           <h1 className="font-display text-4xl font-semibold">{user.name}</h1>
           {laurels > 0 ? (
-            <p className="text-accent" aria-label={t('{count} laurels', { count: laurels })}>
-              {'🏆'.repeat(Math.min(laurels, 10))}
+            <p className="flex items-center gap-2 text-sm text-[#a8641a]" title={t('A laurel for each goal you met')}>
+              <span aria-hidden="true">{'🏆'.repeat(Math.min(laurels, 10))}</span>
+              <span className="font-display">
+                {laurels === 1 ? t('1 goal met') : t('{count} goals met', { count: laurels })}
+              </span>
             </p>
           ) : null}
           <p className="text-sm text-ink-soft">

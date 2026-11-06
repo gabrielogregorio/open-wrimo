@@ -1,4 +1,7 @@
 export const ptBRWriting: Record<string, string> = {
+  '1 goal met': '1 meta cumprida',
+  '{count} goals met': '{count} metas cumpridas',
+  'A laurel for each goal you met': 'Um louro para cada meta cumprida',
   'Delete the novel with its goals and progress?': 'Excluir o romance com metas e progresso?',
   'Goal beaten!': 'Meta batida!',
   'New goal': 'Nova meta',
