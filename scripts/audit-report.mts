@@ -54,7 +54,8 @@ const readAudit = (file: string): Audit => {
 const total = (counts: Record<Severity, number>): number =>
   SEVERITIES.reduce((sum, severity) => sum + counts[severity], 0);
 
-const cell = (text = ''): string => text.replace(/\|/g, '\\|');
+// Backslashes first, or a "\|" in the text would turn into an escaped backslash and a bare pipe.
+const cell = (text = ''): string => text.replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
 
 const table = (audit: Audit): string[] => {
   const rows = Object.values(audit.advisories).sort(
