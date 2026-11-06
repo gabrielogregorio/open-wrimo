@@ -107,16 +107,16 @@ Allow your address in the cluster network settings. Indexes are created on the f
 
 ## Available scripts
 
-| Command                                     | What it does                                                 |
-| ------------------------------------------- | ------------------------------------------------------------ |
-| `pnpm run dev`                              | Development server on port 8920                              |
-| `pnpm run build` / `pnpm run start`         | Production build and server on port 8920                     |
-| `pnpm run db:up` / `pnpm run db:down`       | Start or stop the local MongoDB container                    |
-| `pnpm run lint`                             | ESLint, route types and TypeScript                           |
-| `pnpm run format` / `pnpm run format:check` | Prettier                                                     |
-| `pnpm run unit` / `pnpm run unit:coverage`  | Vitest, with the 100% gate in the second                     |
-| `pnpm run e2e`                              | Build, then Playwright, Lighthouse and the memory check      |
-| `pnpm run check:all`                        | Everything CI runs                                           |
+| Command                                     | What it does                                            |
+| ------------------------------------------- | ------------------------------------------------------- |
+| `pnpm run dev`                              | Development server on port 8920                         |
+| `pnpm run build` / `pnpm run start`         | Production build and server on port 8920                |
+| `pnpm run db:up` / `pnpm run db:down`       | Start or stop the local MongoDB container               |
+| `pnpm run lint`                             | ESLint, route types and TypeScript                      |
+| `pnpm run format` / `pnpm run format:check` | Prettier                                                |
+| `pnpm run unit` / `pnpm run unit:coverage`  | Vitest, with the 100% gate in the second                |
+| `pnpm run e2e`                              | Build, then Playwright, Lighthouse and the memory check |
+| `pnpm run check:all`                        | Everything CI runs                                      |
 
 ## Tests
 
