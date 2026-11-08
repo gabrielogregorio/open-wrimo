@@ -1,2 +1,124 @@
-// Texts of the story tools.
-export const ptBRToolsStory: Record<string, string> = {};
+// Texts of the review and story tools.
+export const ptBRToolsStory: Record<string, string> = {
+  // Shared by the review tools
+  'Your passage': 'Seu trecho',
+  'Paste a chapter or a scene here.': 'Cole aqui um capítulo ou uma cena.',
+  'The text stays on this device and is shared by the four review tools.':
+    'O texto fica neste aparelho e é compartilhado pelas quatro ferramentas de revisão.',
+  'Paste a passage to see the analysis.': 'Cole um trecho para ver a análise.',
+  Sentences: 'Frases',
+  // Passage stats
+  Paragraphs: 'Parágrafos',
+  'Minutes to read': 'Minutos de leitura',
+  'Most repeated words': 'Palavras mais repetidas',
+  'No word repeats yet.': 'Nenhuma palavra se repete por enquanto.',
+  'Sentences over {limit} words: {count}': 'Frases com mais de {limit} palavras: {count}',
+  '({count} words)': '({count} palavras)',
+  'Adverbs ending in -mente: {count}': 'Advérbios terminados em -mente: {count}',
+  'Long sentence above (words)': 'Frase longa acima de (palavras)',
+  // Readability
+  Syllables: 'Sílabas',
+  'Flesch reading ease adapted to Portuguese by Martins and others: 248.835 minus 1.015 times words per sentence minus 84.6 times syllables per word. From 0 (very hard) to 100 (very easy). Syllables are counted by a rule of thumb, so treat the score as a guide.':
+    'Índice de facilidade de leitura de Flesch adaptado ao português por Martins e colegas: 248,835 menos 1,015 vezes as palavras por frase menos 84,6 vezes as sílabas por palavra. Vai de 0 (muito difícil) a 100 (muito fácil). As sílabas são contadas por uma regra prática, então use a nota como guia.',
+  'Very easy': 'Muito fácil',
+  Easy: 'Fácil',
+  Hard: 'Difícil',
+  'Very hard': 'Muito difícil',
+  'Short sentences and short words. Reads like a children’s book or a fast thriller.':
+    'Frases curtas e palavras curtas. Lê-se como um livro infantil ou um suspense ágil.',
+  'Comfortable for most adult readers, like popular fiction and good journalism.':
+    'Confortável para a maioria dos leitores adultos, como a ficção popular e o bom jornalismo.',
+  'Long sentences or long words. Fine for literary or dense prose, tiring for a fast scene.':
+    'Frases longas ou palavras longas. Serve para prosa literária ou densa, cansa numa cena rápida.',
+  'Reads like academic or legal text. Try splitting sentences and choosing shorter words.':
+    'Lê-se como texto acadêmico ou jurídico. Tente dividir as frases e escolher palavras mais curtas.',
+  // Repetition highlighter
+  'Repeated in the paragraph': 'Repetida no parágrafo',
+  'Word you tapped': 'Palavra que você tocou',
+  'Tap any word to find it everywhere.': 'Toque em qualquer palavra para achá-la no texto todo.',
+  'Repeated words by paragraph': 'Palavras repetidas por parágrafo',
+  'Paragraph {number}:': 'Parágrafo {number}:',
+  'Highlight from (times in a paragraph)': 'Destacar a partir de (vezes no parágrafo)',
+  // Dialogue and narration
+  '{dialogue}% dialogue, {narration}% narration': '{dialogue}% de diálogo, {narration}% de narração',
+  'Dialogue {percent}%': 'Diálogo {percent}%',
+  'Narration {percent}%': 'Narração {percent}%',
+  'Words of dialogue': 'Palavras de diálogo',
+  'Words of narration': 'Palavras de narração',
+  'Lines that open with a dash count as speech, and the narrator’s cut between dashes counts as narration. Text inside quotes also counts as speech.':
+    'Linhas que começam com travessão contam como fala, e a intervenção do narrador entre travessões conta como narração. Texto entre aspas também conta como fala.',
+  // Shared by the story tools
+  'No novel (loose notes)': 'Nenhum romance (notas soltas)',
+  'Yes, delete': 'Sim, apagar',
+  Edit: 'Editar',
+  Delete: 'Apagar',
+  'Delete {name}?': 'Apagar {name}?',
+  Note: 'Nota',
+  // Name generator
+  Era: 'Época',
+  Region: 'Região',
+  Gender: 'Gênero',
+  'Generate 10 names': 'Gerar 10 nomes',
+  'Save {name}': 'Guardar {name}',
+  'Saved names': 'Nomes guardados',
+  'Remove {name}': 'Tirar {name}',
+  'Tap the star next to a name to keep it here.': 'Toque na estrela ao lado de um nome para guardá-lo aqui.',
+  'Colonial (1500 to 1822)': 'Colônia (1500 a 1822)',
+  'Empire (1822 to 1889)': 'Império (1822 a 1889)',
+  'Early 1900s': 'Início do século XX',
+  '1950s to 1970s': 'Anos 1950 a 1970',
+  Today: 'Hoje',
+  Brazil: 'Brasil',
+  Portugal: 'Portugal',
+  'English-speaking': 'Língua inglesa',
+  'Spanish-speaking': 'Língua espanhola',
+  Italian: 'Italiana',
+  Japanese: 'Japonesa',
+  Female: 'Feminino',
+  Male: 'Masculino',
+  Any: 'Qualquer',
+  // Character sheet
+  Appearance: 'Aparência',
+  'What they want': 'Objetivo',
+  Fear: 'Medo',
+  Arc: 'Arco',
+  Notes: 'Notas',
+  'Role in the story': 'Papel na história',
+  'New character': 'Novo personagem',
+  'Add character': 'Adicionar personagem',
+  'No characters yet for this novel.': 'Ainda não há personagens neste romance.',
+  // Timeline
+  'What happens': 'O que acontece',
+  Chapter: 'Capítulo',
+  'New event': 'Novo evento',
+  'Add event': 'Adicionar evento',
+  'No events yet for this novel.': 'Ainda não há eventos neste romance.',
+  'Chapter {number}': 'Capítulo {number}',
+  'Move {title} up': 'Subir {title}',
+  'Move {title} down': 'Descer {title}',
+  // Scene board
+  Scene: 'Cena',
+  'New scene': 'Nova cena',
+  'Add to planned': 'Adicionar em planejadas',
+  Columns: 'Colunas',
+  Planned: 'Planejadas',
+  Written: 'Escritas',
+  Revised: 'Revisadas',
+  // Idea generator
+  Character: 'Personagem',
+  Place: 'Lugar',
+  Conflict: 'Conflito',
+  'Reroll {part}': 'Sortear outro: {part}',
+  'Roll a character, a place and a conflict.': 'Sorteie um personagem, um lugar e um conflito.',
+  'Reroll all': 'Sortear tudo de novo',
+  'Roll an idea': 'Sortear uma ideia',
+  'Save idea': 'Guardar ideia',
+  'Saved ideas': 'Ideias guardadas',
+  '{character}, in {place}, {conflict}.': '{character}, em {place}, {conflict}.',
+  'Delete this idea?': 'Apagar esta ideia?',
+  'Ideas you save stay here, with the novel.': 'As ideias que você guardar ficam aqui, junto do romance.',
+  // Plot dice
+  'What happens now?': 'E agora, o que acontece?',
+  'Roll the die': 'Jogar o dado',
+  'Last rolls': 'Últimas jogadas',
+};
