@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- Deleting an account also removes the images added inside its texts before 0.2.0, which had no upload record;
+  an image another account uploaded or still shows is kept, so pasting someone else's image never deletes it.
+
 ## 0.2.0
 
 - Renamed to Open Wrimo and turned into a writing app: novels, goals, word updates, stats, sprints and achievements.
