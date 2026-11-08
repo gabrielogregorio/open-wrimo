@@ -12,7 +12,7 @@ import {
   type Backup as BackupData,
   type RestoreItem,
 } from '@/lib/tools/export/backup';
-import { downloadFile } from '@/lib/tools/export/download';
+import { downloadFile, shareFile } from '@/lib/tools/export/download';
 import { localDb } from '@/lib/tools/local-db';
 
 type Pending = { backup: BackupData; plan: RestoreItem[]; fileName: string };
@@ -43,6 +43,32 @@ export default function Backup() {
     downloadFile(backupZip(backup), `open-wrimo-backup-${now.toISOString().slice(0, 10)}.zip`, 'application/zip');
     setBusy(false);
     setMessage(t('Backup saved with {count} items.', { count: Object.keys(backup.entries).length }));
+  };
+
+  // Sends the same .zip through the phone's share sheet; where files cannot be shared, it downloads instead.
+  const sendToDevice = async (): Promise<void> => {
+    setBusy(true);
+    setError('');
+    const now = new Date();
+    const backup = makeBackup(await localDb().entries(), readLocal(), now);
+    const fileName = `open-wrimo-backup-${now.toISOString().slice(0, 10)}.zip`;
+    const bytes = backupZip(backup);
+    const outcome = await shareFile(bytes, fileName, 'application/zip');
+
+    if (outcome === 'unsupported') {
+      downloadFile(bytes, fileName, 'application/zip');
+    }
+
+    setBusy(false);
+    setMessage(
+      {
+        shared: t('Backup sent. On the other device, open it here with "Choose a backup file".'),
+        cancelled: t('Sending cancelled.'),
+        unsupported: t(
+          'This browser cannot share files, so the backup was downloaded. Send it with the app you prefer and open it on the other device.',
+        ),
+      }[outcome],
+    );
   };
 
   const pickFile = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
@@ -99,6 +125,18 @@ export default function Backup() {
           className="min-h-11 self-start rounded-sm bg-accent px-4 font-display text-sm font-semibold text-accent-ink">
           {t('Download backup .zip')}
         </button>
+        <button
+          type="button"
+          onClick={() => void sendToDevice()}
+          disabled={busy}
+          className="min-h-11 self-start rounded-sm border border-accent px-4 font-display text-sm font-semibold text-accent">
+          {t('Send to another device')}
+        </button>
+        <p className="text-sm text-ink-soft">
+          {t(
+            'The tools keep everything on this device only. To move to a phone or another computer, send the backup and open it there with "Choose a backup file".',
+          )}
+        </p>
       </section>
       <section className="sheet flex flex-col gap-3 rounded-sm p-5 sm:p-6">
         <h2 className="font-display text-xl font-semibold">{t('Bring a backup back')}</h2>

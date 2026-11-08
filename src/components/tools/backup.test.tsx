@@ -53,6 +53,34 @@ describe('Backup', () => {
     expect(screen.getByText(/does not include your account data/)).toBeInTheDocument();
   });
 
+  it('sends the backup through the share sheet, or downloads it where files cannot be shared', async () => {
+    await localDb().set('draft:a', draft({ id: 'a' }));
+    const share = vi.fn(async () => undefined);
+    Object.assign(navigator, { share, canShare: () => true });
+    renderWithLocale(<Backup />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send to another device' }));
+    await flush();
+
+    expect(share).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('status')).toHaveTextContent('Backup sent.');
+
+    share.mockRejectedValueOnce(new DOMException('closed', 'AbortError'));
+    fireEvent.click(screen.getByRole('button', { name: 'Send to another device' }));
+    await flush();
+
+    expect(screen.getByRole('status')).toHaveTextContent('Sending cancelled.');
+
+    Object.assign(navigator, { canShare: () => false });
+    fireEvent.click(screen.getByRole('button', { name: 'Send to another device' }));
+    await flush();
+
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    expect(screen.getByRole('status')).toHaveTextContent('This browser cannot share files');
+    Reflect.deleteProperty(navigator, 'share');
+    Reflect.deleteProperty(navigator, 'canShare');
+  });
+
   it('shows what a backup brings and restores it after confirming', async () => {
     await localDb().set('draft:a', draft({ id: 'a', text: 'novo', updatedAt: '2026-11-09T00:00:00.000Z' }));
     await localDb().set('draft:b', draft({ id: 'b', text: 'velho' }));
