@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2
+
+- An eye button shows or hides the password on sign up and sign in.
+- A refused sign up keeps the typed password, so fixing the email does not mean typing it again; sign in still
+  clears it after a wrong password.
+- An admin's profile links to the reports and account deletions pages.
+
 ## 0.2.1
 
 - Images are stored in a folder per account (`<kind>/<userId>/<file>`), and deleting an account empties its folders,
