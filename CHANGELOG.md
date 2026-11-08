@@ -18,6 +18,7 @@
 - Profile pictures are cropped to a 512×512 square around what draws the eye, instead of up to 1920×1080.
 - Animated GIFs and WebPs keep every frame; before, only the first one was kept.
 - Community cards load the pictures and covers only as they near the screen.
+- The preview of a chosen picture is a small drawing of it instead of the file itself, lighter on big photos.
 - New README tour GIFs, recorded by `pnpm run demo:record` from the script in `docs/demo-script.md`, with its own
   demo data on a throwaway database.
 
