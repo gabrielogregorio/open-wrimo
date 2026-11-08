@@ -129,6 +129,11 @@ export const ptBRToolsRhythm: Record<string, string> = {
   'Reading on a Kindle': 'Para ler no Kindle',
   'Send the .epub with Amazon’s Send to Kindle (the app, the website or your Kindle e-mail address). Kindle accepts EPUB since 2022, and the old MOBI format is no longer accepted.':
     'Mande o .epub pelo Enviar para Kindle da Amazon (o app, o site ou o e-mail do seu Kindle). O Kindle aceita EPUB desde 2022, e o antigo formato MOBI não é mais aceito.',
+  '{count} images kept': '{count} {count:imagem mantida|imagens mantidas}',
+  '{count} images left out (format e-readers do not show, or past the 50 MB limit)':
+    '{count} {count:imagem deixada|imagens deixadas} de fora (formato que os leitores digitais não mostram, ou acima do limite de 50 MB)',
+  'Bold, italic, images and tables are kept. Fonts, colors and sizes are left to the e-reader, and a .txt has no formatting to keep.':
+    'Negrito, itálico, imagens e tabelas são mantidos. Fontes, cores e tamanhos ficam por conta do leitor digital, e um .txt não tem formatação para manter.',
   'Chapters come from the headings of the file. In a .txt, lines like “Capítulo 1” or “Prólogo” start a chapter.':
     'Os capítulos vêm dos títulos do arquivo. Num .txt, linhas como “Capítulo 1” ou “Prólogo” começam um capítulo.',
   'Send to another device': 'Enviar para outro aparelho',

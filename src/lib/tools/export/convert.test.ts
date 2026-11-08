@@ -234,7 +234,7 @@ describe('markdown', () => {
 
     expect(book.title).toBe('Noite');
     expect(book.author).toBe('Ana');
-    expect(book.chapters).toEqual([
+    expect(book.chapters.map(({ title, text: plain }) => ({ title, text: plain }))).toEqual([
       {
         title: 'Capítulo 1',
         text:
@@ -268,7 +268,7 @@ describe('html', () => {
 
     expect(book.title).toBe('Livro & Cia');
     expect(book.author).toBe('Davi é');
-    expect(book.chapters).toEqual([
+    expect(book.chapters.map(({ title, text }) => ({ title, text }))).toEqual([
       { title: 'Capítulo 1', text: 'Primeira linha\nsegunda…\n***' },
       { title: 'Sub', text: 'Mais' },
     ]);

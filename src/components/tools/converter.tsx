@@ -90,11 +90,14 @@ export default function ConverterTool({ convert = convertFile }: { data: ToolDat
       chapters: book.chapters,
       contentsLabel: t('Contents'),
       kindle,
+      images: book.images,
     });
     downloadFile(bytes, `${slugify(finalTitle, 'livro')}.epub`, EPUB_TYPE);
     setDone(true);
   };
 
+  const keptImages = loaded?.book.images?.length ?? 0;
+  const skippedImages = loaded?.book.skippedImages ?? 0;
   const totalWords = loaded ? loaded.book.chapters.reduce((sum, chapter) => sum + countWords(chapter.text), 0) : 0;
 
   return (
@@ -180,6 +183,16 @@ export default function ConverterTool({ convert = convertFile }: { data: ToolDat
                 </li>
               ))}
             </ol>
+            {keptImages > 0 ? (
+              <p className="text-sm">{t('{count} images kept', { count: formatNumber(locale, keptImages) })}</p>
+            ) : null}
+            {skippedImages > 0 ? (
+              <p className="text-sm text-ink-soft">
+                {t('{count} images left out (format e-readers do not show, or past the 50 MB limit)', {
+                  count: formatNumber(locale, skippedImages),
+                })}
+              </p>
+            ) : null}
           </div>
           <label className="flex min-h-11 items-center gap-3 text-sm">
             <input
@@ -207,6 +220,11 @@ export default function ConverterTool({ convert = convertFile }: { data: ToolDat
         <p>
           {t(
             'Send the .epub with Amazon’s Send to Kindle (the app, the website or your Kindle e-mail address). Kindle accepts EPUB since 2022, and the old MOBI format is no longer accepted.',
+          )}
+        </p>
+        <p className="text-ink-soft">
+          {t(
+            'Bold, italic, images and tables are kept. Fonts, colors and sizes are left to the e-reader, and a .txt has no formatting to keep.',
           )}
         </p>
         <p className="text-ink-soft">

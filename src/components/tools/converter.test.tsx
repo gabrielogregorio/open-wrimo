@@ -119,6 +119,28 @@ describe('ConverterTool', () => {
     expect(screen.getByRole('status')).toHaveTextContent('');
   });
 
+  it('keeps formatting and images, and says how many images were kept and left out', async () => {
+    const user = userEvent.setup();
+    const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const html = `<h1>Um</h1><p>Texto <b>forte</b></p><p><img src="data:image/png;base64,${png}" alt="gato"></p><p><img src="data:image/bmp;base64,AAAA"></p>`;
+    renderWithLocale(<ConverterTool data={data} />);
+
+    expect(screen.getByText(/Bold, italic, images and tables are kept/)).toBeInTheDocument();
+
+    await user.upload(fileInput(), textFile(html, 'livro.html'));
+
+    expect(await screen.findByText('1 images kept')).toBeInTheDocument();
+    expect(screen.getByText(/1 images left out/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Download .epub' }));
+    const book = await savedBook();
+
+    expect(book['OEBPS/chapter-001.xhtml']).toContain('<p>Texto <strong>forte</strong></p>');
+    expect(book['OEBPS/chapter-001.xhtml']).toContain('<img src="images/image-001.png" alt="gato"/>');
+    expect(book['OEBPS/content.opf']).toContain('media-type="image/png"');
+    expect(book['OEBPS/images/image-001.png']).toBeDefined();
+  });
+
   it('ignores an empty file selection', () => {
     renderWithLocale(<ConverterTool data={data} />);
     fireEvent.change(fileInput(), { target: { files: [] } });

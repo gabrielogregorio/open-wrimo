@@ -1,7 +1,17 @@
 // Turns the plain text of a draft into paragraphs, and makes any text safe inside XML.
 export type Block = { kind: 'paragraph'; text: string } | { kind: 'break' };
 
-export type Chapter = { title: string; text: string };
+// Formatted text kept by the converter. Drafts only fill title and text; content, when present, is
+// what the ePub renders, while text stays the plain version used for word counts.
+export type Run = { text: string; bold?: boolean; italic?: boolean };
+
+export type RichBlock =
+  | { kind: 'paragraph'; runs: Run[] }
+  | { kind: 'break' }
+  | { kind: 'image'; src: string; alt: string }
+  | { kind: 'table'; rows: Run[][][] };
+
+export type Chapter = { title: string; text: string; content?: RichBlock[] };
 
 const CONTROL_CHARACTERS = /[\u0000-\u0008\u000b\u000c\u000e-\u001f￾￿]/g;
 const SCENE_BREAK = /^(?:[*#~]\s*){1,3}$/;

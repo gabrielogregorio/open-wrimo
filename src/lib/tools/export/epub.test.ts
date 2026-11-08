@@ -92,3 +92,55 @@ describe('buildEpub for Kindle', () => {
     expect(nav).not.toContain('bodymatter');
   });
 });
+
+describe('buildEpub with formatting', () => {
+  it('renders bold, italic, images and tables and adds the images to the package', () => {
+    const bytes = new Uint8Array([137, 80, 78, 71]);
+    const files = readZip(
+      buildEpub(
+        {
+          ...input,
+          kindle: true,
+          images: [{ path: 'images/image-001.png', mediaType: 'image/png', bytes }],
+          chapters: [
+            {
+              title: 'Rico',
+              text: 'ignorado',
+              content: [
+                {
+                  kind: 'paragraph',
+                  runs: [
+                    { text: 'a < b ' },
+                    { text: 'forte', bold: true },
+                    { text: ' leve', italic: true },
+                    { text: ' ambos\nlinha', bold: true, italic: true },
+                  ],
+                },
+                { kind: 'break' },
+                { kind: 'image', src: 'images/image-001.png', alt: 'Gato "preto"' },
+                { kind: 'table', rows: [[[{ text: 'A', bold: true }], []], [[{ text: 'B' }]]] },
+              ],
+            },
+          ],
+        },
+        new Date('2026-11-08T10:00:00Z'),
+      ),
+    );
+    const byName = Object.fromEntries(files.map((file) => [file.name, file.data]));
+    const chapter = textOf(byName['OEBPS/chapter-001.xhtml']);
+
+    expect(byName['OEBPS/images/image-001.png']).toEqual(bytes);
+    expect(textOf(byName['OEBPS/content.opf'])).toContain(
+      '<item id="img1" href="images/image-001.png" media-type="image/png"/>',
+    );
+    expect(chapter).not.toContain('ignorado');
+    expect(chapter).toContain(
+      '<h1>Rico</h1><p>a &lt; b <strong>forte</strong><em> leve</em><strong><em> ambos<br/>linha</em></strong></p>' +
+        '<p class="break">* * *</p>' +
+        '<p class="image"><img src="images/image-001.png" alt="Gato &quot;preto&quot;"/></p>' +
+        '<table><tbody><tr><td><strong>A</strong></td><td></td></tr><tr><td>B</td></tr></tbody></table>',
+    );
+    expect(KINDLE_STYLE).toContain('img { max-width: 100%; }');
+    expect(EPUB_STYLE).toContain('td {');
+  });
+});
