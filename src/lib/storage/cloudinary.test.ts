@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { createCloudinaryStorage, parseCloudinaryUrl, signParameters } from './cloudinary';
 
 const CREDENTIALS = { cloudName: 'demo-cloud', apiKey: '1234', apiSecret: 'shh' };
@@ -17,10 +16,10 @@ describe('Cloudinary storage', () => {
     });
   });
 
-  it('signs the sorted parameters with the secret', () => {
+  it('signs the sorted parameters with the secret using SHA-256', () => {
+    // SHA-256 of "folder=a&timestamp=10shh"
     expect(signParameters({ timestamp: '10', folder: 'a' }, 'shh')).toBe(
-      // eslint-disable-next-line sonarjs/hashing -- Cloudinary request signatures are SHA-1
-      createHash('sha1').update('folder=a&timestamp=10shh').digest('hex'),
+      '40cbb369960ed574e8f5052ec5476e3a10b519ce65098e32446c1d46ec16a695',
     );
   });
 

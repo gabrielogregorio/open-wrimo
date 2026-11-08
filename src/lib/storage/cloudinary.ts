@@ -19,8 +19,8 @@ export const signParameters = (parameters: Record<string, string>, apiSecret: st
     .map((name) => `${name}=${parameters[name]}`)
     .join('&');
 
-  // eslint-disable-next-line sonarjs/hashing -- Cloudinary request signatures are SHA-1
-  return createHash('sha1').update(`${payload}${apiSecret}`).digest('hex');
+  // Cloudinary takes SHA-1 or SHA-256 signatures of the same string; SHA-1 is broken, so it gets SHA-256.
+  return createHash('sha256').update(`${payload}${apiSecret}`).digest('hex');
 };
 
 type Options = CloudinaryCredentials & { folder: string; fetch?: typeof fetch; now?: () => Date };

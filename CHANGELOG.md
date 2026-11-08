@@ -9,6 +9,7 @@
 - Deleting an account also removes the old images added inside its texts, which had no upload record; an image
   another account uploaded or still shows is kept, so pasting someone else's image never deletes it.
 - The delete my account button stays off until the confirmation box is ticked.
+- Cloudinary requests are signed with SHA-256 instead of SHA-1.
 
 ## 0.2.0
 
