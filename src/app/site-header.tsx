@@ -21,6 +21,7 @@ export async function SiteHeader() {
           <MainNav
             label={t('Main')}
             writing={t('Writing')}
+            tools={t('Tools')}
             community={t('Community')}
             profile={t('Profile')}
             update={t('Update my word count')}

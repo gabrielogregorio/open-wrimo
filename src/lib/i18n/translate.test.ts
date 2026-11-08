@@ -1,3 +1,4 @@
+import { TOOLS } from '@/lib/tools/catalog';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -93,6 +94,7 @@ describe('pt-BR dictionary', () => {
     ...Object.values(PERIOD_LABELS),
     ...Object.values(PERIOD_SUFFIX),
     ...GENRE_SUGGESTIONS,
+    ...TOOLS.flatMap((tool) => [tool.title, tool.description]),
     ...EVENTS.map((event) => event.name),
     ...[...WRITING_BADGES, ...LIFETIME_BADGES, ...PERSONAL_BADGES, ...PARTICIPATION_BADGES].flatMap((badge) => [
       badge.label,

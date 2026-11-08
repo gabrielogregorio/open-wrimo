@@ -1,7 +1,9 @@
+import { ptBRTools } from './pt-BR-tools';
 import { ptBRWriting } from './pt-BR-writing';
 
 export const ptBR: Record<string, string> = {
   ...ptBRWriting,
+  ...ptBRTools,
   'Already have a library card?': 'Já tem sua carteirinha?',
   'At least 10 characters.': 'Pelo menos 10 caracteres.',
   'Back to the start': 'Voltar ao início',

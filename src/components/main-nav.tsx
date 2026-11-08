@@ -7,16 +7,18 @@ import { sectionOf } from '@/lib/navigation';
 type MainNavProps = {
   label: string;
   writing: string;
+  tools: string;
   community: string;
   profile: string;
   update: string;
   sprint: string;
 };
 
-export function MainNav({ label, writing, community, profile, update, sprint }: MainNavProps) {
+export function MainNav({ label, writing, tools, community, profile, update, sprint }: MainNavProps) {
   const current = sectionOf(usePathname());
   const tabs = [
     { section: 'writing', href: '/write', text: writing },
+    { section: 'tools', href: '/write/tools', text: tools },
     { section: 'community', href: '/write/community', text: community },
     { section: 'profile', href: '/write/profile', text: profile },
   ] as const;

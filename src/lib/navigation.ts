@@ -1,11 +1,12 @@
 // The writing area reads like the chapters of one book, left to right, so a move between them can turn
 // the page forward or back.
-export const SECTIONS = ['writing', 'community', 'profile', 'update', 'sprint'] as const;
+export const SECTIONS = ['writing', 'tools', 'community', 'profile', 'update', 'sprint'] as const;
 
 export type Section = (typeof SECTIONS)[number];
 export type PageTurn = 'forward' | 'back' | 'within' | 'none';
 
 const OWN_PAGES: Record<Exclude<Section, 'writing'>, string> = {
+  tools: '/write/tools',
   community: '/write/community',
   profile: '/write/profile',
   update: '/write/update',

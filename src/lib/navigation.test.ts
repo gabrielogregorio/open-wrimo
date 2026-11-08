@@ -6,6 +6,7 @@ describe('sectionOf', () => {
     ['/write/novels/abc', 'writing'],
     ['/write/stats', 'writing'],
     ['/write/community', 'community'],
+    ['/write/tools/focus', 'tools'],
     ['/write/profile/edit', 'profile'],
     ['/write/update', 'update'],
     ['/write/sprint', 'sprint'],

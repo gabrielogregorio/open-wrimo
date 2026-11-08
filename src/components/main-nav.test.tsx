@@ -10,6 +10,7 @@ const renderNav = () =>
     <MainNav
       label="Main"
       writing="Writing"
+      tools="Tools"
       community="Community"
       profile="Profile"
       update="Update my word count"
