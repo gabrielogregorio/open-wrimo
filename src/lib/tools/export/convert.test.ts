@@ -7,6 +7,7 @@ import {
   decodeText,
   formatOf,
   type ConvertFailure,
+  withoutHiddenParts,
 } from './convert';
 import { createDeflatedZip } from './test-zip';
 import { createZip, utf8 } from './zip';
@@ -258,6 +259,12 @@ describe('markdown', () => {
 });
 
 describe('html', () => {
+  it('removes comments and hidden elements that only join up after the first pass', () => {
+    expect(withoutHiddenParts('<p>A</p><!<!-- a -->-- b --><p>B</p>')).toBe('<p>A</p><p>B</p>');
+    expect(withoutHiddenParts('<scr<script>x</script>ipt>alert(1)</script><p>B</p>')).toBe('<p>B</p>');
+    expect(withoutHiddenParts('<p>Nada a remover</p>')).toBe('<p>Nada a remover</p>');
+  });
+
   it('reads title, author, headings, paragraphs and breaks without scripts or styles', async () => {
     const html =
       '<html><head><title>Livro &amp; Cia</title><meta name="author" content="Davi &eacute;"><style>p{}</style></head>' +

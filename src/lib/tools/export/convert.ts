@@ -1043,12 +1043,24 @@ const htmlBlock = (block: RegExpExecArray, store: ImageStore): Item[] => {
   return [{ kind: 'heading', level: Number(name[1]), text: htmlInlineText(block[2]).replace(/\n+/g, ' ') }];
 };
 
+// Comments and hidden elements are removed until none is left, so pieces that join up after one pass
+// ("<!<!-- -->--", "<scr<script></script>ipt>") are removed too.
+export const withoutHiddenParts = (html: string): string => {
+  let previous: string;
+  let body = html;
+
+  do {
+    previous = body;
+    body = body.replace(/<!--[\s\S]*?-->/g, '').replace(/<(script|style|head|template|noscript)\b[\s\S]*?<\/\1>/gi, '');
+  } while (body !== previous);
+
+  return body;
+};
+
 const parseHtml = (text: string, store: ImageStore): Parsed => {
   const title = htmlInlineText(/<title(?:\s[^>]*)?>([\s\S]*?)<\/title>/i.exec(text)?.[1] ?? '');
   const author = decodeEntities(/<meta\s+name=["']author["']\s+content=["']([^"']*)["']/i.exec(text)?.[1] ?? '').trim();
-  const body = text
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/<(script|style|head|template|noscript)\b[\s\S]*?<\/\1>/gi, '');
+  const body = withoutHiddenParts(text);
   const items = [...body.matchAll(/<(h[1-6]|p|table)(?:\s[^>]*)?>([\s\S]*?)<\/\1>|<(?:hr|img)\b[^>]*>/gi)].flatMap(
     (block) => htmlBlock(block, store),
   );
