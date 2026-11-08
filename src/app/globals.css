@@ -207,9 +207,11 @@
     --slide-from: -1.5rem;
   }
 
+  /* A tall click area; the negative margin keeps the header the same height. */
   .nav-tab {
     position: relative;
-    padding-block: 0.25rem;
+    padding-block: 0.85rem;
+    margin-block: -0.6rem;
     text-underline-offset: 4px;
   }
 
@@ -228,7 +230,7 @@
     content: '';
     position: absolute;
     right: 0;
-    bottom: -0.35rem;
+    bottom: 0.25rem;
     left: 0;
     height: 3px;
     border-radius: 2px;
