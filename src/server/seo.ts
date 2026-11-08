@@ -1,6 +1,7 @@
 import { getEnvironment } from '@/lib/env';
 
 export const SITE_NAME = 'Open Wrimo';
+export const REPOSITORY_URL = 'https://github.com/gabrielogregorio/open-wrimo';
 export const SITE_DESCRIPTION = 'Write your novel, track every word and meet your goals.';
 
 export const siteUrl = (): URL => new URL(getEnvironment().APP_URL);

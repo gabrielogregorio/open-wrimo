@@ -14,6 +14,8 @@ export const ptBR: Record<string, string> = {
   'Enter a valid email address.': 'Informe um e-mail válido.',
   'Enter your password.': 'Informe sua senha.',
   'Open Wrimo · write every day, read slowly.': 'Open Wrimo · escreva todo dia, leia devagar.',
+  'Contribute on GitHub': 'Contribua no GitHub',
+  '(opens in a new tab)': '(abre em nova aba)',
   'Hello, {name}': 'Olá, {name}',
   'Invalid email or password.': 'E-mail ou senha incorretos.',
   'It may have been removed, or it was never written.': 'Talvez tenha sido arrancada, ou nunca foi escrita.',

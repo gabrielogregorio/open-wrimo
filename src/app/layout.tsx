@@ -1,6 +1,7 @@
 import '@fontsource-variable/fraunces';
 import '@fontsource-variable/literata';
 import './globals.css';
+import { Code2 } from 'lucide-react';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { cookies } from 'next/headers';
@@ -8,7 +9,7 @@ import { I18nProvider } from '@/components/i18n-provider';
 import { TimeZoneSync } from '@/components/time-zone-sync';
 import { TIME_ZONE_COOKIE } from '@/lib/writing/dates';
 import { getLocale, getTranslator } from '@/server/i18n';
-import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from '@/server/seo';
+import { REPOSITORY_URL, SITE_DESCRIPTION, SITE_NAME, siteUrl } from '@/server/seo';
 import { SiteHeader } from './site-header';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -53,9 +54,18 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             {children}
           </main>
           <footer className="border-t border-rule">
-            <p className="mx-auto max-w-5xl px-4 py-6 text-center text-sm text-ink-soft italic">
-              {t('Open Wrimo · write every day, read slowly.')}
-            </p>
+            <div className="mx-auto flex max-w-5xl flex-col items-center gap-1 px-4 py-6 text-center text-sm text-ink-soft">
+              <p className="italic">{t('Open Wrimo · write every day, read slowly.')}</p>
+              <a
+                href={REPOSITORY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center gap-1.5 font-display underline underline-offset-4 hover:text-accent">
+                <Code2 className="h-4 w-4" aria-hidden="true" />
+                {t('Contribute on GitHub')}
+                <span className="sr-only">{t('(opens in a new tab)')}</span>
+              </a>
+            </div>
           </footer>
         </I18nProvider>
       </body>
