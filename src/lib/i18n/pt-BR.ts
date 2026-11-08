@@ -83,7 +83,8 @@ export const ptBR: Record<string, string> = {
   'This email is already registered.': 'Este e-mail já está cadastrado.',
   'This page is missing from the book.': 'Esta página não está no livro.',
   Title: 'Título',
-  'Too many attempts. Try again in {minutes} minutes.': 'Muitas tentativas. Tente de novo em {minutes} minutos.',
+  'Too many attempts. Try again in {minutes} minutes.':
+    'Muitas tentativas. Tente de novo em {minutes} {minutes:minuto|minutos}.',
   Update: 'Atualizar',
   'Use 10 to 128 characters.': 'Use de 10 a 128 caracteres.',
   'Welcome back': 'Que bom te ver de novo',

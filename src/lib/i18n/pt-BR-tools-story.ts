@@ -15,8 +15,8 @@ export const ptBRToolsStory: Record<string, string> = {
   'Minutes to read': 'Minutos de leitura',
   'Most repeated words': 'Palavras mais repetidas',
   'No word repeats yet.': 'Nenhuma palavra se repete por enquanto.',
-  'Sentences over {limit} words: {count}': 'Frases com mais de {limit} palavras: {count}',
-  '({count} words)': '({count} palavras)',
+  'Sentences over {limit} words: {count}': 'Frases com mais de {limit} {limit:palavra|palavras}: {count}',
+  '({count} words)': '({count} {count:palavra|palavras})',
   'Adverbs ending in -mente: {count}': 'Advérbios terminados em -mente: {count}',
   'Long sentence above (words)': 'Frase longa acima de (palavras)',
   // Readability

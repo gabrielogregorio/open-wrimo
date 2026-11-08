@@ -79,6 +79,14 @@ describe('translate', () => {
     expect(translate('en-US', 'Hello, {name}')).toBe('Hello, {name}');
   });
 
+  it('picks the singular for exactly one and the plural otherwise, even for formatted numbers', () => {
+    expect(translate('pt-BR', '{count} words', { count: 1 })).toBe('1 palavra');
+    expect(translate('pt-BR', '{count} words', { count: 0 })).toBe('0 palavras');
+    expect(translate('pt-BR', '{count} words', { count: '1.234' })).toBe('1.234 palavras');
+    expect(translate('pt-BR', '{count} chapters, {words} words', { count: 1, words: 1 })).toBe('1 capítulo, 1 palavra');
+    expect(translate('pt-BR', '{count} words')).toBe('{count} {count:palavra|palavras}');
+  });
+
   it('falls back to the key when a translation is missing', () => {
     expect(translator('pt-BR')('A sentence nobody translated')).toBe('A sentence nobody translated');
   });
@@ -135,7 +143,9 @@ describe('pt-BR dictionary', () => {
   });
 
   it('keeps the same placeholders in each translation', () => {
-    const placeholders = (text: string): string[] => [...text.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
+    // A plural choice ("{count:palavra|palavras}") repeats a placeholder, so names are compared as a set.
+    const placeholders = (text: string): string[] =>
+      [...new Set([...text.matchAll(/\{(\w+)(?::[^}]*)?\}/g)].map((match) => match[1]))].sort();
     const mismatched = Object.entries(ptBR).filter(
       ([key, value]) => placeholders(key).join() !== placeholders(value).join(),
     );

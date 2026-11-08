@@ -8,7 +8,7 @@ export const ptBRToolsRhythm: Record<string, string> = {
     'Vem do seu romance; mude se você contou em outro lugar.',
   'Finish date': 'Data para terminar',
   'You already reached this target. Congratulations!': 'Você já chegou a essa meta. Parabéns!',
-  'words a day for {days} days, today included': 'palavras por dia durante {days} dias, contando hoje',
+  'words a day for {days} days, today included': 'palavras por dia durante {days} {days:dia|dias}, contando hoje',
   'words today: the finish date has passed': 'palavras hoje: a data para terminar já passou',
   'Words to go': 'Palavras que faltam',
   'Your pace (last 7 days)': 'Seu ritmo (últimos 7 dias)',
@@ -22,14 +22,14 @@ export const ptBRToolsRhythm: Record<string, string> = {
   'Previous year': 'Ano anterior',
   'Next year': 'Próximo ano',
   'Words written each day in {year}': 'Palavras escritas a cada dia em {year}',
-  '{date}: {count} words': '{date}: {count} palavras',
+  '{date}: {count} words': '{date}: {count} {count:palavra|palavras}',
   'Tap a day to see its words.': 'Toque em um dia para ver as palavras.',
   Less: 'Menos',
   More: 'Mais',
   'Words in the year': 'Palavras no ano',
   'Days written': 'Dias com escrita',
   'Longest streak': 'Maior sequência',
-  '{count} days': '{count} dias',
+  '{count} days': '{count} {count:dia|dias}',
   // Pomodoro
   'Round {round}': 'Rodada {round}',
   'Skip to the next phase': 'Pular para a próxima fase',
@@ -69,12 +69,12 @@ export const ptBRToolsRhythm: Record<string, string> = {
   'Book title': 'Título do livro',
   'Author name': 'Nome do autor',
   'Loading your drafts…': 'Carregando seus rascunhos…',
-  '{count} chapters, {words} words': '{count} capítulos, {words} palavras',
+  '{count} chapters, {words} words': '{count} {count:capítulo|capítulos}, {words} {words:palavra|palavras}',
   'No drafts here yet. Write in the Drafts tool and they show up as chapters, in their order.':
     'Ainda não há rascunhos aqui. Escreva na ferramenta de rascunhos e eles aparecem como capítulos, na ordem deles.',
   // Manuscript
   'Print view': 'Visualização de impressão',
-  'about {count} words': 'cerca de {count} palavras',
+  'about {count} words': 'cerca de {count} {count:palavra|palavras}',
   'Standard manuscript format: Times New Roman 12, double spacing, 2.5 cm margins, indented paragraphs, your name and the short title with the page number at the top, each chapter on a new page.':
     'Formato padrão de manuscrito: Times New Roman 12, espaço duplo, margens de 2,5 cm, parágrafos com recuo, seu nome e o título curto com o número da página no topo, cada capítulo em uma página nova.',
   'Download .docx': 'Baixar .docx',
@@ -89,9 +89,9 @@ export const ptBRToolsRhythm: Record<string, string> = {
   'Each draft becomes a chapter, with a contents page. Kindle readers accept ePub sent through Send to Kindle.':
     'Cada rascunho vira um capítulo, com sumário. O Kindle aceita ePub enviado pelo Send to Kindle.',
   // Backup
-  'Backup saved with {count} items.': 'Backup salvo com {count} itens.',
+  'Backup saved with {count} items.': 'Backup salvo com {count} {count:item|itens}.',
   'This file is not a backup of the tools.': 'Este arquivo não é um backup das ferramentas.',
-  'Restored {count} items.': '{count} itens restaurados.',
+  'Restored {count} items.': '{count} {count:item restaurado|itens restaurados}.',
   'Save a backup': 'Salvar um backup',
   'One .zip with everything the tools keep on this device: drafts, snapshots, story sheets, the review text, the reminder and your favorite tools. Inside there is a backup.json and a .txt copy of each draft you can read anywhere.':
     'Um .zip com tudo o que as ferramentas guardam neste aparelho: rascunhos, cópias de segurança, fichas da história, o texto de revisão, o lembrete e suas ferramentas favoritas. Dentro vão um backup.json e uma cópia .txt de cada rascunho, que você lê em qualquer lugar.',
@@ -102,10 +102,11 @@ export const ptBRToolsRhythm: Record<string, string> = {
   'Choose a backup file': 'Escolher arquivo de backup',
   'Backup "{file}" from {date}': 'Backup "{file}" de {date}',
   'Backup "{file}"': 'Backup "{file}"',
-  '{count} new items': '{count} itens novos',
-  '{count} items updated': '{count} itens atualizados',
-  '{count} drafts kept because the one here is newer': '{count} rascunhos mantidos porque o daqui é mais novo',
-  '{count} browser settings': '{count} preferências do navegador',
+  '{count} new items': '{count} {count:item novo|itens novos}',
+  '{count} items updated': '{count} {count:item atualizado|itens atualizados}',
+  '{count} drafts kept because the one here is newer':
+    '{count} {count:rascunho mantido porque o daqui é mais novo|rascunhos mantidos porque os daqui são mais novos}',
+  '{count} browser settings': '{count} {count:preferência|preferências} do navegador',
   'Restore now': 'Restaurar agora',
   'This backup does not include your account data on the server (novels, goals, updates, profile). For that, use the JSON export in your profile.':
     'Este backup não inclui os dados da sua conta no servidor (romances, metas, atualizações, perfil). Para isso, use a exportação em JSON do seu perfil.',
@@ -130,4 +131,12 @@ export const ptBRToolsRhythm: Record<string, string> = {
     'Mande o .epub pelo Enviar para Kindle da Amazon (o app, o site ou o e-mail do seu Kindle). O Kindle aceita EPUB desde 2022, e o antigo formato MOBI não é mais aceito.',
   'Chapters come from the headings of the file. In a .txt, lines like “Capítulo 1” or “Prólogo” start a chapter.':
     'Os capítulos vêm dos títulos do arquivo. Num .txt, linhas como “Capítulo 1” ou “Prólogo” começam um capítulo.',
+  'Send to another device': 'Enviar para outro aparelho',
+  'Backup sent. On the other device, open it here with "Choose a backup file".':
+    'Backup enviado. No outro aparelho, abra aqui com "Escolher arquivo de backup".',
+  'Sending cancelled.': 'Envio cancelado.',
+  'This browser cannot share files, so the backup was downloaded. Send it with the app you prefer and open it on the other device.':
+    'Este navegador não compartilha arquivos, então o backup foi baixado. Envie pelo app que preferir e abra no outro aparelho.',
+  'The tools keep everything on this device only. To move to a phone or another computer, send the backup and open it there with "Choose a backup file".':
+    'As ferramentas guardam tudo só neste aparelho. Para passar para um celular ou outro computador, envie o backup e abra lá com "Escolher arquivo de backup".',
 };
