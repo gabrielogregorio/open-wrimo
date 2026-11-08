@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.2.2
+
+- An eye button shows or hides the password on sign up and sign in.
+- A refused sign up keeps the typed password, so fixing the email does not mean typing it again; sign in still
+  clears it after a wrong password.
+- An admin's profile links to the reports and account deletions pages.
+- Reporting opens an accessible dialog (Radix) that shows the title, picture and description being reported,
+  instead of a form that pushed the page down.
+- The reports page shows the report id, the novel id and its title; the reporter's address and browser stay in the
+  database and are no longer listed.
+- `pnpm run images:owners` reads only the database and image storage settings, so it no longer asks for
+  `JWT_SECRET` or `STORAGE_DRIVER`.
+- `pnpm run images:owners --apply` copies the images instead of moving them and keeps the originals, with `--undo`
+  to go back and `--remove-old` to delete the originals; deleting an account also removes originals not yet removed.
+- Images are saved as WebP at quality 70 instead of 82, smaller with a loss that is hard to see.
+- Profile pictures are cropped to a 512×512 square around what draws the eye, instead of up to 1920×1080.
+- Animated GIFs and WebPs keep every frame; before, only the first one was kept.
+- Community cards load the pictures and covers only as they near the screen.
+- The preview of a chosen picture is a small drawing of it instead of the file itself, lighter on big photos.
+- New README tour GIFs, recorded by `pnpm run demo:record` from the script in `docs/demo-script.md`, with its own
+  demo data on a throwaway database.
+
 ## 0.2.1
 
 - Images are stored in a folder per account (`<kind>/<userId>/<file>`), and deleting an account empties its folders,

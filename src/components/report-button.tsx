@@ -1,5 +1,7 @@
 'use client';
 
+import * as Dialog from '@radix-ui/react-dialog';
+import { X } from 'lucide-react';
 import { useActionState, useId, useState, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 import { reportAction } from '@/app/actions/moderation';
@@ -10,11 +12,15 @@ import { FormAlert } from './form-alert';
 import { fieldClasses } from './form-field';
 import { useI18n } from './i18n-provider';
 
+/** What the reader is reporting, shown at the top of the dialog so they can check it is the right one. */
+export type ReportPreview = { title: string; imageUrl: string | null; description?: ReactNode };
+
 type ReportButtonProps = {
   target: ReportTarget;
   username: string;
   /** The reported novel, when the target is a novel. */
   projectId?: string;
+  preview: ReportPreview;
 };
 
 const quietButtonClasses =
@@ -60,7 +66,7 @@ function ReportField({ id, label, error, children }: ReportFieldProps) {
   );
 }
 
-type ReportFormProps = ReportButtonProps & {
+type ReportFormProps = Omit<ReportButtonProps, 'preview'> & {
   state: FormState;
   formAction: (formData: FormData) => void;
   onCancel: () => void;
@@ -137,29 +143,59 @@ function ReportForm({ target, username, projectId = '', state, formAction, onCan
   );
 }
 
-export function ReportButton(props: ReportButtonProps) {
+function PreviewCard({ target, preview }: { target: ReportTarget; preview: ReportPreview }) {
+  const { t } = useI18n();
+  const imageClasses = target === 'novel' ? 'h-24 w-16 rounded-sm' : 'h-16 w-16 rounded-full';
+
+  return (
+    <section
+      aria-label={t('What you are reporting')}
+      className="flex items-start gap-4 rounded-sm border border-rule p-3">
+      {preview.imageUrl ? (
+        <img src={preview.imageUrl} alt="" className={`${imageClasses} shrink-0 border border-rule object-cover`} />
+      ) : null}
+      <div className="flex min-w-0 flex-col gap-1">
+        <p className="font-display font-semibold break-words">{preview.title}</p>
+        {preview.description ? (
+          <div className="line-clamp-4 text-sm break-words text-ink-soft">{preview.description}</div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+/** A quiet link-like button that opens an accessible dialog (focus kept inside, Escape closes) to report. */
+export function ReportButton({ preview, ...props }: ReportButtonProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [state, formAction] = useActionState<FormState, FormData>(reportAction, {});
-  const panelId = `${useId()}-panel`;
   const buttonLabel = props.target === 'novel' ? t('Report novel') : t('Report profile');
 
   return (
-    <div className="flex flex-col items-start gap-3">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={panelId}
-        onClick={() => setOpen((current) => !current)}
-        className={quietButtonClasses}>
-        {buttonLabel}
-      </button>
-
-      {open ? (
-        <section
-          id={panelId}
-          aria-label={buttonLabel}
-          className="sheet flex w-full max-w-xl flex-col gap-4 rounded-sm border border-rule p-4 sm:p-6">
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Trigger asChild>
+        <button type="button" className={quietButtonClasses}>
+          {buttonLabel}
+        </button>
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/40" />
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 flex max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-y-auto rounded-sm border border-rule bg-paper p-5 shadow-xl sm:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <Dialog.Title className="font-display text-xl font-semibold">{buttonLabel}</Dialog.Title>
+            <Dialog.Close asChild>
+              <button
+                type="button"
+                aria-label={t('Close')}
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-sm text-ink-soft hover:text-ink">
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </Dialog.Close>
+          </div>
+          <Dialog.Description className="text-sm text-ink-soft">
+            {t('Check that this is what you want to report.')}
+          </Dialog.Description>
+          <PreviewCard target={props.target} preview={preview} />
           {state.saved ? (
             <p role="status" className="text-sm">
               {t('Thank you. Your report was sent to the moderation team.')}
@@ -167,8 +203,8 @@ export function ReportButton(props: ReportButtonProps) {
           ) : (
             <ReportForm {...props} state={state} formAction={formAction} onCancel={() => setOpen(false)} />
           )}
-        </section>
-      ) : null}
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

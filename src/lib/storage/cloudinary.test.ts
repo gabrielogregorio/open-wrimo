@@ -53,21 +53,36 @@ describe('Cloudinary storage', () => {
     expect((init!.body as FormData).get('file')).toBeNull();
   });
 
-  it('moves an image by renaming it', async () => {
+  it('copies an image by uploading from its address into the folder of the new key', async () => {
     const fetch = respond({
       secure_url: 'https://res.cloudinary.com/demo/v2/f/covers/u/x.webp',
       public_id: 'f/covers/u/x',
     });
     const storage = createCloudinaryStorage({ ...CREDENTIALS, folder: 'f', fetch, now: () => NOW });
 
-    await expect(storage.move('f/covers/x', 'f/covers/u/x')).resolves.toEqual({
+    expect(storage.urlFor('f/covers/x')).toBe('https://res.cloudinary.com/demo-cloud/image/upload/f/covers/x');
+    await expect(storage.copy('f/covers/x', 'f/covers/u/x')).resolves.toEqual({
       url: 'https://res.cloudinary.com/demo/v2/f/covers/u/x.webp',
       key: 'f/covers/u/x',
     });
     const [url, init] = fetch.mock.calls[0];
-    expect(url).toBe('https://api.cloudinary.com/v1_1/demo-cloud/image/rename');
-    expect((init!.body as FormData).get('from_public_id')).toBe('f/covers/x');
-    expect((init!.body as FormData).get('to_public_id')).toBe('f/covers/u/x');
+    const body = init!.body as FormData;
+    expect(url).toBe('https://api.cloudinary.com/v1_1/demo-cloud/image/upload');
+    expect(body.get('file')).toBe('https://res.cloudinary.com/demo-cloud/image/upload/f/covers/x');
+    expect(body.get('folder')).toBe('f/covers/u');
+    expect(body.get('public_id')).toBe('x');
+    expect(body.get('signature')).toBe(
+      signParameters({ folder: 'f/covers/u', public_id: 'x', timestamp: '1793880000' }, 'shh'),
+    );
+  });
+
+  it('refuses a copy that Cloudinary stored under another key', async () => {
+    const fetch = respond({ secure_url: 'https://res.cloudinary.com/demo/x.webp', public_id: 'x' });
+    const storage = createCloudinaryStorage({ ...CREDENTIALS, folder: 'f', fetch, now: () => NOW });
+
+    await expect(storage.copy('f/covers/x', 'f/covers/u/x')).rejects.toThrow(
+      'Cloudinary stored the copy of f/covers/x as x, not f/covers/u/x',
+    );
   });
 
   it('empties an owner folder through the Admin API, page by page', async () => {

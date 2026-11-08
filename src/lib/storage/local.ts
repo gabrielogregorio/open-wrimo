@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, rename, rm, unlink, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rm, unlink, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve, sep } from 'node:path';
 import { contentTypeForExtension } from './images';
 import type { OwnedImageStorage } from './storage';
@@ -17,6 +17,17 @@ export const createLocalStorage = (directory: string) => {
 
     return SAFE_KEY.test(key) && path.startsWith(`${root}${sep}`) ? path : null;
   };
+  const pathsFor = (key: string, toKey: string, action: string): [string, string] => {
+    const from = pathFor(key);
+    const to = pathFor(toKey);
+
+    if (!from || !to) {
+      throw new Error(`Cannot ${action} ${key} to ${toKey}`);
+    }
+
+    return [from, to];
+  };
+
   // Only a folder at least two levels deep, such as covers/<userId>, can be emptied at once.
   const folderPath = (folder: string): string | null => {
     const path = resolve(join(root, folder));
@@ -48,19 +59,15 @@ export const createLocalStorage = (directory: string) => {
       }
     },
 
-    async move(key, toKey) {
-      const from = pathFor(key);
-      const to = pathFor(toKey);
-
-      if (!from || !to) {
-        throw new Error(`Cannot move ${key} to ${toKey}`);
-      }
-
+    async copy(key, toKey) {
+      const [from, to] = pathsFor(key, toKey, 'copy');
       await mkdir(dirname(to), { recursive: true });
-      await rename(from, to);
+      await copyFile(from, to);
 
-      return { key: toKey, url: `${LOCAL_MEDIA_PATH}/${toKey}` };
+      return { key: toKey, url: storage.urlFor(toKey) };
     },
+
+    urlFor: (key) => `${LOCAL_MEDIA_PATH}/${key}`,
 
     async removeFolder(folder) {
       const path = folderPath(folder);

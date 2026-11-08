@@ -166,17 +166,33 @@ describe('account', () => {
       NOW,
     );
 
+    await collections(database).imageMigrations.insertOne({
+      userId: gone,
+      fromKey: 'covers/copied.webp',
+      fromUrl: '/media/covers/copied.webp',
+      toKey: `covers/${goneId}/copied.webp`,
+      toUrl: `/media/covers/${goneId}/copied.webp`,
+      copiedAt: NOW,
+    });
     const removed: string[] = [];
     const emptied: string[] = [];
     const storage: OwnedImageStorage = {
       save: vi.fn(),
-      move: vi.fn(),
+      copy: vi.fn(),
+      urlFor: (key: string) => key,
       remove: async (key) => void removed.push(key),
       removeFolder: async (folder) => void emptied.push(folder),
     };
 
-    expect(await purgeAccount(database, storage, goneId, NOW)).toEqual({ deleted: true, images: 4 });
-    expect(removed.sort()).toEqual(['inline/bio.webp', 'inline/old.webp', 'inline/post.webp', 'openwrimo/inline/abc']);
+    expect(await purgeAccount(database, storage, goneId, NOW)).toEqual({ deleted: true, images: 5 });
+    expect(await collections(database).imageMigrations.countDocuments({ userId: gone })).toBe(0);
+    expect(removed.sort()).toEqual([
+      'covers/copied.webp',
+      'inline/bio.webp',
+      'inline/old.webp',
+      'inline/post.webp',
+      'openwrimo/inline/abc',
+    ]);
     expect(await projects.countDocuments({ userId: new ObjectId(otherId) })).toBe(1);
     expect(emptied.sort()).toEqual([`avatars/${goneId}`, `covers/${goneId}`, `inline/${goneId}`, `posts/${goneId}`]);
   });
@@ -219,7 +235,8 @@ describe('account', () => {
     const removed: string[] = [];
     const storage: OwnedImageStorage = {
       save: vi.fn(),
-      move: vi.fn(),
+      copy: vi.fn(),
+      urlFor: (key: string) => key,
       removeFolder: async () => undefined,
       remove: async (key) => {
         removed.push(key);

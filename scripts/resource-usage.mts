@@ -118,7 +118,7 @@ const signUp = async (page: Page): Promise<void> => {
   await page.getByLabel('Nome', { exact: true }).fill('Resource Writer');
   await page.getByLabel('Nome de usuário').fill(`resources-${id}`);
   await page.getByLabel('E-mail').fill(`resources-${id}@example.com`);
-  await page.getByLabel('Senha').fill('a long enough secret');
+  await page.getByLabel('Senha', { exact: true }).fill('a long enough secret');
   await page.getByRole('checkbox', { name: /Li e aceito os/ }).check();
   await page.getByRole('button', { name: 'Criar conta' }).click();
   await page.waitForURL('**/write');

@@ -56,7 +56,7 @@ test('a profile picture is uploaded by dropping it on the field and shown on the
     return transfer;
   }, buffer);
   await page.locator('#field-avatar').locator('..').dispatchEvent('drop', { dataTransfer });
-  await expect(page.locator('img[src^="blob:"]')).toBeVisible();
+  await expect(page.locator('img[src^="data:image/webp"]')).toBeVisible();
   await page.getByRole('button', { name: 'Salvar alterações' }).click();
 
   await expect(page).toHaveURL('/write/profile');

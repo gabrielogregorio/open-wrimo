@@ -1,15 +1,16 @@
-// Moves the images uploaded before 0.2.1 into their owner's folder (`<kind>/<userId>/<file>`) and points
-// every document and text at the new address. Planning only reads; applying moves one image at a time,
-// so it can run again after a failure and picks up what is left.
-import type { Db, ObjectId } from 'mongodb';
+// Copies the images uploaded before 0.2.1 into their owner's folder (`<kind>/<userId>/<file>`) and points
+// every document and text at the copy. Planning only reads; applying copies one image at a time and keeps
+// the original, with a record in image_migrations, so the change can be undone until the originals are
+// removed. It can run again after a failure and picks up what is left.
+import { ObjectId, type Db } from 'mongodb';
 import { collections } from '@/lib/db/collections';
-import { inlineKeysIn, ownedKey, replaceImage } from './owners';
+import { inlineImageKey, inlineKeysIn, ownedKey, replaceImage } from './owners';
 import type { OwnedImageStorage } from './storage';
 
 export type PlannedMove = { key: string; toKey: string; userId: string; source: string };
 export type UnassignedImage = { key: string; userIds: string[] };
 export type OwnerMigrationPlan = { moves: PlannedMove[]; unassigned: UnassignedImage[] };
-export type OwnerMigrationResult = { moved: PlannedMove[]; failed: { key: string; error: string }[] };
+export type OwnerMigrationResult = { done: string[]; failed: { key: string; error: string }[] };
 
 const hex = (id: ObjectId): string => id.toHexString();
 
@@ -130,24 +131,115 @@ const pointAt = async (database: Db, key: string, image: { key: string; url: str
   }
 };
 
-export const applyImageOwners = async (
-  database: Db,
-  storage: OwnedImageStorage,
-  plan: OwnerMigrationPlan,
-  onProgress: (done: number, total: number) => void = () => undefined,
-): Promise<OwnerMigrationResult> => {
-  const result: OwnerMigrationResult = { moved: [], failed: [] };
+const IMAGE_SOURCES = /<img\b[^>]*?\bsrc="([^"]+)"/gi;
 
-  for (const move of plan.moves) {
+/** The address the documents use for `key` today, so --undo can put exactly that one back. */
+const currentUrl = async (database: Db, key: string, storage: OwnedImageStorage): Promise<string> => {
+  const { projects, profiles, posts } = collections(database);
+  const named = { $regex: escapeRegex(key) };
+  const found =
+    (await projects.findOne({ coverKey: key }))?.coverUrl ??
+    (await profiles.findOne({ avatarKey: key }))?.avatarUrl ??
+    (await posts.findOne({ imageKey: key }))?.imageUrl;
+  const texts = [
+    (await projects.findOne({ excerpt: named }))?.excerpt,
+    (await profiles.findOne({ bio: named }))?.bio,
+    (await posts.findOne({ body: named }))?.body,
+  ];
+  const inText = texts
+    .flatMap((html) => [...(html ?? '').matchAll(IMAGE_SOURCES)].map((match) => match[1]))
+    .find((source) => inlineImageKey(source) === key);
+
+  return found ?? inText ?? storage.urlFor(key);
+};
+
+const run = async <Item>(
+  items: Item[],
+  keyOf: (item: Item) => string,
+  work: (item: Item) => Promise<void>,
+  onProgress: (done: number, total: number) => void,
+): Promise<OwnerMigrationResult> => {
+  const result: OwnerMigrationResult = { done: [], failed: [] };
+
+  for (const item of items) {
     try {
-      await pointAt(database, move.key, await storage.move(move.key, move.toKey));
-      result.moved.push(move);
+      await work(item);
+      result.done.push(keyOf(item));
     } catch (error) {
-      result.failed.push({ key: move.key, error: error instanceof Error ? error.message : String(error) });
+      result.failed.push({ key: keyOf(item), error: error instanceof Error ? error.message : String(error) });
     }
 
-    onProgress(result.moved.length + result.failed.length, plan.moves.length);
+    onProgress(result.done.length + result.failed.length, items.length);
   }
 
   return result;
+};
+
+type Progress = (done: number, total: number) => void;
+
+const quiet: Progress = () => undefined;
+
+/** Copies each planned image into its owner's folder, points everything at the copy and records it. */
+export const applyImageOwners = (
+  database: Db,
+  storage: OwnedImageStorage,
+  plan: OwnerMigrationPlan,
+  onProgress: Progress = quiet,
+): Promise<OwnerMigrationResult> =>
+  run(
+    plan.moves,
+    (move) => move.key,
+    async (move) => {
+      const fromUrl = await currentUrl(database, move.key, storage);
+      const copy = await storage.copy(move.key, move.toKey);
+      await pointAt(database, move.key, copy);
+      await collections(database).imageMigrations.insertOne({
+        userId: new ObjectId(move.userId),
+        fromKey: move.key,
+        fromUrl,
+        toKey: copy.key,
+        toUrl: copy.url,
+        copiedAt: new Date(),
+      });
+    },
+    onProgress,
+  );
+
+/** Points everything back at the originals and deletes the copies. */
+export const undoImageOwners = async (
+  database: Db,
+  storage: OwnedImageStorage,
+  onProgress: Progress = quiet,
+): Promise<OwnerMigrationResult> => {
+  const { imageMigrations } = collections(database);
+
+  return run(
+    await imageMigrations.find().toArray(),
+    (migration) => migration.fromKey,
+    async (migration) => {
+      await pointAt(database, migration.toKey, { key: migration.fromKey, url: migration.fromUrl });
+      await storage.remove(migration.toKey);
+      await imageMigrations.deleteOne({ _id: migration._id });
+    },
+    onProgress,
+  );
+};
+
+/** Deletes the originals once the copies are checked; after this there is nothing to undo. */
+export const removeOldImages = async (
+  database: Db,
+  storage: OwnedImageStorage,
+  onProgress: Progress = quiet,
+): Promise<OwnerMigrationResult> => {
+  const { imageMigrations } = collections(database);
+
+  return run(
+    await imageMigrations.find().toArray(),
+    (migration) => migration.fromKey,
+    async (migration) => {
+      await storage.remove(migration.fromKey);
+      await imageMigrations.deleteOne({ _id: migration._id });
+    },
+    onProgress,
+  );
 };

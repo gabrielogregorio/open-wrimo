@@ -284,6 +284,9 @@ describe('reports', () => {
 
     const { reports: listed } = await reports.listReports({ status: 'open' });
 
+    expect(listed[1].targetProjectId).toBeNull();
+    expect(listed.every((report) => !('reporterAddress' in report) && !('reporterUserAgent' in report))).toBe(true);
+
     expect(listed.map((report) => [report.targetUsername, report.novelTitle, report.reporterUsername])).toEqual([
       ['writer', 'Rio de Janeiro', 'reporter'],
       ['writer', null, null],
@@ -292,8 +295,7 @@ describe('reports', () => {
     expect(listed[0]).toMatchObject({
       target: 'novel',
       targetName: 'WRITER',
-      reporterAddress: '203.0.113.7',
-      reporterUserAgent: 'Firefox',
+      targetProjectId: publicNovelId.toHexString(),
       status: 'open',
       createdAt: LATER,
       resolvedAt: null,

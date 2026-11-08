@@ -32,7 +32,7 @@ test('the username is typed lowercase with dashes and must be unique', async ({ 
   await page.getByLabel('Nome', { exact: true }).fill('Outra pessoa');
   await page.getByLabel('Nome de usuário').fill(first.username);
   await page.getByLabel('E-mail').fill(`other-${first.email}`);
-  await page.getByLabel('Senha').fill(PASSWORD);
+  await page.getByLabel('Senha', { exact: true }).fill(PASSWORD);
   await page.getByRole('checkbox', { name: /Li e aceito os/ }).check();
   await page.getByRole('button', { name: 'Criar conta' }).click();
 
@@ -42,7 +42,7 @@ test('the username is typed lowercase with dashes and must be unique', async ({ 
 test('sign up explains what is wrong with each field', async ({ page }) => {
   await page.goto('/register');
   await page.getByLabel('E-mail').fill('not-an-email');
-  await page.getByLabel('Senha').fill('short');
+  await page.getByLabel('Senha', { exact: true }).fill('short');
   await page.getByRole('button', { name: 'Criar conta' }).click();
 
   await expect(page.getByText('Informe um e-mail válido.')).toBeVisible();
@@ -103,6 +103,26 @@ test('an expired access token is renewed from the refresh token, and signing out
   await expect(page).toHaveURL('/login?next=%2Fwrite');
 });
 
+test('sign up keeps the password after a refused field and shows it on request', async ({ page }) => {
+  const writer = uniqueWriter('eye');
+  await page.goto('/register');
+  await page.getByLabel('Nome', { exact: true }).fill(writer.name);
+  await page.getByLabel('Nome de usuário').fill(writer.username);
+  await page.getByLabel('E-mail').fill('not-an-email');
+  await page.getByLabel('Senha', { exact: true }).fill(PASSWORD);
+  await page.getByRole('checkbox', { name: /Li e aceito os/ }).check();
+  await page.getByRole('button', { name: 'Criar conta' }).click();
+
+  await expect(page.getByLabel('E-mail')).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.getByLabel('Senha', { exact: true })).toHaveValue(PASSWORD);
+  await page.getByRole('button', { name: 'Mostrar senha' }).click();
+  await expect(page.getByLabel('Senha', { exact: true })).toHaveAttribute('type', 'text');
+
+  await page.getByLabel('E-mail').fill(writer.email);
+  await page.getByRole('button', { name: 'Criar conta' }).click();
+  await expect(page).toHaveURL('/write');
+});
+
 test('a wrong password and an unknown email get the same answer', async ({ page }) => {
   const writer = uniqueWriter('wrong');
   await signUp(page, writer);
@@ -110,7 +130,7 @@ test('a wrong password and an unknown email get the same answer', async ({ page 
 
   await signIn(page, writer.email, 'not the password at all');
   await expect(formAlert(page)).toHaveText(WRONG);
-  await expect(page.getByLabel('Senha')).toHaveValue('');
+  await expect(page.getByLabel('Senha', { exact: true })).toHaveValue('');
   await signIn(page, 'nobody-here@example.com');
 
   await expect(formAlert(page)).toHaveText(WRONG);
@@ -123,7 +143,7 @@ test('the sixth try for one email is blocked, even with the right password', asy
 
   for (let attempt = 1; attempt <= 5; attempt += 1) {
     await signIn(page, writer.email, `wrong guess ${attempt}`);
-    await expect(page.getByLabel('Senha')).toHaveValue('');
+    await expect(page.getByLabel('Senha', { exact: true })).toHaveValue('');
     await expect(formAlert(page)).toHaveText(WRONG);
   }
 

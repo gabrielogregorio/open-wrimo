@@ -57,11 +57,12 @@ export type ReportView = {
   resolvedAt: Date | null;
   targetUsername: string | null;
   targetName: string | null;
+  /** The reported novel's id, when the target is a novel; kept even after the novel is deleted. */
+  targetProjectId: string | null;
   novelTitle: string | null;
   reporterUsername: string | null;
-  reporterAddress: string | null;
-  reporterUserAgent: string;
 };
+// The reporter's address and browser stay in the database for the authorities and are never listed here.
 
 export type ReportPage = { reports: ReportView[]; total: number; page: number; pages: number };
 
@@ -116,10 +117,9 @@ export const createReportRepository = (database: Db) => {
           resolvedAt: report.resolvedAt,
           targetUsername: target?.username ?? null,
           targetName: target?.name ?? null,
+          targetProjectId: report.targetProjectId?.toHexString() ?? null,
           novelTitle: novelTitle ?? null,
           reporterUsername: reporter?.username ?? null,
-          reporterAddress: report.reporterAddress,
-          reporterUserAgent: report.reporterUserAgent,
         };
       });
 

@@ -26,6 +26,9 @@ export default defineConfig([
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       'sonarjs/no-nested-conditional': 'error',
+      // Images are already resized and turned into WebP on upload (src/lib/storage/images.ts) and served
+      // straight from Cloudinary or /media. next/image would only add Vercel's paid optimization per image.
+      '@next/next/no-img-element': 'off',
     },
   },
   {

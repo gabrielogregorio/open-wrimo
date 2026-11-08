@@ -3,7 +3,13 @@
 import type { PointerEvent } from 'react';
 import { LogoMark } from './logo';
 
-type BookMockupProps = { title: string; coverUrl: string | null; tilted?: boolean };
+type BookMockupProps = {
+  title: string;
+  coverUrl: string | null;
+  tilted?: boolean;
+  /** Loads the cover only when it nears the screen; for long lists, not for the book a page opens on. */
+  lazy?: boolean;
+};
 
 const TURN_Y = { from: -38, to: -8 };
 const TURN_X = 6;
@@ -25,7 +31,7 @@ const rest = (event: PointerEvent<HTMLSpanElement>): void => {
   event.currentTarget.style.removeProperty('--turn-x');
 };
 
-export function BookMockup({ title, coverUrl, tilted = true }: BookMockupProps) {
+export function BookMockup({ title, coverUrl, tilted = true, lazy = false }: BookMockupProps) {
   return (
     <span
       className={`book-mock isolate select-none ${tilted ? '' : 'is-flat'}`}
@@ -37,7 +43,14 @@ export function BookMockup({ title, coverUrl, tilted = true }: BookMockupProps) 
         <span className="book-mock-pages" aria-hidden="true" />
         <span className="book-mock-cover">
           {coverUrl ? (
-            <img src={coverUrl} alt="" draggable={false} className="pointer-events-none h-full w-full object-cover" />
+            <img
+              src={coverUrl}
+              alt=""
+              draggable={false}
+              loading={lazy ? 'lazy' : undefined}
+              decoding="async"
+              className="pointer-events-none h-full w-full object-cover"
+            />
           ) : (
             <span className="book-cover-plain flex h-full w-full flex-col items-center justify-center gap-2 p-3 text-center">
               <LogoMark className="h-8 w-8" />

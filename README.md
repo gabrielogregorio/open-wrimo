@@ -19,10 +19,11 @@ writing sprints, achievements with sound and confetti, and a public profile only
 </div>
 
 <p align="center">
-  <img src="docs/demo-small.gif" alt="Open Wrimo tour: writing desk, 3D cover shelf, word update, stats, sprint, achievements, community and public profile" width="720" />
+  <img src="docs/demo-small.gif" alt="Open Wrimo tour: sign up with the password eye, writing desk, 3D cover shelf, word update, stats, sprint, tools and plot dice, novel badges, community, public profile and the report dialog" width="640" />
 </p>
 
-The full tour, slower and sharper, is in [docs/demo.gif](docs/demo.gif).
+The full tour, slower and sharper, is in [docs/demo.gif](docs/demo.gif). Both are recorded by
+`pnpm run demo:record`, following the script in [docs/demo-script.md](docs/demo-script.md).
 
 ## About
 
@@ -117,10 +118,13 @@ Allow your address in the cluster network settings. Indexes are created on the f
 | `pnpm run unit` / `pnpm run unit:coverage`  | Vitest, with the 100% gate in the second                |
 | `pnpm run e2e`                              | Build, then Playwright, Lighthouse and the memory check |
 | `pnpm run check:all`                        | Everything CI runs                                      |
+| `pnpm run demo:record`                      | Record the README GIFs (see docs/demo-script.md)        |
 
-`pnpm run images:owners -- --env <file> [--apply]` moves images uploaded before 0.2.1 into a folder per account
-(`<kind>/<userId>/<file>`), so deleting an account can empty its folders. Without `--apply` it only reports what it
-would move and the images it cannot assign; it is safe to run again.
+`pnpm run images:owners -- --env <file>` brings images uploaded before 0.2.1 into a folder per account
+(`<kind>/<userId>/<file>`), so deleting an account can empty its folders. On its own it only reports. `--apply` copies
+the images and points the site at the copies, keeping the originals; `--undo` goes back to the originals;
+`--remove-old` deletes the originals once the copies are checked. It reads only `MONGODB_URI`, `MONGODB_DB`,
+`CLOUDINARY_URL` and `CLOUDINARY_FOLDER` (or `LOCAL_UPLOADS_DIR` for images on disk).
 
 ## Tests
 

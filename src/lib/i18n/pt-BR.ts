@@ -8,6 +8,8 @@ export const ptBR: Record<string, string> = {
   ...ptBRModeration,
   'Already have a library card?': 'Já tem sua carteirinha?',
   'At least 10 characters.': 'Pelo menos 10 caracteres.',
+  'Show password': 'Mostrar senha',
+  'Hide password': 'Ocultar senha',
   'Back to the start': 'Voltar ao início',
   'Create account': 'Criar conta',
   Email: 'E-mail',

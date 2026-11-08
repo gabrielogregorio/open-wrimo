@@ -46,7 +46,7 @@ const storeImage = async (
     return { fieldErrors: { [field]: UPLOADS_TOO_FAST } };
   }
 
-  const prepared = await prepareImage(bytes);
+  const prepared = await prepareImage(bytes, { shape: folder === 'avatars' ? 'avatar' : 'free' });
 
   if ('error' in prepared) {
     return { fieldErrors: { [field]: prepared.error } };

@@ -26,8 +26,13 @@ test('a visitor reports a public profile, only an admin sees it and resolves it'
   await adminPage.goto('/write/admin/reports');
   await expect(adminPage.getByRole('heading', { level: 1 })).toHaveText('Esta página não está no livro.');
 
+  await adminPage.goto('/write/profile');
+  await expect(adminPage.getByRole('navigation', { name: 'Administração' })).toHaveCount(0);
+
   await updateAccount(moderator.username, { isAdmin: true });
   await adminPage.reload();
+  await adminPage.getByRole('navigation', { name: 'Administração' }).getByRole('link', { name: 'Denúncias' }).click();
+  await adminPage.waitForURL('**/write/admin/reports');
   const report = adminPage.getByRole('listitem').filter({ hasText: `@${writer.username}` });
   await expect(report).toContainText('Spam ou golpe');
   await report.getByRole('button', { name: 'Marcar como resolvida' }).click();
