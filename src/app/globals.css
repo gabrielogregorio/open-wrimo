@@ -155,25 +155,61 @@
     animation-delay: calc(var(--order, 0) * 45ms + 250ms);
   }
 
-  .page-turn {
-    position: relative;
-    transform-origin: left center;
-    animation: page-turn 560ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  .page-enter {
+    animation: page-enter 420ms cubic-bezier(0.2, 0.7, 0.2, 1) 520ms both;
   }
 
-  .page-turn::after {
-    content: '';
-    position: absolute;
+  .book-assembly {
+    position: fixed;
     inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: center;
     pointer-events: none;
-    background-image: linear-gradient(
-      90deg,
-      transparent,
-      color-mix(in srgb, var(--ink) 14%, transparent) 45%,
-      transparent 60%
-    );
-    background-size: 250% 100%;
-    animation: page-shade 560ms ease-out both;
+    background-color: color-mix(in srgb, var(--paper) 88%, transparent);
+    animation: assembly-out 260ms ease-in 700ms both;
+  }
+
+  .book-assembly rect,
+  .book-assembly path,
+  .book-assembly g {
+    transform-box: fill-box;
+  }
+
+  .assembly-spine {
+    transform-origin: bottom;
+    animation: assembly-rise 200ms cubic-bezier(0.3, 1.3, 0.5, 1) both;
+  }
+
+  .assembly-board {
+    transform-origin: left;
+    animation: assembly-unfold 200ms ease-out 80ms both;
+  }
+
+  .assembly-leaf {
+    animation: assembly-drop 220ms cubic-bezier(0.3, 1.2, 0.5, 1) both;
+    animation-delay: calc(var(--leaf, 0) * 60ms + 160ms);
+  }
+
+  .assembly-cover {
+    transform-origin: left;
+    animation:
+      assembly-open 160ms ease-out 60ms both,
+      assembly-close 260ms cubic-bezier(0.5, 0, 0.3, 1) 440ms both;
+  }
+
+  .assembly-title path {
+    stroke-dasharray: 1;
+    animation: assembly-ink 200ms ease-out 600ms both;
+  }
+
+  .assembly-title path + path {
+    animation-delay: 660ms;
+  }
+
+  .assembly-ribbon {
+    transform-origin: top;
+    animation: assembly-rise 160ms ease-out 640ms both;
   }
 
   .ink-fill {
@@ -503,21 +539,65 @@
   }
 }
 
-@keyframes page-turn {
+@keyframes page-enter {
   from {
-    opacity: 0.35;
-    transform: perspective(1800px) rotateY(-22deg) translateX(1.5rem);
+    opacity: 0;
+    transform: translateY(0.5rem);
   }
 }
 
-@keyframes page-shade {
+@keyframes assembly-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes assembly-rise {
   from {
-    background-position: 100% 0;
-    opacity: 1;
+    transform: scaleY(0);
+  }
+}
+
+@keyframes assembly-unfold {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes assembly-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-120%) rotate(-6deg);
+  }
+}
+
+@keyframes assembly-ink {
+  from {
+    stroke-dashoffset: 1;
   }
   to {
-    background-position: 0 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes assembly-open {
+  from {
     opacity: 0;
+    transform: scaleX(-0.9);
+  }
+  to {
+    transform: scaleX(-0.9);
+  }
+}
+
+@keyframes assembly-close {
+  from {
+    transform: scaleX(-0.9);
+    filter: brightness(1.25);
+  }
+  to {
+    transform: scaleX(1);
   }
 }
 
@@ -688,6 +768,10 @@
   }
 
   .book-cover {
+    display: none;
+  }
+
+  .book-assembly {
     display: none;
   }
 
