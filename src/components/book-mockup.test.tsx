@@ -70,4 +70,13 @@ describe('BookMockup', () => {
     expect(container.querySelector('img')).toHaveAttribute('src', '/media/cover.webp');
     expect(screen.queryByText('Dune')).not.toBeInTheDocument();
   });
+
+  it('loads a cover lazily only when asked, and always decodes it off the main thread', () => {
+    const { container, rerender } = render(<BookMockup title="Dune" coverUrl="/media/covers/u/a.webp" />);
+
+    expect(container.querySelector('img')).not.toHaveAttribute('loading');
+    expect(container.querySelector('img')).toHaveAttribute('decoding', 'async');
+    rerender(<BookMockup title="Dune" coverUrl="/media/covers/u/a.webp" lazy />);
+    expect(container.querySelector('img')).toHaveAttribute('loading', 'lazy');
+  });
 });

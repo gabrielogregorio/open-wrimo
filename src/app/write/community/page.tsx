@@ -102,6 +102,10 @@ export default async function CommunityPage({ searchParams }: PageProps<'/write/
                       <img
                         src={writer.avatarUrl}
                         alt=""
+                        width={56}
+                        height={56}
+                        loading="lazy"
+                        decoding="async"
                         className="h-14 w-14 rounded-full border-2 border-paper object-cover shadow"
                       />
                     ) : (
@@ -129,7 +133,7 @@ export default async function CommunityPage({ searchParams }: PageProps<'/write/
                 </div>
                 {writer.featured ? (
                   <span className="w-16 shrink-0" title={writer.featured.title}>
-                    <BookMockup title={writer.featured.title} coverUrl={writer.featured.coverUrl} />
+                    <BookMockup title={writer.featured.title} coverUrl={writer.featured.coverUrl} lazy />
                   </span>
                 ) : null}
               </Link>
