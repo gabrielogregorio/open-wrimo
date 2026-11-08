@@ -160,4 +160,36 @@ describe('ImageField', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(container.querySelector('img')).toBeNull();
   });
+
+  it('puts the chosen file back after the form is reset by a refused submit', async () => {
+    const { container } = renderWithLocale(
+      <form>
+        <ImageField name="cover" label="Cover" />
+      </form>,
+    );
+    const input = screen.getByLabelText('Cover') as HTMLInputElement;
+    const form = container.querySelector('form') as HTMLFormElement;
+    const file = image();
+    Object.defineProperty(input, 'files', { configurable: true, writable: true, value: [file] });
+
+    fireEvent.change(input);
+    input.files = [] as unknown as FileList;
+    form.reset();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(input.files[0]).toBe(file);
+
+    Object.defineProperty(input, 'files', { configurable: true, writable: true, value: [] });
+    fireEvent.change(input);
+    form.reset();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(input.files).toHaveLength(0);
+  });
+
+  it('needs no form around it', () => {
+    renderWithLocale(<ImageField name="cover" label="Cover" />);
+
+    expect(screen.getByLabelText('Cover')).toBeInTheDocument();
+  });
 });

@@ -15,6 +15,24 @@ test('a cover of 5 MB or more is stopped in the browser', async ({ writerPage: p
   await expect(page.locator('#field-cover')).toHaveValue('');
 });
 
+test('the chosen cover is still sent after the form comes back with an error', async ({ writerPage: page }) => {
+  await page.goto('/write/novels/new');
+  await page.waitForLoadState('networkidle');
+  await page
+    .locator('#field-cover')
+    .setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: await pngImage() });
+  await page.locator('.ProseMirror').click();
+  await page.keyboard.type('Trecho escrito antes do erro.');
+  await page.getByRole('button', { name: 'Criar romance' }).click();
+  await expect(page.locator('#field-title')).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.locator('.ProseMirror')).toContainText('Trecho escrito antes do erro.');
+
+  await page.locator('#field-title').fill('Com capa depois do erro');
+  await page.getByRole('button', { name: 'Criar romance' }).click();
+  await expect(page).toHaveURL(/\/write\/novels\/[0-9a-f]{24}$/);
+  await expect(page.locator('.book-mock img')).toHaveAttribute('src', /^\/media\/covers\//);
+});
+
 test('a file that only pretends to be an image is refused by the server', async ({ writerPage: page }) => {
   const url = await createNovel(page, { title: 'Capa falsa' });
   await page.goto(`${url}/edit`);

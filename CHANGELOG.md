@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- A cover or profile picture chosen before the form came back with an error is still sent on the next save; before,
+  the preview kept showing it but the novel or profile was saved without it.
 - Terms: the account deletion section no longer names the backups in its 180-day deadline (new version of the terms, so
   every writer accepts it once more).
 
