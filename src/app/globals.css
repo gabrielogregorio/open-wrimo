@@ -207,12 +207,23 @@
     --slide-from: -1.5rem;
   }
 
-  /* A tall click area; the negative margin keeps the header the same height. */
+  /* A tall click area; from tablets up a negative margin keeps the header the same height, while on
+     phones the menu is its own scrolling row and keeps the full height. */
   .nav-tab {
     position: relative;
+    flex-shrink: 0;
     padding-block: 0.85rem;
-    margin-block: -0.6rem;
     text-underline-offset: 4px;
+  }
+
+  @media (width >= 40rem) {
+    .nav-tab {
+      margin-block: -0.6rem;
+    }
+  }
+
+  .main-nav {
+    scrollbar-width: none;
   }
 
   .nav-tab:hover {
