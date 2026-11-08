@@ -103,7 +103,8 @@ Allow your address in the cluster network settings. Indexes are created on the f
 | `LOCAL_UPLOADS_DIR`                          | `public/uploads`                        | Where the local driver writes images                                |
 | `CLOUDINARY_URL`                             | none                                    | `cloudinary://<key>:<secret>@<cloud>`, required with `cloudinary`   |
 | `CLOUDINARY_FOLDER`                          | `openwrimo`                             | Folder for the images in Cloudinary                                 |
-| `CRON_SECRET`                                | none                                    | Lets Vercel Cron call `/api/cron/purge-accounts` once a day         |
+| `RESEND_API_KEY`                             | none                                    | Resend key for the e-mail alert of each new report                  |
+| `REPORT_ALERT_EMAIL`                         | none                                    | Where the report alert goes (the Resend account e-mail)             |
 | `MONGO_ROOT_USERNAME`, `MONGO_ROOT_PASSWORD` | `openwrimo`, `openwrimo-local-password` | Credentials of the local container                                  |
 
 ## Available scripts

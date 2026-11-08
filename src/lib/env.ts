@@ -24,8 +24,9 @@ const environmentSchema = z
       .string()
       .regex(/^[\w/-]+$/)
       .default('openwrimo'),
-    /** Secret the scheduler sends to the account purge route; without it the route stays closed. */
-    CRON_SECRET: z.string().min(32, { error: 'must have at least 32 characters' }).optional(),
+    /** Optional e-mail alerts of new reports through Resend; both are needed to send. */
+    RESEND_API_KEY: z.string().min(1).optional(),
+    REPORT_ALERT_EMAIL: z.email().optional(),
   })
   .refine((environment) => environment.STORAGE_DRIVER === 'local' || environment.CLOUDINARY_URL, {
     path: ['CLOUDINARY_URL'],

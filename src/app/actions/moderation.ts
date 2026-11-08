@@ -1,12 +1,15 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { purgeAccount } from '@/lib/account/account';
 import { createRateLimiter } from '@/lib/auth/rate-limit';
 import { getDatabase } from '@/lib/db/client';
+import { getEnvironment } from '@/lib/env';
 import { formValues, type FormState } from '@/lib/form';
+import { sendReportAlert } from '@/lib/moderation/alert';
 import { REPORT_FIELDS, createReportRepository, submitReport, type ReportRepository } from '@/lib/moderation/reports';
-import { clientInfo, getCurrentUser } from '@/server/session';
+import { clientInfo, getCurrentUser, getImageStorage } from '@/server/session';
 
 const ADMIN_REPORTS_PATH = '/write/admin/reports';
 
@@ -16,8 +19,15 @@ export async function reportAction(_previous: FormState, formData: FormData): Pr
   const user = await getCurrentUser();
   const { address, userAgent } = await clientInfo();
 
+  const { RESEND_API_KEY, REPORT_ALERT_EMAIL, APP_URL } = getEnvironment();
+
   return submitReport(
-    { reports: createReportRepository(database), limiter: createRateLimiter(database), now: new Date() },
+    {
+      reports: createReportRepository(database),
+      limiter: createRateLimiter(database),
+      now: new Date(),
+      alert: (reason) => sendReportAlert({ apiKey: RESEND_API_KEY, to: REPORT_ALERT_EMAIL, appUrl: APP_URL }, reason),
+    },
     formValues(formData, REPORT_FIELDS),
     { userId: user?.id ?? null, address, userAgent },
   );
@@ -45,4 +55,19 @@ export async function reopenReportAction(reportId: string): Promise<void> {
   const reports = await adminReports();
   await reports.reopenReport(reportId);
   revalidatePath(ADMIN_REPORTS_PATH);
+}
+
+const ADMIN_DELETIONS_PATH = '/write/admin/exclusoes';
+
+/** Deletes one account for good, by hand, after the grace period; only for an admin who ticked the box. */
+export async function purgeAccountAction(userId: string, formData: FormData): Promise<void> {
+  await adminReports();
+
+  if (formData.get('confirm') !== 'on') {
+    redirect(`${ADMIN_DELETIONS_PATH}?confirmar=${userId}`);
+  }
+
+  await purgeAccount(await getDatabase(), getImageStorage(), userId, new Date());
+  revalidatePath(ADMIN_DELETIONS_PATH);
+  redirect(ADMIN_DELETIONS_PATH);
 }

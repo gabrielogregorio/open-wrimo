@@ -50,4 +50,30 @@ export const ptBRModeration: Record<string, string> = {
   'Resolved at': 'Resolvida em',
   'Mark as resolved': 'Marcar como resolvida',
   Reopen: 'Reabrir',
+  Administration: 'Administração',
+  'Account deletions': 'Exclusões de conta',
+  'Report pages': 'Páginas de denúncias',
+  'Page {page} of {total} · {count} reports': 'Página {page} de {total} · {count} denúncias',
+  '{count} novels': '{count} romances',
+  '{count} goals': '{count} metas',
+  '{count} word count entries': '{count} registros de contagem',
+  '{count} posts': '{count} posts',
+  '{count} images': '{count} imagens',
+  'The profile': 'O perfil',
+  'No profile': 'Sem perfil',
+  'The account and its sessions': 'A conta e as sessões',
+  'Requested on {date}. Grace period until {grace}. Deadline from the terms: {deadline}.':
+    'Pedido em {date}. Arrependimento até {grace}. Prazo dos termos: {deadline}.',
+  'Past the deadline: delete it now.': 'Prazo vencido: exclua agora.',
+  'What will be deleted': 'O que será excluído',
+  'Access records and reports stay until their own expiry, as the terms say.':
+    'Registros de acesso e denúncias ficam até o próprio prazo, como dizem os termos.',
+  'I confirm deleting @{username} for good. This cannot be undone.':
+    'Confirmo a exclusão definitiva de @{username}. Não dá para desfazer.',
+  'Delete for good': 'Excluir definitivamente',
+  'Still in the grace period: the writer can cancel until then.':
+    'Ainda no período de arrependimento: a pessoa pode cancelar até lá.',
+  '{ready} ready to delete · {waiting} still in the grace period':
+    '{ready} prontas para excluir · {waiting} ainda no período de arrependimento',
+  'No account is waiting for deletion.': 'Nenhuma conta aguardando exclusão.',
 };

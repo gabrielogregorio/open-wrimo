@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { AdminNav } from '../admin-nav';
 import { notFound } from 'next/navigation';
 import { reopenReportAction, resolveReportAction } from '@/app/actions/moderation';
 import { getDatabase } from '@/lib/db/client';
@@ -91,11 +92,22 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
   }
 
   const t = await getTranslator();
-  const status: ReportStatus = single((await searchParams).status) === 'resolved' ? 'resolved' : 'open';
-  const listed = await reports.listReports({ status });
+  const params = await searchParams;
+  const status: ReportStatus = single(params.status) === 'resolved' ? 'resolved' : 'open';
+  const {
+    reports: listed,
+    total,
+    page,
+    pages,
+  } = await reports.listReports({
+    status,
+    page: Number(single(params.page) ?? '1'),
+  });
+  const pageLink = (target: number) => `/write/admin/reports?status=${status}&page=${target}`;
 
   return (
     <div className="flex flex-col gap-6">
+      <AdminNav current="/write/admin/reports" t={t} />
       <h1 className="font-display text-4xl font-semibold">{t('Reports')}</h1>
 
       <nav aria-label={t('Report status')} className="flex flex-wrap gap-2">
@@ -121,6 +133,32 @@ export default async function AdminReportsPage({ searchParams }: AdminReportsPag
       ) : (
         <p className="text-ink-soft">{t('No reports here.')}</p>
       )}
+
+      {total > 0 ? (
+        <nav aria-label={t('Report pages')} className="flex flex-wrap items-center justify-between gap-3 text-sm">
+          {page > 1 ? (
+            <Link
+              href={pageLink(page - 1)}
+              className="inline-flex min-h-11 items-center rounded-sm border border-rule px-4">
+              {t('Previous page')}
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="text-ink-soft">
+            {t('Page {page} of {total} · {count} reports', { page, total: pages, count: total })}
+          </span>
+          {page < pages ? (
+            <Link
+              href={pageLink(page + 1)}
+              className="inline-flex min-h-11 items-center rounded-sm border border-rule px-4">
+              {t('Next page')}
+            </Link>
+          ) : (
+            <span />
+          )}
+        </nav>
+      ) : null}
     </div>
   );
 }

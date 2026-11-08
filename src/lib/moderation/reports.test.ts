@@ -4,6 +4,7 @@ import { collections } from '@/lib/db/collections';
 import { startTestDatabase, type TestDatabase } from '@/test/mongo';
 import { formatReportTime, REPORT_REASON_LABELS } from './labels';
 import {
+  REPORTS_PAGE_SIZE,
   REPORT_RULES,
   createReportRepository,
   reportInputSchema,
@@ -159,6 +160,14 @@ describe('reports', () => {
     await collections(testDatabase.database).reports.deleteMany({});
   });
 
+  it('alerts the admin with the reason after storing the report', async () => {
+    const alert = vi.fn(async () => true);
+
+    expect(await submitReport({ ...dependencies, alert }, input(), anonymous)).toEqual({ saved: true });
+    expect(alert).toHaveBeenCalledWith('spam');
+    expect(await collections(testDatabase.database).reports.countDocuments({})).toBe(1);
+  });
+
   it('stores an anonymous profile report as open', async () => {
     expect(await submitReport(dependencies, input(), anonymous)).toEqual({ saved: true });
 
@@ -281,7 +290,7 @@ describe('reports', () => {
       createdAt: new Date('2026-11-01T00:00:00.000Z'),
     });
 
-    const listed = await reports.listReports({ status: 'open' });
+    const { reports: listed } = await reports.listReports({ status: 'open' });
 
     expect(listed.map((report) => [report.targetUsername, report.novelTitle, report.reporterUsername])).toEqual([
       ['writer', 'Rio de Janeiro', 'reporter'],
@@ -298,7 +307,38 @@ describe('reports', () => {
       resolvedAt: null,
     });
     expect(listed[2].targetName).toBeNull();
-    expect(await reports.listReports({ status: 'resolved' })).toEqual([]);
+    expect(await reports.listReports({ status: 'resolved' })).toEqual({ reports: [], total: 0, page: 1, pages: 1 });
+  });
+
+  it('lists the reports a page at a time and keeps the page inside the range', async () => {
+    await collections(testDatabase.database).reports.deleteMany({});
+    await collections(testDatabase.database).reports.insertMany(
+      Array.from({ length: REPORTS_PAGE_SIZE + 3 }, (_unused, index) => ({
+        target: 'profile' as const,
+        targetUserId: writerId,
+        targetProjectId: null,
+        reason: 'spam' as const,
+        details: `report ${index}`,
+        reporterUserId: null,
+        reporterAddress: null,
+        reporterUserAgent: '',
+        status: 'open' as const,
+        createdAt: new Date(NOW.getTime() + index * 1000),
+        resolvedAt: null,
+      })),
+    );
+
+    const first = await reports.listReports({ status: 'open' });
+    const second = await reports.listReports({ status: 'open', page: 2 });
+
+    expect(first).toMatchObject({ total: REPORTS_PAGE_SIZE + 3, page: 1, pages: 2 });
+    expect(first.reports).toHaveLength(REPORTS_PAGE_SIZE);
+    expect(first.reports[0].details).toBe(`report ${REPORTS_PAGE_SIZE + 2}`);
+    expect(second.reports.map((report) => report.details)).toEqual(['report 2', 'report 1', 'report 0']);
+    expect((await reports.listReports({ status: 'open', page: 99 })).page).toBe(2);
+    expect((await reports.listReports({ status: 'open', page: 0 })).page).toBe(1);
+    expect((await reports.listReports({ status: 'open', page: Number.NaN })).page).toBe(1);
+    await collections(testDatabase.database).reports.deleteMany({});
   });
 
   it('resolves and reopens a report', async () => {
@@ -317,10 +357,12 @@ describe('reports', () => {
     });
 
     expect(await reports.resolveReport(id, LATER)).toBe(true);
-    expect(await reports.listReports({ status: 'resolved' })).toMatchObject([{ id, resolvedAt: LATER }]);
+    expect((await reports.listReports({ status: 'resolved' })).reports).toMatchObject([{ id, resolvedAt: LATER }]);
 
     expect(await reports.reopenReport(id)).toBe(true);
-    expect(await reports.listReports({ status: 'open' })).toMatchObject([{ id, status: 'open', resolvedAt: null }]);
+    expect((await reports.listReports({ status: 'open' })).reports).toMatchObject([
+      { id, status: 'open', resolvedAt: null },
+    ]);
   });
 
   it('ignores unknown or malformed report ids', async () => {

@@ -6,7 +6,8 @@ import {
   createAccessLog,
   createAccountRepository,
   deletionState,
-  purgeDeletedAccounts,
+  listPendingDeletions,
+  purgeAccount,
   type AccountRepository,
 } from './account';
 
@@ -116,9 +117,12 @@ describe('account', () => {
     expect((records.at(-1)?.expiresAt.getTime() ?? 0) - NOW.getTime()).toBe(183 * DAY);
   });
 
-  it('purges only accounts past the grace period, with their data and images', async () => {
+  it('previews the accounts waiting for deletion and purges one by hand only after the grace period', async () => {
     const database = testDatabase.database;
+    const { users } = collections(database);
+    await users.updateMany({ deletionRequestedAt: { $exists: true } }, { $unset: { deletionRequestedAt: '' } });
     const goneId = await addUser('gone@example.com', { deletionRequestedAt: new Date(NOW.getTime() - 31 * DAY) });
+    const lateId = await addUser('late@example.com', { deletionRequestedAt: new Date(NOW.getTime() - 200 * DAY) });
     const waitingId = await addUser('waiting@example.com', { deletionRequestedAt: new Date(NOW.getTime() - DAY) });
     const gone = new ObjectId(goneId);
     const { projects, profiles, posts, goals, entries } = collections(database);
@@ -132,6 +136,22 @@ describe('account', () => {
       { userId: goneId, action: 'upload', address: null, userAgent: '', detail: 'inline/i.webp' },
       NOW,
     );
+
+    const preview = await listPendingDeletions(database, NOW);
+
+    expect(preview.map((item) => [item.username, item.state, item.overdue])).toEqual([
+      ['late', 'closed', true],
+      ['gone', 'closed', false],
+      ['waiting', 'grace', false],
+    ]);
+    expect(preview[1]).toMatchObject({
+      email: 'gone@example.com',
+      graceEndsAt: new Date(NOW.getTime() - DAY),
+      deadline: new Date(NOW.getTime() + 149 * DAY),
+      counts: { novels: 2, goals: 1, entries: 1, posts: 1, images: 4, profile: true },
+    });
+    expect(preview[2].counts).toEqual({ novels: 0, goals: 0, entries: 0, posts: 0, images: 0, profile: false });
+
     const removed: string[] = [];
     const storage: ImageStorage = {
       save: vi.fn(),
@@ -144,12 +164,14 @@ describe('account', () => {
       },
     };
 
-    expect(await purgeDeletedAccounts(database, storage, NOW)).toBe(1);
+    expect(await purgeAccount(database, storage, waitingId, NOW)).toEqual({ deleted: false, images: 0 });
+    expect(await purgeAccount(database, storage, 'not-an-id', NOW)).toEqual({ deleted: false, images: 0 });
+    expect(await purgeAccount(database, storage, goneId, NOW)).toEqual({ deleted: true, images: 4 });
     expect(removed.sort()).toEqual(['avatars/a.webp', 'covers/c.webp', 'inline/i.webp', 'posts/p.webp']);
-    expect(await collections(database).users.findOne({ _id: gone })).toBeNull();
+    expect(await users.findOne({ _id: gone })).toBeNull();
     expect(await projects.countDocuments({ userId: gone })).toBe(0);
-    expect(await goals.countDocuments({ userId: gone })).toBe(0);
-    expect(await collections(database).users.findOne({ _id: new ObjectId(waitingId) })).not.toBeNull();
-    expect(await purgeDeletedAccounts(database, storage, NOW)).toBe(0);
+    expect(await users.findOne({ _id: new ObjectId(waitingId) })).not.toBeNull();
+    expect(await purgeAccount(database, storage, goneId, NOW)).toEqual({ deleted: false, images: 0 });
+    expect(await purgeAccount(database, storage, lateId, NOW)).toEqual({ deleted: true, images: 0 });
   });
 });

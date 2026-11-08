@@ -13,7 +13,7 @@ import { fieldErrorsFrom, type FormState } from '@/lib/form';
 import { REPORT_DETAILS_MAX_LENGTH } from './labels';
 
 const HOUR_IN_MS = 60 * 60_000;
-const LIST_LIMIT = 200;
+export const REPORTS_PAGE_SIZE = 25;
 
 export const REPORT_RULES = {
   perAddress: { limit: 5, windowMs: HOUR_IN_MS },
@@ -63,6 +63,8 @@ export type ReportView = {
   reporterUserAgent: string;
 };
 
+export type ReportPage = { reports: ReportView[]; total: number; page: number; pages: number };
+
 export type PublicTarget = { targetUserId: ObjectId; targetProjectId: ObjectId | null };
 
 const objectIdOrNull = (id: string): ObjectId | null => (ObjectId.isValid(id) ? new ObjectId(id) : null);
@@ -77,9 +79,17 @@ export const createReportRepository = (database: Db) => {
       return insertedId.toHexString();
     },
 
-    /** Newest first; only the moderation page reads this, never the reported writer. */
-    async listReports({ status }: { status: ReportStatus }): Promise<ReportView[]> {
-      const found = await reports.find({ status }).sort({ createdAt: -1 }).limit(LIST_LIMIT).toArray();
+    /** Newest first, a page at a time; only the moderation page reads this, never the reported writer. */
+    async listReports({ status, page = 1 }: { status: ReportStatus; page?: number }): Promise<ReportPage> {
+      const total = await reports.countDocuments({ status });
+      const pages = Math.max(1, Math.ceil(total / REPORTS_PAGE_SIZE));
+      const current = Math.min(Math.max(1, Math.floor(page) || 1), pages);
+      const found = await reports
+        .find({ status })
+        .sort({ createdAt: -1, _id: -1 })
+        .skip((current - 1) * REPORTS_PAGE_SIZE)
+        .limit(REPORTS_PAGE_SIZE)
+        .toArray();
       const userIds = found.flatMap((report) =>
         report.reporterUserId ? [report.targetUserId, report.reporterUserId] : [report.targetUserId],
       );
@@ -91,7 +101,7 @@ export const createReportRepository = (database: Db) => {
       const usersById = new Map(foundUsers.map((user) => [user._id.toHexString(), user]));
       const titlesById = new Map(foundProjects.map((project) => [project._id.toHexString(), project.title]));
 
-      return found.map((report) => {
+      const views = found.map((report) => {
         const target = usersById.get(report.targetUserId.toHexString());
         const reporter = report.reporterUserId ? usersById.get(report.reporterUserId.toHexString()) : undefined;
         const novelTitle = report.targetProjectId ? titlesById.get(report.targetProjectId.toHexString()) : undefined;
@@ -112,6 +122,8 @@ export const createReportRepository = (database: Db) => {
           reporterUserAgent: report.reporterUserAgent,
         };
       });
+
+      return { reports: views, total, page: current, pages };
     },
 
     async resolveReport(id: string, now: Date): Promise<boolean> {
@@ -182,7 +194,13 @@ export const createReportRepository = (database: Db) => {
 
 export type ReportRepository = ReturnType<typeof createReportRepository>;
 
-export type ReportDependencies = { reports: ReportRepository; limiter: RateLimiter; now: Date };
+export type ReportDependencies = {
+  reports: ReportRepository;
+  limiter: RateLimiter;
+  now: Date;
+  /** Optional alert to the admin after the report is stored. */
+  alert?: (reason: ReportReason) => Promise<unknown>;
+};
 
 export type Reporter = { userId: string | null; address: string | null; userAgent: string };
 
@@ -201,7 +219,7 @@ const rateKeys = (reporter: Reporter): [string, RateRule][] => {
 };
 
 export const submitReport = async (
-  { reports, limiter, now }: ReportDependencies,
+  { reports, limiter, now, alert }: ReportDependencies,
   input: Record<string, unknown>,
   reporter: Reporter,
 ): Promise<FormState> => {
@@ -240,6 +258,7 @@ export const submitReport = async (
     createdAt: now,
     resolvedAt: null,
   });
+  await alert?.(parsed.data.reason);
 
   return { saved: true };
 };

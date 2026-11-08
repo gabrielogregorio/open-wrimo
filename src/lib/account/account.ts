@@ -1,7 +1,7 @@
 import { ObjectId, type Db } from 'mongodb';
 import { collections, type AccessAction } from '@/lib/db/collections';
 import type { ImageStorage } from '@/lib/storage/storage';
-import { ACCESS_LOG_MONTHS, DELETION_GRACE_DAYS } from '@/lib/legal/terms-content';
+import { ACCESS_LOG_MONTHS, DELETION_DEADLINE_DAYS, DELETION_GRACE_DAYS } from '@/lib/legal/terms-content';
 
 const DAY_MS = 86_400_000;
 const ACCESS_LOG_DAYS = Math.ceil(ACCESS_LOG_MONTHS * 30.5);
@@ -103,43 +103,120 @@ export const createAccountRepository = (database: Db) => {
 
 export type AccountRepository = ReturnType<typeof createAccountRepository>;
 
-/**
- * Deletes for good the accounts whose grace period is over, with their novels, goals, entries,
- * profile, sessions and images (covers, avatar and the uploads still in the access records).
- * Access records and reports stay until their own expiry, as the terms say.
- */
-export const purgeDeletedAccounts = async (database: Db, storage: ImageStorage, now: Date): Promise<number> => {
-  const { users, sessions, projects, goals, entries, posts, profiles, accessLogs } = collections(database);
-  const cutoff = new Date(now.getTime() - DELETION_GRACE_DAYS * DAY_MS);
-  const closed = await users.find({ deletionRequestedAt: { $lte: cutoff } }, { projection: { _id: 1 } }).toArray();
+export type DeletionPreview = {
+  userId: string;
+  name: string;
+  username: string;
+  email: string;
+  requestedAt: Date;
+  graceEndsAt: Date;
+  deadline: Date;
+  state: Exclude<DeletionState, 'none'>;
+  overdue: boolean;
+  counts: { novels: number; goals: number; entries: number; posts: number; images: number; profile: boolean };
+};
 
-  for (const { _id: userId } of closed) {
-    const [ownProjects, profile, ownPosts, uploads] = await Promise.all([
-      projects.find({ userId }, { projection: { coverKey: 1 } }).toArray(),
-      profiles.findOne({ userId }, { projection: { avatarKey: 1 } }),
-      posts.find({ userId }, { projection: { imageKey: 1 } }).toArray(),
-      accessLogs.find({ userId, action: 'upload' }, { projection: { detail: 1 } }).toArray(),
-    ]);
-    const keys = new Set(
+const later = (date: Date, days: number): Date => new Date(date.getTime() + days * DAY_MS);
+
+const imageKeysOf = async (database: Db, userId: ObjectId): Promise<string[]> => {
+  const { projects, profiles, posts, accessLogs } = collections(database);
+  const [ownProjects, profile, ownPosts, uploads] = await Promise.all([
+    projects.find({ userId }, { projection: { coverKey: 1 } }).toArray(),
+    profiles.findOne({ userId }, { projection: { avatarKey: 1 } }),
+    posts.find({ userId }, { projection: { imageKey: 1 } }).toArray(),
+    accessLogs.find({ userId, action: 'upload' }, { projection: { detail: 1 } }).toArray(),
+  ]);
+
+  return [
+    ...new Set(
       [
         ...ownProjects.map((project) => project.coverKey),
         profile?.avatarKey,
         ...ownPosts.map((post) => post.imageKey),
         ...uploads.map((upload) => upload.detail),
       ].filter((key): key is string => typeof key === 'string' && key.length > 0),
-    );
+    ),
+  ];
+};
 
-    await Promise.all([...keys].map((key) => storage.remove(key).catch(() => undefined)));
-    await Promise.all([
-      projects.deleteMany({ userId }),
-      goals.deleteMany({ userId }),
-      entries.deleteMany({ userId }),
-      posts.deleteMany({ userId }),
-      profiles.deleteMany({ userId }),
-      sessions.deleteMany({ userId }),
-    ]);
-    await users.deleteOne({ _id: userId });
+/**
+ * Every account waiting for deletion, oldest request first, with what deleting it would remove, so an
+ * admin can check before deleting by hand. `overdue` marks requests past the deadline the terms promise.
+ */
+export const listPendingDeletions = async (database: Db, now: Date): Promise<DeletionPreview[]> => {
+  const { users, projects, goals, entries, posts, profiles } = collections(database);
+  const pending = await users
+    .find({ deletionRequestedAt: { $exists: true } })
+    .sort({ deletionRequestedAt: 1 })
+    .toArray();
+
+  return Promise.all(
+    pending.map(async (user) => {
+      const requestedAt = user.deletionRequestedAt as Date;
+      const userId = user._id;
+      const [novels, goalCount, entryCount, postCount, profile, images] = await Promise.all([
+        projects.countDocuments({ userId }),
+        goals.countDocuments({ userId }),
+        entries.countDocuments({ userId }),
+        posts.countDocuments({ userId }),
+        profiles.countDocuments({ userId }),
+        imageKeysOf(database, userId),
+      ]);
+      const deadline = later(requestedAt, DELETION_DEADLINE_DAYS);
+
+      return {
+        userId: userId.toHexString(),
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        requestedAt,
+        graceEndsAt: later(requestedAt, DELETION_GRACE_DAYS),
+        deadline,
+        state: deletionState(requestedAt, now) === 'closed' ? 'closed' : 'grace',
+        overdue: now.getTime() > deadline.getTime(),
+        counts: {
+          novels,
+          goals: goalCount,
+          entries: entryCount,
+          posts: postCount,
+          images: images.length,
+          profile: profile > 0,
+        },
+      };
+    }),
+  );
+};
+
+/**
+ * Deletes one account for good, with its novels, goals, entries, profile, sessions and images (covers,
+ * avatar and the uploads still in the access records), but only once its grace period is over. Access
+ * records and reports stay until their own expiry, as the terms say.
+ */
+export const purgeAccount = async (
+  database: Db,
+  storage: ImageStorage,
+  userId: string,
+  now: Date,
+): Promise<{ deleted: boolean; images: number }> => {
+  const { users, sessions, projects, goals, entries, posts, profiles } = collections(database);
+  const id = idOf(userId);
+  const user = id ? await users.findOne({ _id: id }, { projection: { deletionRequestedAt: 1 } }) : null;
+
+  if (!id || !user || deletionState(user.deletionRequestedAt, now) !== 'closed') {
+    return { deleted: false, images: 0 };
   }
 
-  return closed.length;
+  const keys = await imageKeysOf(database, id);
+  await Promise.all(keys.map((key) => storage.remove(key).catch(() => undefined)));
+  await Promise.all([
+    projects.deleteMany({ userId: id }),
+    goals.deleteMany({ userId: id }),
+    entries.deleteMany({ userId: id }),
+    posts.deleteMany({ userId: id }),
+    profiles.deleteMany({ userId: id }),
+    sessions.deleteMany({ userId: id }),
+  ]);
+  await users.deleteOne({ _id: id });
+
+  return { deleted: true, images: keys.length };
 };
