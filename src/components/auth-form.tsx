@@ -65,7 +65,9 @@ export function AuthForm({ mode, action, next }: AuthFormProps) {
         error={fieldError('password')}
         required
       />
-      <SubmitButton>{isSignUp ? t('Create account') : t('Sign in')}</SubmitButton>
+      <SubmitButton pendingLabel={isSignUp ? t('Creating account…') : t('Signing in…')}>
+        {isSignUp ? t('Create account') : t('Sign in')}
+      </SubmitButton>
       <p className="text-center text-sm text-ink-soft">
         {isSignUp ? t('Already have a library card?') : t('New here?')}{' '}
         <Link href={isSignUp ? '/login' : '/register'} className="text-accent underline underline-offset-4">

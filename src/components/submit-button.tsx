@@ -4,7 +4,12 @@ import type { ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useI18n } from './i18n-provider';
 
-type SubmitButtonProps = { children: ReactNode; variant?: 'primary' | 'quiet' | 'danger' };
+type SubmitButtonProps = {
+  children: ReactNode;
+  /** What the button says while the form is sent; defaults to "Saving…". */
+  pendingLabel?: ReactNode;
+  variant?: 'primary' | 'quiet' | 'danger';
+};
 
 const VARIANT_CLASSES = {
   primary: 'bg-accent text-accent-ink hover:brightness-110',
@@ -12,7 +17,7 @@ const VARIANT_CLASSES = {
   danger: 'border border-danger text-danger hover:bg-paper',
 } as const;
 
-export function SubmitButton({ children, variant = 'primary' }: SubmitButtonProps) {
+export function SubmitButton({ children, pendingLabel, variant = 'primary' }: SubmitButtonProps) {
   const { pending } = useFormStatus();
   const { t } = useI18n();
 
@@ -22,7 +27,7 @@ export function SubmitButton({ children, variant = 'primary' }: SubmitButtonProp
       disabled={pending}
       aria-disabled={pending}
       className={`relative inline-flex items-center justify-center rounded-sm px-4 py-2 font-display text-sm font-semibold tracking-wide transition disabled:opacity-60 ${VARIANT_CLASSES[variant]}`}>
-      {pending ? t('Saving…') : children}
+      {pending ? (pendingLabel ?? t('Saving…')) : children}
       {pending ? <span className="pending-ink" aria-hidden="true" /> : null}
     </button>
   );

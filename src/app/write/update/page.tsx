@@ -62,7 +62,9 @@ export default async function UpdatePage({ searchParams }: PageProps<'/write/upd
                 </span>
               </span>
               <form action={removeEntryAction.bind(null, entry.id)}>
-                <SubmitButton variant="quiet">{t('Undo')}</SubmitButton>
+                <SubmitButton variant="quiet" pendingLabel={t('Undoing…')}>
+                  {t('Undo')}
+                </SubmitButton>
               </form>
             </li>
           ))}

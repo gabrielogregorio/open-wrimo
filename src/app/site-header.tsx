@@ -51,7 +51,9 @@ export async function SiteHeader() {
         <div className="flex flex-wrap items-end gap-4">
           {user ? (
             <form action={signOutAction}>
-              <SubmitButton variant="quiet">{t('Sign out')}</SubmitButton>
+              <SubmitButton variant="quiet" pendingLabel={t('Signing out…')}>
+                {t('Sign out')}
+              </SubmitButton>
             </form>
           ) : null}
         </div>
