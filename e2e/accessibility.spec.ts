@@ -12,6 +12,8 @@ test('public pages have no WCAG A or AA violations', async ({ page }) => {
 });
 
 test('the writing pages have no WCAG A or AA violations', async ({ writerPage: page }) => {
+  // Twelve pages, each checked by axe, take longer than one ordinary test on a shared CI runner.
+  test.slow();
   expect(await axeViolations(page)).toEqual([]);
   const url = await createNovel(page, { title: 'Acessível', daily: 500 });
 

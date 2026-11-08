@@ -44,6 +44,10 @@ jobs:
 
       - name: Run the production build against Playwright, Lighthouse and the resource monitor
         run: pnpm run e2e:built
+        env:
+          # The hosted runner reads about 100 MB more for the same build (308 MB there, 203 MB on a
+          # developer machine on 2026-11-08), so it gets its own ceiling; local runs keep 300 MB.
+          MAX_SITE_MEMORY_IN_MB: '350'
 
       - name: Upload the failure report
         if: ${{ failure() }}
