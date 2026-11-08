@@ -120,9 +120,10 @@ Allow your address in the cluster network settings. Indexes are created on the f
 | `pnpm run check:all`                        | Everything CI runs                                      |
 | `pnpm run demo:record`                      | Record the README GIFs (see docs/demo-script.md)        |
 
-`pnpm run images:owners -- --env <file> [--apply]` moves images uploaded before 0.2.1 into a folder per account
-(`<kind>/<userId>/<file>`), so deleting an account can empty its folders. Without `--apply` it only reports what it
-would move and the images it cannot assign; it is safe to run again. It reads only `MONGODB_URI`, `MONGODB_DB`,
+`pnpm run images:owners -- --env <file>` brings images uploaded before 0.2.1 into a folder per account
+(`<kind>/<userId>/<file>`), so deleting an account can empty its folders. On its own it only reports. `--apply` copies
+the images and points the site at the copies, keeping the originals; `--undo` goes back to the originals;
+`--remove-old` deletes the originals once the copies are checked. It reads only `MONGODB_URI`, `MONGODB_DB`,
 `CLOUDINARY_URL` and `CLOUDINARY_FOLDER` (or `LOCAL_UPLOADS_DIR` for images on disk).
 
 ## Tests

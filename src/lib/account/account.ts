@@ -168,18 +168,21 @@ const keysOnlyThisAccountUses = async (database: Db, userId: ObjectId, keys: str
 };
 
 const imageKeysOf = async (database: Db, userId: ObjectId): Promise<string[]> => {
-  const { projects, profiles, posts, accessLogs } = collections(database);
-  const [ownProjects, profile, ownPosts, uploads] = await Promise.all([
+  const { projects, profiles, posts, accessLogs, imageMigrations } = collections(database);
+  const [ownProjects, profile, ownPosts, uploads, copied] = await Promise.all([
     projects.find({ userId }, { projection: { coverKey: 1, excerpt: 1 } }).toArray(),
     profiles.findOne({ userId }, { projection: { avatarKey: 1, bio: 1 } }),
     posts.find({ userId }, { projection: { imageKey: 1, body: 1 } }).toArray(),
     accessLogs.find({ userId, action: 'upload' }, { projection: { detail: 1 } }).toArray(),
+    // Originals of images copied into the owner folder and not removed yet.
+    imageMigrations.find({ userId }, { projection: { fromKey: 1 } }).toArray(),
   ]);
   const recorded = [
     ...ownProjects.map((project) => project.coverKey),
     profile?.avatarKey,
     ...ownPosts.map((post) => post.imageKey),
     ...uploads.map((upload) => upload.detail),
+    ...copied.map((migration) => migration.fromKey),
   ].filter((key): key is string => typeof key === 'string' && key.length > 0);
   const inText = [
     ...ownProjects.flatMap((project) => inlineKeysIn(project.excerpt)),
@@ -249,7 +252,7 @@ export const purgeAccount = async (
   userId: string,
   now: Date,
 ): Promise<{ deleted: boolean; images: number }> => {
-  const { users, sessions, projects, goals, entries, posts, profiles } = collections(database);
+  const { users, sessions, projects, goals, entries, posts, profiles, imageMigrations } = collections(database);
   const id = idOf(userId);
   const user = id ? await users.findOne({ _id: id }, { projection: { deletionRequestedAt: 1 } }) : null;
 
@@ -268,6 +271,7 @@ export const purgeAccount = async (
     posts.deleteMany({ userId: id }),
     profiles.deleteMany({ userId: id }),
     sessions.deleteMany({ userId: id }),
+    imageMigrations.deleteMany({ userId: id }),
   ]);
   await users.deleteOne({ _id: id });
 

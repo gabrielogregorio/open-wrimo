@@ -12,6 +12,8 @@
   database and are no longer listed.
 - `pnpm run images:owners` reads only the database and image storage settings, so it no longer asks for
   `JWT_SECRET` or `STORAGE_DRIVER`.
+- `pnpm run images:owners --apply` copies the images instead of moving them and keeps the originals, with `--undo`
+  to go back and `--remove-old` to delete the originals; deleting an account also removes originals not yet removed.
 - New README tour GIFs, recorded by `pnpm run demo:record` from the script in `docs/demo-script.md`, with its own
   demo data on a throwaway database.
 
