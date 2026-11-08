@@ -5,9 +5,7 @@ import { notFound, redirect } from 'next/navigation';
 import { purgeAccount } from '@/lib/account/account';
 import { createRateLimiter } from '@/lib/auth/rate-limit';
 import { getDatabase } from '@/lib/db/client';
-import { getEnvironment } from '@/lib/env';
 import { formValues, type FormState } from '@/lib/form';
-import { sendReportAlert } from '@/lib/moderation/alert';
 import { REPORT_FIELDS, createReportRepository, submitReport, type ReportRepository } from '@/lib/moderation/reports';
 import { clientInfo, getCurrentUser, getImageStorage } from '@/server/session';
 
@@ -19,14 +17,11 @@ export async function reportAction(_previous: FormState, formData: FormData): Pr
   const user = await getCurrentUser();
   const { address, userAgent } = await clientInfo();
 
-  const { RESEND_API_KEY, REPORT_ALERT_EMAIL, APP_URL } = getEnvironment();
-
   return submitReport(
     {
       reports: createReportRepository(database),
       limiter: createRateLimiter(database),
       now: new Date(),
-      alert: (reason) => sendReportAlert({ apiKey: RESEND_API_KEY, to: REPORT_ALERT_EMAIL, appUrl: APP_URL }, reason),
     },
     formValues(formData, REPORT_FIELDS),
     { userId: user?.id ?? null, address, userAgent },

@@ -54,14 +54,6 @@ describe('parseEnvironment', () => {
     expect(() => parseEnvironment({ MONGODB_URI: LOCAL_URI, JWT_SECRET: 'short' })).toThrow(/JWT_SECRET/);
   });
 
-  it('takes an optional Resend key and a valid alert address', () => {
-    expect(parseEnvironment({ ...BASE, RESEND_API_KEY: 're_123', REPORT_ALERT_EMAIL: 'a@b.com' })).toMatchObject({
-      RESEND_API_KEY: 're_123',
-      REPORT_ALERT_EMAIL: 'a@b.com',
-    });
-    expect(() => parseEnvironment({ ...BASE, REPORT_ALERT_EMAIL: 'not-an-email' })).toThrow(/REPORT_ALERT_EMAIL/);
-  });
-
   it('refuses a connection string from another database', () => {
     expect(() => parseEnvironment({ JWT_SECRET, MONGODB_URI: 'postgres://localhost/openwrimo' })).toThrow(
       /Invalid environment: .*MONGODB_URI/s,

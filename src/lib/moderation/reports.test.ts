@@ -160,14 +160,6 @@ describe('reports', () => {
     await collections(testDatabase.database).reports.deleteMany({});
   });
 
-  it('alerts the admin with the reason after storing the report', async () => {
-    const alert = vi.fn(async () => true);
-
-    expect(await submitReport({ ...dependencies, alert }, input(), anonymous)).toEqual({ saved: true });
-    expect(alert).toHaveBeenCalledWith('spam');
-    expect(await collections(testDatabase.database).reports.countDocuments({})).toBe(1);
-  });
-
   it('stores an anonymous profile report as open', async () => {
     expect(await submitReport(dependencies, input(), anonymous)).toEqual({ saved: true });
 

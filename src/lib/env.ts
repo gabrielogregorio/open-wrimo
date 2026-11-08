@@ -24,9 +24,6 @@ const environmentSchema = z
       .string()
       .regex(/^[\w/-]+$/)
       .default('openwrimo'),
-    /** Optional e-mail alerts of new reports through Resend; both are needed to send. */
-    RESEND_API_KEY: z.string().min(1).optional(),
-    REPORT_ALERT_EMAIL: z.email().optional(),
   })
   .refine((environment) => environment.STORAGE_DRIVER === 'local' || environment.CLOUDINARY_URL, {
     path: ['CLOUDINARY_URL'],

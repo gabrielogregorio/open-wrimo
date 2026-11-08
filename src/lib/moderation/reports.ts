@@ -198,8 +198,6 @@ export type ReportDependencies = {
   reports: ReportRepository;
   limiter: RateLimiter;
   now: Date;
-  /** Optional alert to the admin after the report is stored. */
-  alert?: (reason: ReportReason) => Promise<unknown>;
 };
 
 export type Reporter = { userId: string | null; address: string | null; userAgent: string };
@@ -219,7 +217,7 @@ const rateKeys = (reporter: Reporter): [string, RateRule][] => {
 };
 
 export const submitReport = async (
-  { reports, limiter, now, alert }: ReportDependencies,
+  { reports, limiter, now }: ReportDependencies,
   input: Record<string, unknown>,
   reporter: Reporter,
 ): Promise<FormState> => {
@@ -258,7 +256,6 @@ export const submitReport = async (
     createdAt: now,
     resolvedAt: null,
   });
-  await alert?.(parsed.data.reason);
 
   return { saved: true };
 };
