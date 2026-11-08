@@ -14,6 +14,10 @@
   `JWT_SECRET` or `STORAGE_DRIVER`.
 - `pnpm run images:owners --apply` copies the images instead of moving them and keeps the originals, with `--undo`
   to go back and `--remove-old` to delete the originals; deleting an account also removes originals not yet removed.
+- Images are saved as WebP at quality 70 instead of 82, smaller with a loss that is hard to see.
+- Profile pictures are cropped to a 512×512 square around what draws the eye, instead of up to 1920×1080.
+- Animated GIFs and WebPs keep every frame; before, only the first one was kept.
+- Community cards load the pictures and covers only as they near the screen.
 - New README tour GIFs, recorded by `pnpm run demo:record` from the script in `docs/demo-script.md`, with its own
   demo data on a throwaway database.
 
