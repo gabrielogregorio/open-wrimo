@@ -9,7 +9,7 @@ export const ptBRTools: Record<string, string> = {
   ...ptBRToolsRhythm,
   Tools: 'Ferramentas',
   'All tools': 'Todas as ferramentas',
-  Favorites: 'Favoritas',
+  'Favorite tools': 'Favoritas',
   'Favorite {tool}': 'Favoritar {tool}',
   'This tool is on its way.': 'Esta ferramenta está a caminho.',
   'Everything here works in the browser and keeps your work on this device. Star the ones you use most.':

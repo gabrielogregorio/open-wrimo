@@ -14,7 +14,7 @@ describe('ToolsGrid', () => {
     expect(screen.getByRole('heading', { name: 'Write' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Export' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Focus editor/ })).toHaveAttribute('href', '/write/tools/focus');
-    expect(screen.queryByRole('heading', { name: 'Favorites' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Favorite tools' })).not.toBeInTheDocument();
   });
 
   it('stars a tool into the favorites and remembers it on this device', async () => {
@@ -22,20 +22,20 @@ describe('ToolsGrid', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Favorite Year heatmap' }));
 
-    const favorites = screen.getByRole('heading', { name: 'Favorites' }).closest('section') as HTMLElement;
+    const favorites = screen.getByRole('heading', { name: 'Favorite tools' }).closest('section') as HTMLElement;
     expect(within(favorites).getByRole('link', { name: /Year heatmap/ })).toBeInTheDocument();
     expect(JSON.parse(window.localStorage.getItem(FAVORITES_KEY) ?? '[]')).toEqual(['heatmap']);
 
     await userEvent.click(within(favorites).getByRole('button', { name: 'Favorite Year heatmap' }));
 
-    expect(screen.queryByRole('heading', { name: 'Favorites' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Favorite tools' })).not.toBeInTheDocument();
   });
 
   it('brings back stored favorites and survives storage that throws', async () => {
     window.localStorage.setItem(FAVORITES_KEY, '["epub"]');
     renderWithLocale(<ToolsGrid />);
 
-    expect(await screen.findByRole('heading', { name: 'Favorites' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Favorite tools' })).toBeInTheDocument();
 
     const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('blocked');

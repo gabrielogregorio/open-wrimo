@@ -24,7 +24,6 @@ export const ptBR: Record<string, string> = {
   'This account was deleted at its owner’s request.': 'Esta conta foi excluída a pedido de quem a criou.',
   'Terms of Use': 'Termos de uso',
   'About the site': 'Sobre o site',
-  Search: 'Pesquisar',
   'Open the list': 'Abrir a lista',
   'Close the list': 'Fechar a lista',
   'Nothing found.': 'Nada encontrado.',
@@ -89,7 +88,6 @@ export const ptBR: Record<string, string> = {
   Title: 'Título',
   'Too many attempts. Try again in {minutes} minutes.':
     'Muitas tentativas. Tente de novo em {minutes} {minutes:minuto|minutos}.',
-  Update: 'Atualizar',
   'Use 10 to 128 characters.': 'Use de 10 a 128 caracteres.',
   'Welcome back': 'Que bom te ver de novo',
 };

@@ -13,7 +13,6 @@ export const ptBRToolsRhythm: Record<string, string> = {
   'Words to go': 'Palavras que faltam',
   'Your pace (last 7 days)': 'Seu ritmo (últimos 7 dias)',
   '{count} a day': '{count} por dia',
-  'At this pace you finish on': 'Nesse ritmo você termina em',
   'no recent writing yet': 'ainda sem escrita recente',
   'Keep this pace and you get there in time.': 'Mantenha esse ritmo e você chega a tempo.',
   'Your recent pace is not enough yet. Write a little more each day to catch up.':
@@ -62,7 +61,6 @@ export const ptBRToolsRhythm: Record<string, string> = {
   'The reminder only works while Open Wrimo is open on this device, in a tab or an installed app. There is no server sending it, so with the app closed nothing arrives. The setting is saved only on this device.':
     'O lembrete só funciona enquanto o Open Wrimo está aberto neste aparelho, em uma aba ou no app instalado. Não há servidor enviando, então com o app fechado nada chega. A configuração fica salva só neste aparelho.',
   // Shared by the export tools
-  'Chapter {number}': 'Capítulo {number}',
   'Loose drafts': 'Rascunhos soltos',
   'Drafts from': 'Rascunhos de',
   'Loose drafts (no novel)': 'Rascunhos soltos (sem romance)',

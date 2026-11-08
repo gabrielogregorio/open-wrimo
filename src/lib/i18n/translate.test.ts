@@ -142,6 +142,22 @@ describe('pt-BR dictionary', () => {
     expect(ptBR[key]).toBeTruthy();
   });
 
+  it('defines each text in one dictionary file only, so no file silently overrides another', () => {
+    const dictionaryFiles = readdirSync(join(SOURCE_ROOT, 'lib', 'i18n')).filter((name) => /^pt-BR.*\.ts$/.test(name));
+    const owners = new Map<string, string[]>();
+
+    for (const name of dictionaryFiles) {
+      const source = readFileSync(join(SOURCE_ROOT, 'lib', 'i18n', name), 'utf8');
+
+      for (const match of source.matchAll(/^ {2}(?:'((?:[^'\\]|\\.)*)'|(\w+)):/gm)) {
+        const key = match[1] ?? match[2];
+        owners.set(key, [...(owners.get(key) ?? []), name]);
+      }
+    }
+
+    expect([...owners].filter(([, files]) => files.length > 1)).toEqual([]);
+  });
+
   it('keeps the same placeholders in each translation', () => {
     // A plural choice ("{count:palavra|palavras}") repeats a placeholder, so names are compared as a set.
     const placeholders = (text: string): string[] =>

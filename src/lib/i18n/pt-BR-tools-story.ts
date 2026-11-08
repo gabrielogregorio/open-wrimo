@@ -52,9 +52,7 @@ export const ptBRToolsStory: Record<string, string> = {
     'Linhas que começam com travessão contam como fala, e a intervenção do narrador entre travessões conta como narração. Texto entre aspas também conta como fala.',
   // Shared by the story tools
   'No novel (loose notes)': 'Nenhum romance (notas soltas)',
-  'Yes, delete': 'Sim, apagar',
   Edit: 'Editar',
-  Delete: 'Apagar',
   'Delete {name}?': 'Apagar {name}?',
   Note: 'Nota',
   // Name generator

@@ -149,7 +149,7 @@ export function ToolsGrid() {
       {favoriteTools.length > 0 ? (
         <section aria-labelledby="tools-favorites" className="flex flex-col gap-3">
           <h2 id="tools-favorites" className="font-display text-xl font-semibold">
-            {t('Favorites')}
+            {t('Favorite tools')}
           </h2>
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {favoriteTools.map((tool) => card(tool as (typeof TOOLS)[number]))}
