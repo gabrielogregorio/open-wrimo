@@ -1,11 +1,10 @@
-import { createAccountRepository } from '@/lib/account/account';
+import { accountBlock, createAccountRepository } from '@/lib/account/account';
 import { clientAddressFrom } from '@/lib/auth/request';
 import type { AuthResult } from '@/lib/auth/service';
 import { verifyAccessToken, type AccessClaims } from '@/lib/auth/tokens';
 import { getEnvironment } from '@/lib/env';
 import { getDatabase } from '@/lib/db/client';
 import type { FormState } from '@/lib/form';
-import { needsTermsAcceptance } from '@/lib/legal/terms';
 import { tokenPair } from './tokens';
 
 export const dynamic = 'force-dynamic';
@@ -27,13 +26,18 @@ export const TERMS_OUTDATED = 'Accept the new Terms of Use on the site to keep u
 /** The writer behind a bearer token, or the response to send: 401 without a live account, 403 until the new terms are accepted. */
 export const bearerWriter = async (request: Request): Promise<AccessClaims | Response> => {
   const claims = await bearerClaims(request);
-  const status = claims ? await createAccountRepository(await getDatabase()).status(claims.userId) : null;
 
-  if (!claims || !status || status.deletionRequestedAt) {
+  if (!claims) {
     return unauthorized();
   }
 
-  return needsTermsAcceptance(status.termsVersion) ? json({ error: TERMS_OUTDATED }, 403) : claims;
+  const block = accountBlock(await createAccountRepository(await getDatabase()).status(claims.userId));
+
+  if (block === 'terms') {
+    return json({ error: TERMS_OUTDATED }, 403);
+  }
+
+  return block ? unauthorized() : claims;
 };
 
 export const requestAddress = (request: Request): string | null =>

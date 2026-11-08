@@ -1,14 +1,17 @@
 import { exportNotebook } from '@/lib/writing/service';
-import { getCurrentUser, writingContext } from '@/server/session';
+import { getCurrentUser, getTimeZone, writingContextFor } from '@/server/session';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(): Promise<Response> {
-  if (!(await getCurrentUser())) {
+  const user = await getCurrentUser();
+
+  if (!user) {
     return new Response(null, { status: 401 });
   }
 
-  const context = await writingContext();
+  // The copy of one's own data stays open while the account waits for deletion or new terms.
+  const context = await writingContextFor(user.id, await getTimeZone());
   const notebook = await exportNotebook(context);
 
   return new Response(JSON.stringify({ ...notebook, exportedAt: context.now.toISOString() }, null, 2), {

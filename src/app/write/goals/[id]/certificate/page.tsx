@@ -5,7 +5,7 @@ import { UNIT_LABELS } from '@/components/writing-labels';
 import { formatDay, formatNumber } from '@/lib/i18n/format';
 import { getLocale, getTranslator } from '@/server/i18n';
 import { loadNotebook } from '@/server/notebook';
-import { requireUser } from '@/server/session';
+import { requireWriter } from '@/server/session';
 import { PrintButton } from './print-button';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function CertificatePage({ params }: PageProps<'/write/goals/[id]/certificate'>) {
   const { id } = await params;
-  const user = await requireUser();
+  const user = await requireWriter();
   const notebook = await loadNotebook();
   const goal = notebook.goals.find((item) => item.id === id);
   const novel = notebook.projects.find((project) => project.id === goal?.projectId);

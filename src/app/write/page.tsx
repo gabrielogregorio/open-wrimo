@@ -14,7 +14,7 @@ import {
   participationBadges,
   wordsFor,
 } from '@/server/notebook';
-import { requireUser } from '@/server/session';
+import { requireWriter } from '@/server/session';
 import { NovelCard } from './novel-card';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function WritingDeskPage() {
-  const user = await requireUser();
+  const user = await requireWriter();
   const t = await getTranslator();
   const locale = await getLocale();
   const notebook = await loadNotebook();

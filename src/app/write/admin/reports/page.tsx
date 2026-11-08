@@ -7,7 +7,7 @@ import { getDatabase } from '@/lib/db/client';
 import { REPORT_REASON_LABELS, formatReportTime } from '@/lib/moderation/labels';
 import { createReportRepository, type ReportStatus, type ReportView } from '@/lib/moderation/reports';
 import { getTranslator } from '@/server/i18n';
-import { getCurrentUser } from '@/server/session';
+import { currentAdmin } from '@/server/admin';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslator();
@@ -84,12 +84,11 @@ function ReportItem({ report, t }: { report: ReportView; t: Translate }) {
 type AdminReportsPageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 export default async function AdminReportsPage({ searchParams }: AdminReportsPageProps) {
-  const user = await getCurrentUser();
-  const reports = createReportRepository(await getDatabase());
-
-  if (!user || !(await reports.isAdmin(user.id))) {
+  if (!(await currentAdmin())) {
     notFound();
   }
+
+  const reports = createReportRepository(await getDatabase());
 
   const t = await getTranslator();
   const params = await searchParams;

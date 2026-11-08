@@ -40,7 +40,7 @@ export async function signUpAction(_previous: FormState, formData: FormData): Pr
 
   return finish(
     result,
-    { name: input.name, username: input.username, email: input.email, acceptTerms: input.acceptTerms ?? '' },
+    { name: input.name, username: input.username, email: input.email, acceptTerms: input.acceptTerms },
     '/write',
   );
 }

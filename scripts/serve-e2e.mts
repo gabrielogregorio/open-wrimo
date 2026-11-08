@@ -1,24 +1,30 @@
 // Serves the production build on the E2E port with a throwaway database, unless E2E_MONGODB_URI points to one.
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { mkdtempSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
 const PORT = process.env.E2E_PORT ?? '8921';
+const E2E_DATABASE_FILE = 'node_modules/.cache/openwrimo-e2e-database.json';
 const externalUri = process.env.E2E_MONGODB_URI;
 const memoryServer = externalUri ? null : await MongoMemoryServer.create();
 const uri = externalUri ?? memoryServer!.getUri();
 
 const NEXT_BIN = 'node_modules/next/dist/bin/next';
+const databaseName = `openwrimo-e2e-${Date.now()}`;
+
+// The E2E tests read this to set up what has no screen of its own: an admin, or terms accepted long ago.
+mkdirSync('node_modules/.cache', { recursive: true });
+writeFileSync(E2E_DATABASE_FILE, JSON.stringify({ uri, databaseName }));
 
 const server = spawn(process.execPath, [NEXT_BIN, 'start', '--port', PORT, '--hostname', '127.0.0.1'], {
   stdio: 'inherit',
   env: {
     ...process.env,
     MONGODB_URI: uri,
-    MONGODB_DB: `openwrimo-e2e-${Date.now()}`,
+    MONGODB_DB: databaseName,
     APP_URL: `http://127.0.0.1:${PORT}`,
     TRUST_PROXY: 'false',
     JWT_SECRET: randomBytes(48).toString('base64url'),

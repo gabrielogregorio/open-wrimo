@@ -16,6 +16,16 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'server',
+          environment: 'node',
+          include: ['src/server/**/*.test.ts', 'src/app/**/*.test.ts', 'src/proxy.test.ts'],
+          setupFiles: ['src/test/setup-server.ts'],
+          hookTimeout: 120_000,
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'dom',
           environment: 'jsdom',
           include: ['src/components/**/*.test.tsx'],
@@ -25,7 +35,15 @@ export default defineConfig({
     ],
     coverage: {
       provider: 'v8',
-      include: ['src/lib/**/*.ts', 'src/components/**/*.tsx'],
+      include: [
+        'src/lib/**/*.ts',
+        'src/components/**/*.tsx',
+        'src/server/**/*.ts',
+        'src/proxy.ts',
+        'src/app/actions/**/*.ts',
+        'src/app/api/**/route.ts',
+        'src/app/media/**/route.ts',
+      ],
       exclude: ['**/*.test.ts', '**/*.test.tsx'],
       reporter: ['text', 'html'],
       thresholds: { lines: 100, functions: 100, branches: 100, statements: 100 },

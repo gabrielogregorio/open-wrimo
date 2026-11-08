@@ -157,6 +157,9 @@ export const ptBRWriting: Record<string, string> = {
   'This goal no longer exists.': 'Essa meta não existe mais.',
   'This project is not in your notebook.': 'Esse projeto não está no seu caderno.',
   'Use a PNG, JPEG, WebP or GIF image.': 'Use uma imagem PNG, JPEG, WebP ou GIF.',
+  'Sign in first.': 'Entre na sua conta primeiro.',
+  'Accept the new Terms of Use, or cancel the deletion of your account, to add images.':
+    'Aceite os novos Termos de Uso, ou cancele a exclusão da sua conta, para enviar imagens.',
   'Send an image under 5 MB.': 'Envie uma imagem com menos de 5 MB.',
   'The image is still 2 MB or more after converting to WebP.':
     'A imagem ainda tem 2 MB ou mais depois de convertida para WebP.',

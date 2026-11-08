@@ -7,6 +7,7 @@ import { createRateLimiter } from '@/lib/auth/rate-limit';
 import { getDatabase } from '@/lib/db/client';
 import { formValues, type FormState } from '@/lib/form';
 import { REPORT_FIELDS, createReportRepository, submitReport, type ReportRepository } from '@/lib/moderation/reports';
+import { currentAdmin } from '@/server/admin';
 import { clientInfo, getCurrentUser, getImageStorage } from '@/server/session';
 
 const ADMIN_REPORTS_PATH = '/write/admin/reports';
@@ -28,16 +29,13 @@ export async function reportAction(_previous: FormState, formData: FormData): Pr
   );
 }
 
-/** The report repository, only for a signed-in admin; anyone else gets a 404. */
+/** The report repository, only for a signed-in admin whose account is in order; anyone else gets a 404. */
 const adminReports = async (): Promise<ReportRepository> => {
-  const user = await getCurrentUser();
-  const reports = createReportRepository(await getDatabase());
-
-  if (!user || !(await reports.isAdmin(user.id))) {
+  if (!(await currentAdmin())) {
     notFound();
   }
 
-  return reports;
+  return createReportRepository(await getDatabase());
 };
 
 export async function resolveReportAction(reportId: string): Promise<void> {

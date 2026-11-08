@@ -2,7 +2,9 @@ import { ObjectId } from 'mongodb';
 import { collections } from '@/lib/db/collections';
 import type { ImageStorage } from '@/lib/storage/storage';
 import { startTestDatabase, type TestDatabase } from '@/test/mongo';
+import { TERMS_VERSION } from '@/lib/legal/terms';
 import {
+  accountBlock,
   createAccessLog,
   createAccountRepository,
   deletionState,
@@ -20,6 +22,21 @@ describe('deletionState', () => {
     expect(deletionState(undefined, NOW)).toBe('none');
     expect(deletionState(new Date(NOW.getTime() - 29 * DAY), NOW)).toBe('grace');
     expect(deletionState(new Date(NOW.getTime() - 30 * DAY), NOW)).toBe('closed');
+  });
+});
+
+describe('accountBlock', () => {
+  const status = { termsVersion: TERMS_VERSION, termsAcceptedAt: NOW, deletionRequestedAt: null, isAdmin: false };
+
+  it('lets a live account with the terms in force write', () => {
+    expect(accountBlock(status)).toBeNull();
+  });
+
+  it('blocks a missing account, one waiting for deletion and one with old terms, in that order', () => {
+    expect(accountBlock(null)).toBe('gone');
+    expect(accountBlock({ ...status, termsVersion: 'old', deletionRequestedAt: NOW })).toBe('deletion');
+    expect(accountBlock({ ...status, termsVersion: 'old' })).toBe('terms');
+    expect(accountBlock({ ...status, termsVersion: null })).toBe('terms');
   });
 });
 

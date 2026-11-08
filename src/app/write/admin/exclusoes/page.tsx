@@ -6,9 +6,8 @@ import { listPendingDeletions, type DeletionPreview } from '@/lib/account/accoun
 import { getDatabase } from '@/lib/db/client';
 import type { Translate } from '@/lib/i18n/translate';
 import { formatReportTime } from '@/lib/moderation/labels';
-import { createReportRepository } from '@/lib/moderation/reports';
 import { getTranslator } from '@/server/i18n';
-import { getCurrentUser } from '@/server/session';
+import { currentAdmin } from '@/server/admin';
 import { AdminNav } from '../admin-nav';
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -82,12 +81,11 @@ function DeletionItem({ item, askedToConfirm, t }: { item: DeletionPreview; aske
 }
 
 export default async function AdminDeletionsPage({ searchParams }: DeletionsPageProps) {
-  const user = await getCurrentUser();
-  const database = await getDatabase();
-
-  if (!user || !(await createReportRepository(database).isAdmin(user.id))) {
+  if (!(await currentAdmin())) {
     notFound();
   }
+
+  const database = await getDatabase();
 
   const t = await getTranslator();
   const confirmFor = (await searchParams).confirmar;

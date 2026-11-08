@@ -1,6 +1,7 @@
 import { ObjectId, type Db } from 'mongodb';
 import { collections, type AccessAction } from '@/lib/db/collections';
 import type { ImageStorage } from '@/lib/storage/storage';
+import { needsTermsAcceptance } from '@/lib/legal/terms';
 import { ACCESS_LOG_MONTHS, DELETION_DEADLINE_DAYS, DELETION_GRACE_DAYS } from '@/lib/legal/terms-content';
 
 const DAY_MS = 86_400_000;
@@ -30,6 +31,24 @@ export const deletionState = (requestedAt: Date | null | undefined, now: Date): 
   }
 
   return now.getTime() - requestedAt.getTime() < DELETION_GRACE_DAYS * DAY_MS ? 'grace' : 'closed';
+};
+
+/**
+ * Why an account may not write right now: 'gone' without an account, 'deletion' while it waits to be
+ * deleted, 'terms' until the terms in force are accepted. Null means it may write.
+ */
+export type AccountBlock = 'gone' | 'deletion' | 'terms' | null;
+
+export const accountBlock = (status: AccountStatus | null): AccountBlock => {
+  if (!status) {
+    return 'gone';
+  }
+
+  if (status.deletionRequestedAt) {
+    return 'deletion';
+  }
+
+  return needsTermsAcceptance(status.termsVersion) ? 'terms' : null;
 };
 
 const idOf = (userId: string | null): ObjectId | null =>
