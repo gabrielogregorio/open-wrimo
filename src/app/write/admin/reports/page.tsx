@@ -39,6 +39,9 @@ function ReportItem({ report, t }: { report: ReportView; t: Translate }) {
       </div>
 
       <dl className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]">
+        <dt className="font-semibold">{t('Report id')}</dt>
+        <dd className="font-mono text-xs break-all">{report.id}</dd>
+
         <dt className="font-semibold">{t('Reported')}</dt>
         <dd className="break-words">
           {report.targetUsername ? (
@@ -48,17 +51,20 @@ function ReportItem({ report, t }: { report: ReportView; t: Translate }) {
           ) : (
             t('Account no longer exists')
           )}
-          {report.target === 'novel' ? ` · ${report.novelTitle ?? t('Novel no longer exists')}` : null}
         </dd>
+
+        {report.target === 'novel' ? (
+          <>
+            <dt className="font-semibold">{t('Novel')}</dt>
+            <dd className="break-words">{report.novelTitle ?? t('Novel no longer exists')}</dd>
+
+            <dt className="font-semibold">{t('Novel id')}</dt>
+            <dd className="font-mono text-xs break-all">{report.targetProjectId}</dd>
+          </>
+        ) : null}
 
         <dt className="font-semibold">{t('Reported by')}</dt>
         <dd className="break-words">{report.reporterUsername ? `@${report.reporterUsername}` : t('anonymous')}</dd>
-
-        <dt className="font-semibold">{t('IP address')}</dt>
-        <dd className="break-all">{report.reporterAddress ?? t('Unknown')}</dd>
-
-        <dt className="font-semibold">{t('Browser')}</dt>
-        <dd className="break-all text-ink-soft">{report.reporterUserAgent || t('Unknown')}</dd>
 
         {report.resolvedAt ? (
           <>
