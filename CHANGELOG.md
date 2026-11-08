@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.3
+
+- A cover or profile picture chosen before the form came back with an error is still sent on the next save; before,
+  the preview kept showing it but the novel or profile was saved without it.
+- Terms: the account deletion section no longer names the backups in its 180-day deadline (new version of the terms, so
+  every writer accepts it once more).
+
 ## 0.2.2
 
 - An eye button shows or hides the password on sign up and sign in.

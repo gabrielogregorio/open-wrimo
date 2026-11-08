@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type DragEvent } from 'react';
+import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { MAX_UPLOAD_BYTES } from '@/lib/storage/limits';
 import { BookMockup } from './book-mockup';
 import { useI18n } from './i18n-provider';
@@ -36,10 +36,37 @@ export function ImageField({
 
   // Only the latest pick may set the preview, in case an older one finishes drawing later.
   const latestPick = useRef(0);
+  // The chosen file, kept apart from the input: React resets the form after a refused submit, which
+  // empties the file input while the preview still shows the picture, and the next save went without it.
+  const chosen = useRef<File | null>(null);
+
+  useEffect(() => {
+    const form = input.current?.form;
+
+    if (!form) {
+      return undefined;
+    }
+
+    const restore = (): void => {
+      // The reset clears the input after this event, so the file goes back on the next tick.
+      setTimeout(() => {
+        if (chosen.current && input.current) {
+          const transfer = new DataTransfer();
+          transfer.items.add(chosen.current);
+          input.current.files = transfer.files;
+        }
+      }, 0);
+    };
+
+    form.addEventListener('reset', restore);
+
+    return () => form.removeEventListener('reset', restore);
+  }, []);
 
   const pick = (target: HTMLInputElement): void => {
     const file = target.files?.[0];
     latestPick.current += 1;
+    chosen.current = null;
     setPreview(null);
     setLocalError(null);
 
@@ -54,6 +81,7 @@ export function ImageField({
       return;
     }
 
+    chosen.current = file;
     const pickNumber = latestPick.current;
     void previewOf(file).then((drawn) => {
       // A file the browser cannot draw just has no preview; the server says what is wrong with it.

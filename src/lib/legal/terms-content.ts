@@ -219,7 +219,7 @@ export const TERMS_SECTIONS: readonly TermsSection[] = [
         items: [
           'Na hora, a conta é desativada: seu perfil público e seus romances públicos deixam de aparecer, e você é desconectado.',
           `Durante ${DELETION_GRACE_DAYS} dias, você pode desistir entrando de novo na conta e cancelando o pedido.`,
-          `Depois disso, em até ${DELETION_DEADLINE_DAYS} dias contados do pedido, a conta e os dados associados (textos, metas, contagens, perfil e imagens) são apagados de forma definitiva, inclusive das cópias de segurança.`,
+          `Depois disso, em até ${DELETION_DEADLINE_DAYS} dias contados do pedido, a conta e os dados associados (textos, metas, contagens, perfil e imagens) são apagados de forma definitiva.`,
         ],
       },
       paragraph(
