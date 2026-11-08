@@ -6,6 +6,10 @@
 - A refused sign up keeps the typed password, so fixing the email does not mean typing it again; sign in still
   clears it after a wrong password.
 - An admin's profile links to the reports and account deletions pages.
+- Reporting opens an accessible dialog (Radix) that shows the title, picture and description being reported,
+  instead of a form that pushed the page down.
+- The reports page shows the report id, the novel id and its title; the reporter's address and browser stay in the
+  database and are no longer listed.
 
 ## 0.2.1
 
