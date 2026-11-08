@@ -25,13 +25,15 @@
     "e2e": "pnpm run build && pnpm run e2e:built",
     "e2e:built": "playwright test && pnpm run e2e:lighthouse && pnpm run e2e:resources",
     "e2e:features": "playwright test",
+    "demo:record": "start-server-and-test _serve_e2e http-get://127.0.0.1:8921/api/health _demo",
     "images:owners": "node --import ./scripts/ts-paths.mjs scripts/migrate-image-owners.mts",
     "e2e:lighthouse": "start-server-and-test _serve_e2e http-get://127.0.0.1:8921/api/health _lighthouse",
     "e2e:resources": "start-server-and-test _serve_e2e http-get://127.0.0.1:8921/api/health _resources",
     "check:all": "pnpm run format:check && pnpm run lint && pnpm run unit:coverage && pnpm run e2e",
     "_serve_e2e": "node scripts/serve-e2e.mts",
     "_lighthouse": "node scripts/lighthouse.mts",
-    "_resources": "node scripts/resource-usage.mts"
+    "_resources": "node scripts/resource-usage.mts",
+    "_demo": "node scripts/record-demo.mts"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",
