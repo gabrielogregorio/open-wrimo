@@ -16,10 +16,22 @@ describe('name collections', () => {
     NAME_GROUPS.forEach((group) => expect(nameOptions(group).length).toBeGreaterThan(0));
   });
 
-  it('has at least 80 names per gender in every collection', () => {
+  // Curated historical lists hold only attested names, so they are shorter. The precolonial
+  // Philippines keeps the few women on record (one inscription, one genealogy, the epics).
+  const CURATED_MINIMUMS: Record<string, { female: number; male: number }> = {
+    tupi: { female: 25, male: 25 },
+    'asia-philippines-precolonial': { female: 19, male: 25 },
+    'asia-indonesia-majapahit': { female: 25, male: 80 },
+    'asia-thailand-ayutthaya': { female: 25, male: 25 },
+  };
+
+  it('has at least 80 names per gender, or the curated minimum for attested historical lists', () => {
+    Object.keys(CURATED_MINIMUMS).forEach((id) => expect(NAME_COLLECTIONS.map((c) => c.id)).toContain(id));
     NAME_COLLECTIONS.forEach((collection) => {
-      expect(collection.female.length, collection.id).toBeGreaterThanOrEqual(80);
-      expect(collection.male.length, collection.id).toBeGreaterThanOrEqual(80);
+      const minimum = CURATED_MINIMUMS[collection.id] ?? { female: 80, male: 80 };
+
+      expect(collection.female.length, collection.id).toBeGreaterThanOrEqual(minimum.female);
+      expect(collection.male.length, collection.id).toBeGreaterThanOrEqual(minimum.male);
     });
   });
 
