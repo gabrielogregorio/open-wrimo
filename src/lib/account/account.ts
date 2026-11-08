@@ -137,25 +137,75 @@ export type DeletionPreview = {
 
 const later = (date: Date, days: number): Date => new Date(date.getTime() + days * DAY_MS);
 
+const IMAGE_SOURCE = /<img\b[^>]*?\bsrc="([^"]+)"/gi;
+const LOCAL_INLINE_IMAGE = /^\/media\/(inline\/[\w-]+\.webp)$/;
+const CLOUDINARY_IMAGE = /^https:\/\/res\.cloudinary\.com\/[\w-]+\/image\/upload\/(?:v\d+\/)?([\w/-]+)\.\w+$/;
+const INLINE_FOLDER = /(?:^|\/)inline\/[\w-]+$/;
+
+/** The storage key of an image added through the text editor, read from its address; null for anything else. */
+export const inlineImageKey = (url: string): string | null => {
+  const local = LOCAL_INLINE_IMAGE.exec(url);
+
+  if (local) {
+    return local[1];
+  }
+
+  const cloud = CLOUDINARY_IMAGE.exec(url);
+
+  return cloud && INLINE_FOLDER.test(cloud[1]) ? cloud[1] : null;
+};
+
+const inlineKeysIn = (html: string | undefined): string[] =>
+  [...(html ?? '').matchAll(IMAGE_SOURCE)].flatMap((match) => inlineImageKey(match[1]) ?? []);
+
+const escapeRegex = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Inline images uploaded before 0.2.0 have no upload record, so they are found in the writer's texts.
+ * Any account may paste any image address into its text, so a key found that way is kept when another
+ * account uploaded it or still shows it: deleting one account never deletes someone else's image.
+ */
+const keysOnlyThisAccountUses = async (database: Db, userId: ObjectId, keys: string[]): Promise<string[]> => {
+  const { projects, profiles, posts, accessLogs } = collections(database);
+  const others = { $ne: userId };
+  const claimed = await Promise.all(
+    keys.map(async (key) => {
+      const named = { $regex: escapeRegex(key) };
+      const counts = await Promise.all([
+        accessLogs.countDocuments({ userId: others, action: 'upload', detail: key }, { limit: 1 }),
+        projects.countDocuments({ userId: others, excerpt: named }, { limit: 1 }),
+        posts.countDocuments({ userId: others, body: named }, { limit: 1 }),
+        profiles.countDocuments({ userId: others, bio: named }, { limit: 1 }),
+      ]);
+
+      return counts.some((count) => count > 0);
+    }),
+  );
+
+  return keys.filter((_, index) => !claimed[index]);
+};
+
 const imageKeysOf = async (database: Db, userId: ObjectId): Promise<string[]> => {
   const { projects, profiles, posts, accessLogs } = collections(database);
   const [ownProjects, profile, ownPosts, uploads] = await Promise.all([
-    projects.find({ userId }, { projection: { coverKey: 1 } }).toArray(),
-    profiles.findOne({ userId }, { projection: { avatarKey: 1 } }),
-    posts.find({ userId }, { projection: { imageKey: 1 } }).toArray(),
+    projects.find({ userId }, { projection: { coverKey: 1, excerpt: 1 } }).toArray(),
+    profiles.findOne({ userId }, { projection: { avatarKey: 1, bio: 1 } }),
+    posts.find({ userId }, { projection: { imageKey: 1, body: 1 } }).toArray(),
     accessLogs.find({ userId, action: 'upload' }, { projection: { detail: 1 } }).toArray(),
   ]);
+  const recorded = [
+    ...ownProjects.map((project) => project.coverKey),
+    profile?.avatarKey,
+    ...ownPosts.map((post) => post.imageKey),
+    ...uploads.map((upload) => upload.detail),
+  ].filter((key): key is string => typeof key === 'string' && key.length > 0);
+  const inText = [
+    ...ownProjects.flatMap((project) => inlineKeysIn(project.excerpt)),
+    ...inlineKeysIn(profile?.bio),
+    ...ownPosts.flatMap((post) => inlineKeysIn(post.body)),
+  ].filter((key) => !recorded.includes(key));
 
-  return [
-    ...new Set(
-      [
-        ...ownProjects.map((project) => project.coverKey),
-        profile?.avatarKey,
-        ...ownPosts.map((post) => post.imageKey),
-        ...uploads.map((upload) => upload.detail),
-      ].filter((key): key is string => typeof key === 'string' && key.length > 0),
-    ),
-  ];
+  return [...new Set([...recorded, ...(await keysOnlyThisAccountUses(database, userId, [...new Set(inText)]))])];
 };
 
 /**

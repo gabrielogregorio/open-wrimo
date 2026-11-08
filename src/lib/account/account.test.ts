@@ -8,6 +8,7 @@ import {
   createAccessLog,
   createAccountRepository,
   deletionState,
+  inlineImageKey,
   listPendingDeletions,
   purgeAccount,
   type AccountRepository,
@@ -37,6 +38,25 @@ describe('accountBlock', () => {
     expect(accountBlock({ ...status, termsVersion: 'old', deletionRequestedAt: NOW })).toBe('deletion');
     expect(accountBlock({ ...status, termsVersion: 'old' })).toBe('terms');
     expect(accountBlock({ ...status, termsVersion: null })).toBe('terms');
+  });
+});
+
+describe('inlineImageKey', () => {
+  it('reads the key of an editor image on the local disk or on Cloudinary', () => {
+    expect(inlineImageKey('/media/inline/0b1c-2d.webp')).toBe('inline/0b1c-2d.webp');
+    expect(
+      inlineImageKey('https://res.cloudinary.com/demo/image/upload/v1731000000/openwrimo/inline/abc123.webp'),
+    ).toBe('openwrimo/inline/abc123');
+    expect(inlineImageKey('https://res.cloudinary.com/demo/image/upload/openwrimo/inline/abc123.webp')).toBe(
+      'openwrimo/inline/abc123',
+    );
+  });
+
+  it('ignores covers, avatars and anything that is not an editor upload', () => {
+    expect(inlineImageKey('/media/covers/a.webp')).toBeNull();
+    expect(inlineImageKey('https://res.cloudinary.com/demo/image/upload/v1/openwrimo/avatars/a.webp')).toBeNull();
+    expect(inlineImageKey('https://example.com/media/inline/a.webp')).toBeNull();
+    expect(inlineImageKey('/media/inline/../covers/a.webp')).toBeNull();
   });
 });
 
@@ -132,6 +152,45 @@ describe('account', () => {
       { action: 'upload', address: null, detail: 'inline/a.webp', owner: userId },
     ]);
     expect((records.at(-1)?.expiresAt.getTime() ?? 0) - NOW.getTime()).toBe(183 * DAY);
+  });
+
+  it('also deletes old editor images found in the texts, but never one another account uses or uploaded', async () => {
+    const database = testDatabase.database;
+    const { projects, profiles, posts } = collections(database);
+    const goneId = await addUser('old@example.com', { deletionRequestedAt: new Date(NOW.getTime() - 31 * DAY) });
+    const otherId = await addUser('other@example.com');
+    const gone = new ObjectId(goneId);
+    const cloud = 'https://res.cloudinary.com/demo/image/upload/v17/openwrimo/inline/abc.webp';
+    const img = (src: string) => `<img src="${src}" alt="">`;
+
+    await projects.insertOne({
+      userId: gone,
+      coverKey: null,
+      excerpt: `<p>a</p>${img('/media/inline/old.webp')}${img(cloud)}${img('/media/inline/theirs.webp')}`,
+    } as never);
+    await projects.insertOne({ userId: gone, coverKey: null, excerpt: img('/media/inline/old.webp') } as never);
+    await profiles.insertOne({ userId: gone, avatarKey: null, bio: img('/media/inline/bio.webp') } as never);
+    await posts.insertOne({
+      userId: gone,
+      imageKey: null,
+      body: `${img('/media/inline/post.webp')}${img('/media/inline/logged.webp')}${img('/media/covers/c.webp')}`,
+    } as never);
+    await projects.insertOne({ userId: new ObjectId(otherId), excerpt: img('/media/inline/theirs.webp') } as never);
+    await createAccessLog(database).record(
+      { userId: otherId, action: 'upload', address: null, userAgent: '', detail: 'inline/logged.webp' },
+      NOW,
+    );
+    await createAccessLog(database).record(
+      { userId: goneId, action: 'upload', address: null, userAgent: '', detail: 'inline/old.webp' },
+      NOW,
+    );
+
+    const removed: string[] = [];
+    const storage: ImageStorage = { save: vi.fn(), remove: async (key) => void removed.push(key) };
+
+    expect(await purgeAccount(database, storage, goneId, NOW)).toEqual({ deleted: true, images: 4 });
+    expect(removed.sort()).toEqual(['inline/bio.webp', 'inline/old.webp', 'inline/post.webp', 'openwrimo/inline/abc']);
+    expect(await projects.countDocuments({ userId: new ObjectId(otherId) })).toBe(1);
   });
 
   it('previews the accounts waiting for deletion and purges one by hand only after the grace period', async () => {
