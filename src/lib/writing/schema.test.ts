@@ -24,6 +24,13 @@ describe('project input', () => {
     expect(projectInputSchema.parse({ ...PROJECT, genres: ['a'], featured: true }).featured).toBe(true);
   });
 
+  it('reads the words written before as a number, empty meaning none, up to ten million', () => {
+    expect(projectInputSchema.parse({ ...PROJECT, genres: [] }).wordsBefore).toBe(0);
+    expect(projectInputSchema.parse({ ...PROJECT, genres: [], wordsBefore: '' }).wordsBefore).toBe(0);
+    expect(projectInputSchema.parse({ ...PROJECT, genres: [], wordsBefore: '48250' }).wordsBefore).toBe(48250);
+    expect(projectInputSchema.parse({ ...PROJECT, genres: [], wordsBefore: '10000000' }).wordsBefore).toBe(10_000_000);
+  });
+
   it.each([
     [{ pinterestUrl: 'pin.it/x' }, 'Enter an https:// address.'],
     [{ playlistUrl: 'javascript:alert(1)' }, 'Enter an https:// address.'],
@@ -31,6 +38,9 @@ describe('project input', () => {
     [{ genres: 'x'.repeat(41) }, 'Keep each genre under 40 characters.'],
     [{ status: 'abandoned' }, 'Choose a project status.'],
     [{ type: 'comic' }, 'Choose a project type.'],
+    [{ wordsBefore: '10000001' }, 'Enter a number from 0 to 10000000.'],
+    [{ wordsBefore: '-5' }, 'Enter a number from 0 to 10000000.'],
+    [{ wordsBefore: '12.5' }, 'Enter a number from 0 to 10000000.'],
   ])('refuses %o', (change, message) => {
     expect(firstError(projectInputSchema.safeParse({ ...PROJECT, ...change }))).toBe(message);
   });
@@ -64,7 +74,7 @@ describe('entry input', () => {
   it.each([
     [{ mode: 'multiply' }, 'Choose to add or to set the total.'],
     [{ mood: 'angry' }, 'Choose how it felt.'],
-    [{ count: '100001' }, 'Enter a number from 0 to 100000.'],
+    [{ count: '10000001' }, 'Enter a number from 0 to 10000000.'],
   ])('refuses %o', (change, message) => {
     expect(firstError(entryInputSchema.safeParse({ ...ENTRY, ...change }))).toBe(message);
   });

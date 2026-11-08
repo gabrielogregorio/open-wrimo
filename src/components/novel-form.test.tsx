@@ -17,6 +17,7 @@ const novel = {
   playlistUrl: 'https://music.example/list',
   featured: true,
   isPublic: true,
+  wordsBefore: 42000,
   awards: [],
   coverUrl: '/media/cover.webp',
   updatedAt: '2026-11-01T00:00:00.000Z',
@@ -58,6 +59,7 @@ describe('NovelForm', () => {
     expect(screen.getByLabelText('Status')).toHaveValue('in-progress');
     expect(screen.getByLabelText('What kind of project is it?')).toHaveValue('novella');
     expect(screen.getByLabelText('How much privacy do you want?')).toHaveValue('on');
+    expect(screen.getByLabelText('Words written before')).toHaveValue('42,000');
     expect(screen.getByLabelText('Summary')).toHaveValue('A town without sunrise.');
     expect(screen.getByLabelText('Pinterest board')).toHaveValue('https://pinterest.com/board');
     expect(screen.getByLabelText('Playlist')).toHaveValue('https://music.example/list');

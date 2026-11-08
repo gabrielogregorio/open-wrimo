@@ -98,7 +98,7 @@ export function UpdateForm({ action, books, selectedGoal, today, fixedCount, com
             mode === 'set' ? t('Now: {total}', { total: new Intl.NumberFormat('pt-BR').format(goal.total) }) : undefined
           }
           error={fieldError('count')}
-          maxDigits={6}
+          maxDigits={8}
         />
         <FormField
           label={t('Day')}

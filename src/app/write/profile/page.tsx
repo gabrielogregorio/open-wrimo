@@ -8,8 +8,9 @@ import { getLocale, getTranslator } from '@/server/i18n';
 import {
   allEarnedBadges,
   laurelCount,
-  loadNotebook,
   lifetimeBadges,
+  lifetimeWords,
+  loadNotebook,
   participationBadges,
   wordsFor,
 } from '@/server/notebook';
@@ -45,7 +46,7 @@ export default async function ProfilePage() {
   ];
   const personalBadges = PERSONAL_BADGES.filter((badge) => earned.has(badge.id));
   const numbers: [string, string][] = [
-    [t('Words written'), formatNumber(locale, pace.total)],
+    [t('Words written'), formatNumber(locale, lifetimeWords(notebook))],
     [t('Novels'), formatNumber(locale, notebook.projects.length)],
     [t('Laurels'), formatNumber(locale, laurels)],
     [t('Days in a row'), formatNumber(locale, pace.currentStreak)],

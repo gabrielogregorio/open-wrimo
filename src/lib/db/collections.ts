@@ -37,6 +37,8 @@ export type ProjectDocument = {
   playlistUrl: string;
   featured: boolean;
   isPublic?: boolean;
+  /** Words written before the novel was tracked here; older documents lack it. */
+  wordsBefore?: number;
   awards: string[];
   coverUrl: string | null;
   coverKey: string | null;

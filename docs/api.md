@@ -27,12 +27,12 @@ the newest. Using an old refresh token again revokes the whole session.
 
 ## Writing
 
-| Method and path                    | Body                                                                                                                                                                                                             | Success             |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| `POST /api/v1/novels`              | multipart: `title`, `status`, `type`, `genres` (comma list), optional `summary`, `excerpt` (HTML), `pinterestUrl`, `playlistUrl`, `featured=on`, `isPublic=on`, `event`, `period` + `periodTarget`, file `cover` | 201 `{ id, cover }` |
-| `POST /api/v1/novels/{id}/goals`   | `{ name, unit, target, startDate, endDate, period }`                                                                                                                                                             | 201 `{ id }`        |
-| `POST /api/v1/goals/{id}/progress` | `{ mode: "add" \| "set", count, date, mood, place, source? }`                                                                                                                                                    | 201 `{ id, saved }` |
-| `PUT /api/v1/profile`              | multipart: `name`, `username`, `isPublic=on`, `bio`, `location`, `writingTime`, `favoriteBooks`, `favoriteAuthors`, repeated `show` (`bio`, `stats`, `favorites`, `badges`), file `avatar`                       | 200 `{ saved }`     |
+| Method and path                    | Body                                                                                                                                                                                                                            | Success             |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `POST /api/v1/novels`              | multipart: `title`, `status`, `type`, `genres` (comma list), optional `summary`, `excerpt` (HTML), `pinterestUrl`, `playlistUrl`, `featured=on`, `isPublic=on`, `wordsBefore`, `event`, `period` + `periodTarget`, file `cover` | 201 `{ id, cover }` |
+| `POST /api/v1/novels/{id}/goals`   | `{ name, unit, target, startDate, endDate, period }`                                                                                                                                                                            | 201 `{ id }`        |
+| `POST /api/v1/goals/{id}/progress` | `{ mode: "add" \| "set", count, date, mood, place, source? }`                                                                                                                                                                   | 201 `{ id, saved }` |
+| `PUT /api/v1/profile`              | multipart: `name`, `username`, `isPublic=on`, `bio`, `location`, `writingTime`, `favoriteBooks`, `favoriteAuthors`, repeated `show` (`bio`, `stats`, `favorites`, `badges`), file `avatar`                                      | 200 `{ saved }`     |
 
 Values:
 
@@ -42,7 +42,9 @@ Values:
 - `period`: empty for a goal between `startDate` and `endDate`, or `daily`, `monthly`, `yearly`
 - `event`: `november`, `april-camp`, `july-camp`
 - `mood`: empty, `inspired`, `steady`, `tired`, `stuck`, `proud`
-- Dates are `YYYY-MM-DD`. Counts go from 0 to 100000 per update.
+- Dates are `YYYY-MM-DD`. Counts go from 0 to 10000000 per update.
+- `wordsBefore`: words written before the novel was tracked here, 0 to 10000000. They add to the novel's
+  total and to the lifetime total, not to goals or streaks.
 
 Images (`cover`, `avatar`) must be PNG, JPEG, WebP or GIF under 5 MB. They are stored as WebP of at most 1920×1080
 and must end under 2 MB. Each writer can send two images per second; the third one in the same second is refused.

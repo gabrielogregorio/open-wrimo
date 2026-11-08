@@ -112,8 +112,11 @@ export default async function PublicProfilePage({ params }: PageProps<'/u/[usern
     ]),
   );
   const personalEarned = new Set(projects.flatMap((project) => project.awards));
-  earnedLifetimeBadges(pace.total).forEach((id) => writingEarned.add(id));
+  const wordsBefore = projects.reduce((sum, project) => sum + project.wordsBefore, 0);
+  const totalWords = pace.total + wordsBefore;
+  earnedLifetimeBadges(totalWords).forEach((id) => writingEarned.add(id));
   const wordsOf = (projectId: string): number =>
+    (projects.find((project) => project.id === projectId)?.wordsBefore ?? 0) +
     entries
       .filter((entry) => entry.projectId === projectId && entry.unit === 'words')
       .reduce((sum, entry) => sum + entry.count, 0);
@@ -148,7 +151,7 @@ export default async function PublicProfilePage({ params }: PageProps<'/u/[usern
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {(
             [
-              [t('Words written'), formatNumber(locale, pace.total)],
+              [t('Words written'), formatNumber(locale, totalWords)],
               [t('Novels'), formatNumber(locale, projects.length)],
               [t('Days in a row'), formatNumber(locale, pace.currentStreak)],
               [t('Longest run'), formatNumber(locale, pace.longestStreak)],

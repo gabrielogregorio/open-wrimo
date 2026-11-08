@@ -59,12 +59,15 @@ export const badgeById = new Map(
 
 export const laurelCount = (notebook: Notebook): number => laurels(notebook.goals, notebook.entries, notebook.today);
 
+// A novel's total is what was logged here plus the words written before it was tracked.
 export const wordsFor = (notebook: Notebook, projectId: string): number =>
+  (notebook.projects.find((project) => project.id === projectId)?.wordsBefore ?? 0) +
   notebook.entries
     .filter((entry) => entry.projectId === projectId && entry.unit === 'words')
     .reduce((sum, entry) => sum + entry.count, 0);
 
 export const lifetimeWords = (notebook: Notebook): number =>
+  notebook.projects.reduce((sum, project) => sum + project.wordsBefore, 0) +
   notebook.entries.filter((entry) => entry.unit === 'words').reduce((sum, entry) => sum + entry.count, 0);
 
 export const lifetimeBadges = (notebook: Notebook): Set<string> => earnedLifetimeBadges(lifetimeWords(notebook));

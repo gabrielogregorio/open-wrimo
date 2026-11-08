@@ -139,7 +139,10 @@ export const ptBRWriting: Record<string, string> = {
   'Choose to add or to set the total.': 'Escolha somar ou definir o total.',
   'Choose what the goal counts.': 'Escolha o que a meta conta.',
   'End on or after the start.': 'Termine no dia do início ou depois.',
-  'Enter a number from 0 to 100000.': 'Digite um número de 0 a 100000.',
+  'Enter a number from 0 to 10000000.': 'Digite um número de 0 a 10000000.',
+  'Words written before': 'Palavras já escritas',
+  'Words you wrote before tracking here. They add to the novel total, not to goals or streaks.':
+    'Palavras que você já tinha escrito antes de registrar aqui. Somam no total do romance, não nas metas nem nas sequências.',
   'Enter a target from 1 to 10000000.': 'Digite uma meta de 1 a 10000000.',
   'Enter a valid date.': 'Digite uma data válida.',
   'Enter an https:// address.': 'Digite um endereço https://.',

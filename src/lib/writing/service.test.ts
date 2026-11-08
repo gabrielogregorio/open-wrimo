@@ -292,7 +292,7 @@ describe('writing service', () => {
       fieldErrors: { count: 'Enter how much you wrote.' },
     });
     await expect(logProgress(context, goalId, { ...form, count: '-3' })).resolves.toEqual({
-      fieldErrors: { count: 'Enter a number from 0 to 100000.' },
+      fieldErrors: { count: 'Enter a number from 0 to 10000000.' },
     });
     await expect(logProgress(context, new ObjectId().toHexString(), form)).resolves.toEqual({ error: GOAL_NOT_FOUND });
   });

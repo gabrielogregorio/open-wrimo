@@ -107,6 +107,7 @@ const toProjectView = (project: StoredProject): ProjectView => ({
   playlistUrl: project.playlistUrl,
   featured: project.featured,
   isPublic: project.isPublic ?? false,
+  wordsBefore: project.wordsBefore ?? 0,
   awards: project.awards,
   coverUrl: project.coverUrl,
   updatedAt: project.updatedAt.toISOString(),
