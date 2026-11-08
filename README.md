@@ -122,7 +122,8 @@ Allow your address in the cluster network settings. Indexes are created on the f
 
 `pnpm run images:owners -- --env <file> [--apply]` moves images uploaded before 0.2.1 into a folder per account
 (`<kind>/<userId>/<file>`), so deleting an account can empty its folders. Without `--apply` it only reports what it
-would move and the images it cannot assign; it is safe to run again.
+would move and the images it cannot assign; it is safe to run again. It reads only `MONGODB_URI`, `MONGODB_DB`,
+`CLOUDINARY_URL` and `CLOUDINARY_FOLDER` (or `LOCAL_UPLOADS_DIR` for images on disk).
 
 ## Tests
 

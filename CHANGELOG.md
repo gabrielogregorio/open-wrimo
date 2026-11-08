@@ -10,6 +10,8 @@
   instead of a form that pushed the page down.
 - The reports page shows the report id, the novel id and its title; the reporter's address and browser stay in the
   database and are no longer listed.
+- `pnpm run images:owners` reads only the database and image storage settings, so it no longer asks for
+  `JWT_SECRET` or `STORAGE_DRIVER`.
 - New README tour GIFs, recorded by `pnpm run demo:record` from the script in `docs/demo-script.md`, with its own
   demo data on a throwaway database.
 
