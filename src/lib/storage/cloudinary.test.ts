@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { createCloudinaryStorage, parseCloudinaryUrl, signParameters } from './cloudinary';
 
 const CREDENTIALS = { cloudName: 'demo-cloud', apiKey: '1234', apiSecret: 'shh' };
@@ -17,10 +16,10 @@ describe('Cloudinary storage', () => {
     });
   });
 
-  it('signs the sorted parameters with the secret', () => {
+  it('signs the sorted parameters with the secret using SHA-256', () => {
+    // SHA-256 of "folder=a&timestamp=10shh"
     expect(signParameters({ timestamp: '10', folder: 'a' }, 'shh')).toBe(
-      // eslint-disable-next-line sonarjs/hashing -- Cloudinary request signatures are SHA-1
-      createHash('sha1').update('folder=a&timestamp=10shh').digest('hex'),
+      '40cbb369960ed574e8f5052ec5476e3a10b519ce65098e32446c1d46ec16a695',
     );
   });
 
@@ -52,6 +51,42 @@ describe('Cloudinary storage', () => {
     expect(url).toBe('https://api.cloudinary.com/v1_1/demo-cloud/image/destroy');
     expect((init!.body as FormData).get('public_id')).toBe('openwrimo/covers/x');
     expect((init!.body as FormData).get('file')).toBeNull();
+  });
+
+  it('moves an image by renaming it', async () => {
+    const fetch = respond({
+      secure_url: 'https://res.cloudinary.com/demo/v2/f/covers/u/x.webp',
+      public_id: 'f/covers/u/x',
+    });
+    const storage = createCloudinaryStorage({ ...CREDENTIALS, folder: 'f', fetch, now: () => NOW });
+
+    await expect(storage.move('f/covers/x', 'f/covers/u/x')).resolves.toEqual({
+      url: 'https://res.cloudinary.com/demo/v2/f/covers/u/x.webp',
+      key: 'f/covers/u/x',
+    });
+    const [url, init] = fetch.mock.calls[0];
+    expect(url).toBe('https://api.cloudinary.com/v1_1/demo-cloud/image/rename');
+    expect((init!.body as FormData).get('from_public_id')).toBe('f/covers/x');
+    expect((init!.body as FormData).get('to_public_id')).toBe('f/covers/u/x');
+  });
+
+  it('empties an owner folder through the Admin API, page by page', async () => {
+    const pages = [{ deleted: {}, next_cursor: 'page-2' }, { deleted: {} }];
+    const fetchPages = vi.fn<typeof globalThis.fetch>(async () => new Response(JSON.stringify(pages.shift())));
+    const storage = createCloudinaryStorage({ ...CREDENTIALS, folder: 'f', fetch: fetchPages });
+
+    await storage.removeFolder('inline/u');
+
+    expect(fetchPages).toHaveBeenCalledTimes(2);
+    const [first, init] = fetchPages.mock.calls[0];
+    expect(first).toBe('https://api.cloudinary.com/v1_1/demo-cloud/resources/image/upload?prefix=f%2Finline%2Fu%2F');
+    expect(init).toMatchObject({ method: 'DELETE', headers: { authorization: `Basic ${btoa('1234:shh')}` } });
+    expect(fetchPages.mock.calls[1][0]).toContain('next_cursor=page-2');
+
+    const refused = createCloudinaryStorage({ ...CREDENTIALS, folder: 'f', fetch: respond({}, 403) });
+    await expect(refused.removeFolder('inline/u')).rejects.toThrow(
+      'Cloudinary delete by prefix failed with status 403',
+    );
   });
 
   it('fails loudly when Cloudinary refuses', async () => {

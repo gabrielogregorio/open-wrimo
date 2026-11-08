@@ -12,7 +12,7 @@ import { createUserRepository } from '@/lib/auth/users';
 import { getDatabase } from '@/lib/db/client';
 import { getEnvironment } from '@/lib/env';
 import { storageFor } from '@/lib/storage';
-import type { ImageStorage } from '@/lib/storage/storage';
+import type { OwnedImageStorage } from '@/lib/storage/storage';
 import { TIME_ZONE_COOKIE, localDate, resolveTimeZone } from '@/lib/writing/dates';
 import { createWritingRepository } from '@/lib/writing/repository';
 import type { WritingContext } from '@/lib/writing/service';
@@ -82,9 +82,9 @@ export const currentWriter = async (): Promise<SessionUser | 'signed-out' | 'blo
   return accountBlock(await getAccountStatus(user.id)) ? 'blocked' : user;
 };
 
-let imageStorage: ImageStorage | undefined;
+let imageStorage: OwnedImageStorage | undefined;
 
-export const getImageStorage = (): ImageStorage => {
+export const getImageStorage = (): OwnedImageStorage => {
   imageStorage ??= storageFor(getEnvironment());
 
   return imageStorage;

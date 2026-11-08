@@ -118,6 +118,10 @@ Allow your address in the cluster network settings. Indexes are created on the f
 | `pnpm run e2e`                              | Build, then Playwright, Lighthouse and the memory check |
 | `pnpm run check:all`                        | Everything CI runs                                      |
 
+`pnpm run images:owners -- --env <file> [--apply]` moves images uploaded before 0.2.1 into a folder per account
+(`<kind>/<userId>/<file>`), so deleting an account can empty its folders. Without `--apply` it only reports what it
+would move and the images it cannot assign; it is safe to run again.
+
 ## Tests
 
 - **Unit** (`src/**/*.test.ts(x)`): services and repositories run against a real `mongod` from mongodb-memory-server;

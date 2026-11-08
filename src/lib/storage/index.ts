@@ -1,9 +1,9 @@
 import type { Environment } from '@/lib/env';
 import { createCloudinaryStorage, parseCloudinaryUrl } from './cloudinary';
 import { createLocalStorage } from './local';
-import type { ImageStorage } from './storage';
+import type { OwnedImageStorage } from './storage';
 
-export const storageFor = (environment: Environment): ImageStorage =>
+export const storageFor = (environment: Environment): OwnedImageStorage =>
   environment.STORAGE_DRIVER === 'cloudinary'
     ? createCloudinaryStorage({
         ...parseCloudinaryUrl(environment.CLOUDINARY_URL!),

@@ -22,7 +22,10 @@ test('a writer creates a novel with a cover, a daily goal and the November event
 
   await expect(page.getByRole('heading', { level: 1, name: 'A Casa das Marés' })).toBeVisible();
   await expect(page.getByText('Romance, Romance, Mistério')).toBeVisible();
-  await expect(page.locator('.book-mock img')).toHaveAttribute('src', /^\/media\/covers\/[0-9a-f-]+\.webp$/);
+  await expect(page.locator('.book-mock img')).toHaveAttribute(
+    'src',
+    /^\/media\/covers\/[0-9a-f]{24}\/[0-9a-f-]+\.webp$/,
+  );
   await expect(page.locator('.rich-text strong')).toHaveText('Capítulo um.');
   await page.getByRole('link', { name: 'Metas', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Meta diária' })).toBeVisible();
