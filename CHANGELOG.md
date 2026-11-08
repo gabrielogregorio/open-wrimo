@@ -2,8 +2,13 @@
 
 ## 0.2.1
 
-- Deleting an account also removes the images added inside its texts before 0.2.0, which had no upload record;
-  an image another account uploaded or still shows is kept, so pasting someone else's image never deletes it.
+- Images are stored in a folder per account (`<kind>/<userId>/<file>`), and deleting an account empties its folders,
+  so every image stays tied to who uploaded it.
+- `pnpm run images:owners` moves the images uploaded before 0.2.1 into their owner's folder; it only reports until it
+  is run with `--apply`.
+- Deleting an account also removes the old images added inside its texts, which had no upload record; an image
+  another account uploaded or still shows is kept, so pasting someone else's image never deletes it.
+- The delete my account button stays off until the confirmation box is ticked.
 
 ## 0.2.0
 
