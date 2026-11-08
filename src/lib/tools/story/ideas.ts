@@ -1,4 +1,5 @@
-import { pickOther, type Random } from './random';
+import type { IdeaGenre, IdeaTrope } from './idea-types';
+import { pickOne, pickOther, type Random } from './random';
 
 export const IDEA_CHARACTERS = [
   'uma parteira que guarda os segredos da cidade',
@@ -135,23 +136,101 @@ export const IDEA_CONFLICTS = [
   'tem que confessar algo antes que outro conte',
 ];
 
-export type Idea = { character: string; place: string; conflict: string };
+export type IdeaTropeTag = Pick<IdeaTrope, 'id' | 'name' | 'description'>;
 
-export type IdeaPart = keyof Idea;
+/** Ideas saved before genres and tropes existed have only the three parts. */
+export type Idea = {
+  character: string;
+  place: string;
+  conflict: string;
+  genre?: { id: string; name: string };
+  tropes?: IdeaTropeTag[];
+};
 
-const LISTS: Record<IdeaPart, readonly string[]> = {
+/** A freshly rolled idea always has its tropes. */
+export type RolledIdea = Idea & { tropes: IdeaTropeTag[] };
+
+export type IdeaPart = 'character' | 'place' | 'conflict' | 'tropes';
+export type IdeaCatalog = { genres: readonly IdeaGenre[]; tropes: readonly IdeaTrope[] };
+/** An empty genre id means any genre; wanted tropes always come in the idea. */
+export type IdeaFilters = { genreId: string; tropeIds: readonly string[] };
+
+const TROPES_PER_IDEA = 2;
+// Most of a part comes from the genre, the rest from the general lists, so ideas cross over a bit.
+const FROM_GENRE = 0.7;
+
+const GENERAL: Record<Exclude<IdeaPart, 'tropes'>, readonly string[]> = {
   character: IDEA_CHARACTERS,
   place: IDEA_PLACES,
   conflict: IDEA_CONFLICTS,
 };
 
-export const rerollPart = (idea: Idea, part: IdeaPart, random: Random): Idea => ({
-  ...idea,
-  [part]: pickOther(LISTS[part], idea[part], random),
-});
+const GENRE_LIST = { character: 'characters', place: 'places', conflict: 'conflicts' } as const;
 
-export const rollIdea = (random: Random, current?: Idea): Idea => ({
-  character: pickOther(IDEA_CHARACTERS, current?.character, random),
-  place: pickOther(IDEA_PLACES, current?.place, random),
-  conflict: pickOther(IDEA_CONFLICTS, current?.conflict, random),
-});
+const tag = ({ id, name, description }: IdeaTrope): IdeaTropeTag => ({ id, name, description });
+
+export const tropesFor = (catalog: IdeaCatalog, genreId: string): IdeaTrope[] =>
+  catalog.tropes.filter((trope) => trope.genres.length === 0 || trope.genres.includes(genreId));
+
+const pickPart = (
+  part: Exclude<IdeaPart, 'tropes'>,
+  genre: IdeaGenre | undefined,
+  current: string | undefined,
+  random: Random,
+): string => {
+  const fromGenre = genre ? genre[GENRE_LIST[part]] : [];
+  const list = fromGenre.length > 0 && random() < FROM_GENRE ? fromGenre : GENERAL[part];
+
+  return pickOther(list, current, random);
+};
+
+const pickTropes = (
+  catalog: IdeaCatalog,
+  genre: IdeaGenre | undefined,
+  filters: IdeaFilters,
+  random: Random,
+): IdeaTropeTag[] => {
+  const wanted = catalog.tropes.filter((trope) => filters.tropeIds.includes(trope.id));
+  const candidates = (genre ? tropesFor(catalog, genre.id) : [...catalog.tropes]).filter(
+    (trope) => !filters.tropeIds.includes(trope.id),
+  );
+  const picked = [...wanted];
+
+  while (picked.length < Math.max(TROPES_PER_IDEA, wanted.length) && candidates.length > 0) {
+    picked.push(candidates.splice(Math.floor(random() * candidates.length), 1)[0]);
+  }
+
+  return picked.map(tag);
+};
+
+const genreOf = (catalog: IdeaCatalog, filters: IdeaFilters, random: Random): IdeaGenre | undefined =>
+  catalog.genres.find((genre) => genre.id === filters.genreId) ??
+  (catalog.genres.length > 0 ? pickOne(catalog.genres, random) : undefined);
+
+export const rollIdea = (catalog: IdeaCatalog, filters: IdeaFilters, random: Random, current?: Idea): RolledIdea => {
+  const genre = genreOf(catalog, filters, random);
+
+  return {
+    ...(genre ? { genre: { id: genre.id, name: genre.name } } : {}),
+    tropes: pickTropes(catalog, genre, filters, random),
+    character: pickPart('character', genre, current?.character, random),
+    place: pickPart('place', genre, current?.place, random),
+    conflict: pickPart('conflict', genre, current?.conflict, random),
+  };
+};
+
+export const rerollPart = <Rolled extends Idea>(
+  catalog: IdeaCatalog,
+  idea: Rolled,
+  part: IdeaPart,
+  filters: IdeaFilters,
+  random: Random,
+): Rolled => {
+  const genre = catalog.genres.find((item) => item.id === idea.genre?.id);
+
+  if (part === 'tropes') {
+    return { ...idea, tropes: pickTropes(catalog, genre, filters, random) };
+  }
+
+  return { ...idea, [part]: pickPart(part, genre, idea[part], random) };
+};
