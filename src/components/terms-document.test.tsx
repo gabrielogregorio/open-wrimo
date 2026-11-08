@@ -8,7 +8,7 @@ describe('TermsDocument', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: 'Termos de Uso e Política de Privacidade' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/8 de novembro de 2026, às 08:00/)).toBeInTheDocument();
+    expect(screen.getByText(/8 de novembro de 2026, às 20:00/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '12. Exclusão da conta' })).toHaveAttribute('href', '#exclusao');
     expect(screen.getByRole('heading', { level: 2, name: '17. Lei e foro' })).toBeInTheDocument();
     expect(screen.getByRole('table')).toBeInTheDocument();

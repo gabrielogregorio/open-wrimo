@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Terms: the account deletion section no longer names the backups in its 180-day deadline (new version of the terms, so
+  every writer accepts it once more).
+
 ## 0.2.2
 
 - An eye button shows or hides the password on sign up and sign in.
