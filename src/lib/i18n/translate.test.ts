@@ -1,4 +1,5 @@
 import { TOOLS } from '@/lib/tools/catalog';
+import { FANTASY_STYLES, NAME_COLLECTIONS } from '@/lib/tools/story/names';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -95,6 +96,7 @@ describe('pt-BR dictionary', () => {
     ...Object.values(PERIOD_SUFFIX),
     ...GENRE_SUGGESTIONS,
     ...TOOLS.flatMap((tool) => [tool.title, tool.description]),
+    ...[...NAME_COLLECTIONS, ...FANTASY_STYLES].map((item) => item.label),
     ...EVENTS.map((event) => event.name),
     ...[...WRITING_BADGES, ...LIFETIME_BADGES, ...PERSONAL_BADGES, ...PARTICIPATION_BADGES].flatMap((badge) => [
       badge.label,

@@ -5,18 +5,26 @@ import Names from './names';
 import { steppingRandom, storyData } from './story/fixtures';
 
 describe('Names', () => {
-  it('generates names by era, region and gender and saves favorites', async () => {
+  it('lists the collections by era, in Portuguese', () => {
+    renderWithLocale(<Names data={storyData} />, 'pt-BR');
+
+    expect(screen.getByRole('group', { name: 'Idade Média' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Nórdica antiga (viking)' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Coleção')).toHaveValue('brazil-contemporary');
+  });
+
+  it('generates names from a collection and gender and saves favorites', async () => {
     const user = userEvent.setup();
     renderWithLocale(<Names data={storyData} random={steppingRandom()} />);
 
     expect(await screen.findByText('Tap the star next to a name to keep it here.')).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText('Era'), 'Fantasy');
-    await user.selectOptions(screen.getByLabelText('Region'), 'Japanese');
+    await user.selectOptions(screen.getByLabelText('Collection'), 'old-norse');
     await user.selectOptions(screen.getByLabelText('Gender'), 'Female');
     await user.click(screen.getByRole('button', { name: 'Generate 10 names' }));
 
     const stars = screen.getAllByRole('button', { name: /^Save / });
     expect(stars).toHaveLength(10);
+    expect(stars[0].getAttribute('aria-label')).toMatch(/sdóttir$/);
     const name = (stars[0].getAttribute('aria-label') as string).replace('Save ', '');
 
     await user.click(stars[0]);

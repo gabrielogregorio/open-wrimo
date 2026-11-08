@@ -1,5 +1,8 @@
+import { NAME_LABELS_PT } from '@/lib/tools/story/names';
+
 // Texts of the review and story tools.
 export const ptBRToolsStory: Record<string, string> = {
+  ...NAME_LABELS_PT,
   // Shared by the review tools
   'Your passage': 'Seu trecho',
   'Paste a chapter or a scene here.': 'Cole aqui um capítulo ou uma cena.',
@@ -55,25 +58,19 @@ export const ptBRToolsStory: Record<string, string> = {
   'Delete {name}?': 'Apagar {name}?',
   Note: 'Nota',
   // Name generator
-  Era: 'Época',
-  Region: 'Região',
   Gender: 'Gênero',
+  Collection: 'Coleção',
+  Antiquity: 'Antiguidade',
+  'Middle Ages': 'Idade Média',
+  'Renaissance and the age of navigation': 'Renascença e navegações',
+  'Brazil through time': 'Brasil ao longo do tempo',
+  'Asia through time': 'Ásia ao longo do tempo',
+  'The world today': 'O mundo hoje',
   'Generate 10 names': 'Gerar 10 nomes',
   'Save {name}': 'Guardar {name}',
   'Saved names': 'Nomes guardados',
   'Remove {name}': 'Tirar {name}',
   'Tap the star next to a name to keep it here.': 'Toque na estrela ao lado de um nome para guardá-lo aqui.',
-  'Colonial (1500 to 1822)': 'Colônia (1500 a 1822)',
-  'Empire (1822 to 1889)': 'Império (1822 a 1889)',
-  'Early 1900s': 'Início do século XX',
-  '1950s to 1970s': 'Anos 1950 a 1970',
-  Today: 'Hoje',
-  Brazil: 'Brasil',
-  Portugal: 'Portugal',
-  'English-speaking': 'Língua inglesa',
-  'Spanish-speaking': 'Língua espanhola',
-  Italian: 'Italiana',
-  Japanese: 'Japonesa',
   Female: 'Feminino',
   Male: 'Masculino',
   Any: 'Qualquer',

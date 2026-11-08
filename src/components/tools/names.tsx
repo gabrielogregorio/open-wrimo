@@ -5,14 +5,14 @@ import { fieldClasses } from '@/components/form-field';
 import { useI18n } from '@/components/i18n-provider';
 import type { ToolData } from '@/lib/tools/data';
 import {
-  NAME_ERAS,
+  DEFAULT_NAME_SOURCE,
   NAME_GENDERS,
-  NAME_REGIONS,
+  NAME_GROUPS,
   generateNames,
-  type NameChoice,
-  type NameEra,
+  nameOptions,
+  nameSource,
   type NameGender,
-  type NameRegion,
+  type NameGroup,
 } from '@/lib/tools/story/names';
 import type { Random } from '@/lib/tools/story/random';
 import {
@@ -24,68 +24,26 @@ import {
   useStoryList,
 } from './story/story-ui';
 
-const ERA_LABELS: Record<NameEra, string> = {
-  colonial: 'Colonial (1500 to 1822)',
-  imperial: 'Empire (1822 to 1889)',
-  'early-1900s': 'Early 1900s',
-  midcentury: '1950s to 1970s',
-  contemporary: 'Today',
-  fantasy: 'Fantasy',
-};
-
-const REGION_LABELS: Record<NameRegion, string> = {
-  brazil: 'Brazil',
-  portugal: 'Portugal',
-  anglophone: 'English-speaking',
-  hispanic: 'Spanish-speaking',
-  italian: 'Italian',
-  japanese: 'Japanese',
+const NAME_GROUP_LABELS: Record<NameGroup, string> = {
+  ancient: 'Antiquity',
+  medieval: 'Middle Ages',
+  'early-modern': 'Renaissance and the age of navigation',
+  brazil: 'Brazil through time',
+  asia: 'Asia through time',
+  world: 'The world today',
   fantasy: 'Fantasy',
 };
 
 const GENDER_LABELS: Record<NameGender, string> = { female: 'Female', male: 'Male', any: 'Any' };
 
-function ChoiceSelect<T extends string>({
-  label,
-  options,
-  labels,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: readonly T[];
-  labels: Record<T, string>;
-  value: T;
-  onChange: (value: T) => void;
-}) {
-  const { t } = useI18n();
-  const id = useId();
-
-  return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="font-display text-sm font-semibold">
-        {label}
-      </label>
-      <select
-        id={id}
-        value={value}
-        onChange={(event) => onChange(event.target.value as T)}
-        className={`${fieldClasses} min-h-11`}>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {t(labels[option])}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
 export default function Names({ data, random = Math.random }: { data: ToolData; random?: Random }) {
   const { t } = useI18n();
   const [novelId, setNovelId] = useNovelChoice(data.novels);
   const [favorites, saveFavorites] = useStoryList<string>(novelId, 'names');
-  const [choice, setChoice] = useState<NameChoice>({ era: 'contemporary', region: 'brazil', gender: 'any' });
+  const [sourceId, setSourceId] = useState(DEFAULT_NAME_SOURCE);
+  const [gender, setGender] = useState<NameGender>('any');
+  const sourceSelect = useId();
+  const genderSelect = useId();
   const [names, setNames] = useState<string[]>([]);
   const toggle = (name: string) =>
     saveFavorites(favorites.includes(name) ? favorites.filter((favorite) => favorite !== name) : [...favorites, name]);
@@ -93,30 +51,48 @@ export default function Names({ data, random = Math.random }: { data: ToolData; 
   return (
     <div className="flex flex-col gap-5">
       <NovelPicker novels={data.novels} value={novelId} onChange={setNovelId} />
-      <div className="grid gap-3 sm:grid-cols-3">
-        <ChoiceSelect
-          label={t('Era')}
-          options={NAME_ERAS}
-          labels={ERA_LABELS}
-          value={choice.era}
-          onChange={(era) => setChoice({ ...choice, era })}
-        />
-        <ChoiceSelect
-          label={t('Region')}
-          options={NAME_REGIONS}
-          labels={REGION_LABELS}
-          value={choice.region}
-          onChange={(region) => setChoice({ ...choice, region })}
-        />
-        <ChoiceSelect
-          label={t('Gender')}
-          options={NAME_GENDERS}
-          labels={GENDER_LABELS}
-          value={choice.gender}
-          onChange={(gender) => setChoice({ ...choice, gender })}
-        />
+      <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
+        <div className="flex flex-col gap-1">
+          <label htmlFor={sourceSelect} className="font-display text-sm font-semibold">
+            {t('Collection')}
+          </label>
+          <select
+            id={sourceSelect}
+            value={sourceId}
+            onChange={(event) => setSourceId(event.target.value)}
+            className={`${fieldClasses} min-h-11`}>
+            {NAME_GROUPS.map((group) => (
+              <optgroup key={group} label={t(NAME_GROUP_LABELS[group])}>
+                {nameOptions(group).map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {t(option.label)}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor={genderSelect} className="font-display text-sm font-semibold">
+            {t('Gender')}
+          </label>
+          <select
+            id={genderSelect}
+            value={gender}
+            onChange={(event) => setGender(event.target.value as NameGender)}
+            className={`${fieldClasses} min-h-11`}>
+            {NAME_GENDERS.map((option) => (
+              <option key={option} value={option}>
+                {t(GENDER_LABELS[option])}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
-      <button type="button" onClick={() => setNames(generateNames(choice, random))} className={primaryClasses}>
+      <button
+        type="button"
+        onClick={() => setNames(generateNames(nameSource(sourceId), gender, random))}
+        className={primaryClasses}>
         {t('Generate 10 names')}
       </button>
       {names.length ? (
