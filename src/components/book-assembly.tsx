@@ -1,10 +1,25 @@
-import type { CSSProperties } from 'react';
+'use client';
 
-// Shown for a moment on every page change: the spine stands up with the cover open,
-// the leaves drop onto the back board, the cover closes over them and the title is inked. It never takes clicks and is hidden from screen readers.
+import { useEffect, useState, type CSSProperties } from 'react';
+
+// Shown once, on the first page after the site loads; later page changes turn the page instead. The
+// spine stands up with the cover open, the leaves drop onto the back board, the cover closes over them
+// and the title is inked. It never takes clicks and is hidden from screen readers.
 const LEAVES = [0, 1, 2, 3];
 
+let assembled = false;
+
 export function BookAssembly() {
+  const [show] = useState(() => !assembled);
+
+  useEffect(() => {
+    assembled = true;
+  }, []);
+
+  if (!show) {
+    return null;
+  }
+
   return (
     <div className="book-assembly" aria-hidden="true">
       <svg viewBox="-34 0 188 100" className="h-36 w-auto" focusable="false">
