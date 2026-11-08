@@ -66,7 +66,7 @@ test('the API creates a novel with a cover, a goal and progress', async ({ reque
 
   const invalid = await request.post(`/api/v1/goals/${goalId}/progress`, {
     headers,
-    data: { mode: 'add', count: '999999', date: '2025-03-05' },
+    data: { mode: 'add', count: '10000001', date: '2025-03-05' },
   });
   expect(invalid.status()).toBe(400);
   expect((await request.post('/api/v1/novels', { multipart: { title: 'x' } })).status()).toBe(401);
