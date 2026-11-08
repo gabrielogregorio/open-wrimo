@@ -98,7 +98,7 @@ export const TOOLS = [
     id: 'ideas',
     category: 'story',
     title: 'Idea generator',
-    description: 'A random character, place and conflict to get you unstuck.',
+    description: 'A genre, popular tropes, a character, a place and a conflict drawn at random to get you unstuck.',
   },
   {
     id: 'plot-dice',
@@ -141,6 +141,13 @@ export const TOOLS = [
     category: 'export',
     title: 'ePub book',
     description: 'Read your own book on an e-reader or a phone.',
+  },
+  {
+    id: 'converter',
+    category: 'export',
+    title: 'EPUB converter',
+    description:
+      'Turn a .docx, .odt, .md, .txt or .html file into an ePub you can read on an e-reader or send to Kindle, right in the browser.',
   },
   {
     id: 'backup',

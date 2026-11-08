@@ -109,4 +109,25 @@ export const ptBRToolsRhythm: Record<string, string> = {
   'Restore now': 'Restaurar agora',
   'This backup does not include your account data on the server (novels, goals, updates, profile). For that, use the JSON export in your profile.':
     'Este backup não inclui os dados da sua conta no servidor (romances, metas, atualizações, perfil). Para isso, use a exportação em JSON do seu perfil.',
+  // EPUB converter
+  'This kind of file is not supported. Use a .docx, .odt, .md, .txt or .html file.':
+    'Esse tipo de arquivo não é aceito. Use um arquivo .docx, .odt, .md, .txt ou .html.',
+  'This file could not be read. It may be damaged or saved in another format.':
+    'Não deu para ler esse arquivo. Ele pode estar danificado ou salvo em outro formato.',
+  'No text was found in this file.': 'Nenhum texto foi encontrado nesse arquivo.',
+  'This file is larger than 20 MB.': 'Esse arquivo tem mais de 20 MB.',
+  'Choose a file or drop it here': 'Escolha um arquivo ou solte ele aqui',
+  '.docx, .odt, .md, .txt or .html, up to 20 MB': '.docx, .odt, .md, .txt ou .html, até 20 MB',
+  'Reading the file…': 'Lendo o arquivo…',
+  'Everything happens in this browser: the file is never sent anywhere, not even to our server.':
+    'Tudo acontece neste navegador: o arquivo nunca é enviado para lugar nenhum, nem para o nosso servidor.',
+  'File: {name}': 'Arquivo: {name}',
+  'Language of the book: Brazilian Portuguese.': 'Idioma do livro: português do Brasil.',
+  'Kindle-friendly (simple layout, the reader picks font and size)':
+    'Pronto para Kindle (layout simples, o leitor escolhe fonte e tamanho)',
+  'Reading on a Kindle': 'Para ler no Kindle',
+  'Send the .epub with Amazon’s Send to Kindle (the app, the website or your Kindle e-mail address). Kindle accepts EPUB since 2022, and the old MOBI format is no longer accepted.':
+    'Mande o .epub pelo Enviar para Kindle da Amazon (o app, o site ou o e-mail do seu Kindle). O Kindle aceita EPUB desde 2022, e o antigo formato MOBI não é mais aceito.',
+  'Chapters come from the headings of the file. In a .txt, lines like “Capítulo 1” or “Prólogo” start a chapter.':
+    'Os capítulos vêm dos títulos do arquivo. Num .txt, linhas como “Capítulo 1” ou “Prólogo” começam um capítulo.',
 };

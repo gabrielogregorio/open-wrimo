@@ -56,8 +56,8 @@ export const ptBRTools: Record<string, string> = {
   'Scene board': 'Quadro de cenas',
   'Scene cards across planned, written and revised.': 'Cartões de cena entre planejada, escrita e revisada.',
   'Idea generator': 'Gerador de ideias',
-  'A random character, place and conflict to get you unstuck.':
-    'Um personagem, um lugar e um conflito sorteados para destravar.',
+  'A genre, popular tropes, a character, a place and a conflict drawn at random to get you unstuck.':
+    'Um gênero, tropos populares, um personagem, um lugar e um conflito sorteados para destravar.',
   'Plot dice': 'Dado de enredo',
   'What happens now? Roll for a twist.': 'E agora, o que acontece? Jogue o dado e tire uma reviravolta.',
   'Goal calculator': 'Calculadora de meta',
@@ -77,6 +77,9 @@ export const ptBRTools: Record<string, string> = {
     'Seus rascunhos em .docx ou em PDF para imprimir, no formato que as editoras esperam.',
   'ePub book': 'Livro ePub',
   'Read your own book on an e-reader or a phone.': 'Leia o seu próprio livro num leitor digital ou no celular.',
+  'EPUB converter': 'Conversor de EPUB',
+  'Turn a .docx, .odt, .md, .txt or .html file into an ePub you can read on an e-reader or send to Kindle, right in the browser.':
+    'Transforme um arquivo .docx, .odt, .md, .txt ou .html num ePub para ler no leitor digital ou mandar para o Kindle, direto no navegador.',
   'Full backup': 'Backup completo',
   'Everything the tools saved on this device in one .zip, and a way to bring it back.':
     'Tudo o que as ferramentas salvaram neste aparelho num .zip, e um jeito de trazer de volta.',

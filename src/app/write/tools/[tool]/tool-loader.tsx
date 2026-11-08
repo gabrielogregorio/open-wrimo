@@ -30,6 +30,7 @@ const TOOL_COMPONENTS: Record<ToolId, ComponentType<ToolProps>> = {
   reminder: dynamic(() => import('@/components/tools/reminder')),
   manuscript: dynamic(() => import('@/components/tools/manuscript')),
   epub: dynamic(() => import('@/components/tools/epub')),
+  converter: dynamic(() => import('@/components/tools/converter')),
   backup: dynamic(() => import('@/components/tools/backup')),
 };
 

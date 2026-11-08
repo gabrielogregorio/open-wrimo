@@ -8,6 +8,7 @@ import {
   Dices,
   Download,
   Eye,
+  FileOutput,
   FileText,
   Flame,
   Gauge,
@@ -62,6 +63,7 @@ const ICONS: Record<ToolId, LucideIcon> = {
   reminder: BellRing,
   manuscript: FileText,
   epub: BookOpen,
+  converter: FileOutput,
   backup: Download,
 };
 

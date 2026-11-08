@@ -3,7 +3,16 @@
 import { blocksOf, escapeXml, type Chapter } from './text';
 import { createZip } from './zip';
 
-export type EpubInput = { id: string; title: string; author: string; chapters: Chapter[]; contentsLabel: string };
+// kindle: a simpler stylesheet that leaves fonts, sizes and alignment to the reader, ids on every
+// chapter, hidden landmarks and an EPUB 2 table of contents (toc.ncx) for older readers and Send to Kindle.
+export type EpubInput = {
+  id: string;
+  title: string;
+  author: string;
+  chapters: Chapter[];
+  contentsLabel: string;
+  kindle?: boolean;
+};
 
 export const EPUB_TYPE = 'application/epub+zip';
 
@@ -23,6 +32,15 @@ export const EPUB_STYLE = [
   '.title-page p { text-indent: 0; text-align: center; }',
 ].join('\n');
 
+export const KINDLE_STYLE = [
+  'h1 { text-align: center; margin: 2em 0 1em; page-break-before: always; }',
+  'p { margin: 0; text-indent: 1.5em; }',
+  'h1 + p, p.break + p { text-indent: 0; }',
+  'p.break { text-align: center; text-indent: 0; margin: 1em 0; }',
+  '.title-page { text-align: center; }',
+  '.title-page p { text-indent: 0; text-align: center; }',
+].join('\n');
+
 const page = (title: string, body: string, extraNamespace = ''): string =>
   `${XML_HEADER}<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"${extraNamespace} xml:lang="pt-BR" lang="pt-BR">` +
   `<head><meta charset="utf-8"/><title>${escapeXml(title)}</title><link rel="stylesheet" type="text/css" href="style.css"/></head>` +
@@ -30,15 +48,38 @@ const page = (title: string, body: string, extraNamespace = ''): string =>
 
 const chapterFile = (index: number): string => `chapter-${String(index + 1).padStart(3, '0')}.xhtml`;
 
-export const chapterXhtml = (chapter: Chapter): string =>
+const idAttribute = (id: string): string => (id ? ` id="${id}"` : '');
+
+export const chapterXhtml = (chapter: Chapter, sectionId = ''): string =>
   page(
     chapter.title,
-    `<section><h1>${escapeXml(chapter.title)}</h1>` +
+    `<section${idAttribute(sectionId)}><h1>${escapeXml(chapter.title)}</h1>` +
       blocksOf(chapter.text)
         .map((block) => (block.kind === 'break' ? '<p class="break">* * *</p>' : `<p>${escapeXml(block.text)}</p>`))
         .join('') +
       '</section>',
   );
+
+const landmarks = (input: EpubInput): string =>
+  '<nav epub:type="landmarks" id="landmarks" hidden="hidden"><ol>' +
+  `<li><a epub:type="toc" href="nav.xhtml#toc">${escapeXml(input.contentsLabel)}</a></li>` +
+  (input.chapters.length > 0
+    ? `<li><a epub:type="bodymatter" href="${chapterFile(0)}">${escapeXml(input.chapters[0].title)}</a></li>`
+    : '') +
+  '</ol></nav>';
+
+export const ncxXml = (input: EpubInput): string =>
+  `${XML_HEADER}<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">` +
+  `<head><meta name="dtb:uid" content="urn:uuid:${escapeXml(input.id)}"/></head>` +
+  `<docTitle><text>${escapeXml(input.title)}</text></docTitle><navMap>` +
+  input.chapters
+    .map(
+      (chapter, index) =>
+        `<navPoint id="np${index + 1}" playOrder="${index + 1}"><navLabel><text>${escapeXml(chapter.title)}</text></navLabel>` +
+        `<content src="${chapterFile(index)}"/></navPoint>`,
+    )
+    .join('') +
+  '</navMap></ncx>';
 
 const navXhtml = (input: EpubInput): string =>
   page(
@@ -47,7 +88,8 @@ const navXhtml = (input: EpubInput): string =>
       input.chapters
         .map((chapter, index) => `<li><a href="${chapterFile(index)}">${escapeXml(chapter.title)}</a></li>`)
         .join('') +
-      '</ol></nav>',
+      '</ol></nav>' +
+      (input.kindle ? landmarks(input) : ''),
     ' xmlns:epub="http://www.idpf.org/2007/ops"',
   );
 
@@ -75,8 +117,9 @@ export const packageXml = (input: EpubInput, modified: Date): string => {
     '<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>' +
     '<item id="title" href="title.xhtml" media-type="application/xhtml+xml"/>' +
     '<item id="style" href="style.css" media-type="text/css"/>' +
+    (input.kindle ? '<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>' : '') +
     items +
-    `</manifest><spine><itemref idref="title"/>${spine}</spine></package>`
+    `</manifest><spine${input.kindle ? ' toc="ncx"' : ''}><itemref idref="title"/>${spine}</spine></package>`
   );
 };
 
@@ -88,8 +131,12 @@ export const buildEpub = (input: EpubInput, modified: Date = new Date()): Uint8A
       { name: 'OEBPS/content.opf', data: packageXml(input, modified) },
       { name: 'OEBPS/nav.xhtml', data: navXhtml(input) },
       { name: 'OEBPS/title.xhtml', data: titleXhtml(input) },
-      { name: 'OEBPS/style.css', data: EPUB_STYLE },
-      ...input.chapters.map((chapter, index) => ({ name: `OEBPS/${chapterFile(index)}`, data: chapterXhtml(chapter) })),
+      { name: 'OEBPS/style.css', data: input.kindle ? KINDLE_STYLE : EPUB_STYLE },
+      ...(input.kindle ? [{ name: 'OEBPS/toc.ncx', data: ncxXml(input) }] : []),
+      ...input.chapters.map((chapter, index) => ({
+        name: `OEBPS/${chapterFile(index)}`,
+        data: chapterXhtml(chapter, input.kindle ? `chapter-${index + 1}` : ''),
+      })),
     ],
     modified,
   );

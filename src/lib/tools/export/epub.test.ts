@@ -1,4 +1,4 @@
-import { EPUB_TYPE, buildEpub, chapterXhtml, packageXml, randomUuid } from './epub';
+import { EPUB_STYLE, EPUB_TYPE, KINDLE_STYLE, buildEpub, chapterXhtml, packageXml, randomUuid } from './epub';
 import { readZip, textOf } from './zip';
 
 const input = {
@@ -58,5 +58,37 @@ describe('randomUuid', () => {
   it('makes version 4 UUIDs', () => {
     expect(randomUuid()).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     expect(randomUuid()).not.toBe(randomUuid());
+  });
+});
+
+describe('buildEpub for Kindle', () => {
+  it('adds an NCX table of contents, landmarks, chapter ids and a simpler stylesheet', () => {
+    const files = readZip(buildEpub({ ...input, kindle: true }, new Date('2026-11-08T10:00:00Z')));
+    const byName = Object.fromEntries(files.map((file) => [file.name, textOf(file.data)]));
+
+    expect(byName['OEBPS/style.css']).toBe(KINDLE_STYLE);
+    expect(KINDLE_STYLE).not.toContain('font-family');
+    expect(byName['OEBPS/content.opf']).toContain('<spine toc="ncx">');
+    expect(byName['OEBPS/content.opf']).toContain('href="toc.ncx" media-type="application/x-dtbncx+xml"');
+    expect(byName['OEBPS/toc.ncx']).toContain('<meta name="dtb:uid" content="urn:uuid:1234"/>');
+    expect(byName['OEBPS/toc.ncx']).toContain(
+      '<navPoint id="np2" playOrder="2"><navLabel><text>Dois &lt;2&gt;</text></navLabel><content src="chapter-002.xhtml"/></navPoint>',
+    );
+    expect(byName['OEBPS/nav.xhtml']).toContain('epub:type="landmarks"');
+    expect(byName['OEBPS/nav.xhtml']).toContain('<a epub:type="bodymatter" href="chapter-001.xhtml">Um</a>');
+    expect(byName['OEBPS/chapter-002.xhtml']).toContain('<section id="chapter-2">');
+  });
+
+  it('keeps the default layout without the option and handles a book with no chapters', () => {
+    const plain = readZip(buildEpub(input));
+
+    expect(textOf(plain.find((file) => file.name === 'OEBPS/style.css')!.data)).toBe(EPUB_STYLE);
+    expect(plain.some((file) => file.name === 'OEBPS/toc.ncx')).toBe(false);
+
+    const empty = readZip(buildEpub({ ...input, chapters: [], kindle: true }));
+    const nav = textOf(empty.find((file) => file.name === 'OEBPS/nav.xhtml')!.data);
+
+    expect(nav).toContain('epub:type="landmarks"');
+    expect(nav).not.toContain('bodymatter');
   });
 });
