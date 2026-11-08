@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useState } from 'react';
+import { Combobox } from '@/components/combobox';
 import { fieldClasses } from '@/components/form-field';
 import { useI18n } from '@/components/i18n-provider';
 import type { ToolData } from '@/lib/tools/data';
@@ -42,7 +43,6 @@ export default function Names({ data, random = Math.random }: { data: ToolData; 
   const [favorites, saveFavorites] = useStoryList<string>(novelId, 'names');
   const [sourceId, setSourceId] = useState(DEFAULT_NAME_SOURCE);
   const [gender, setGender] = useState<NameGender>('any');
-  const sourceSelect = useId();
   const genderSelect = useId();
   const [names, setNames] = useState<string[]>([]);
   const toggle = (name: string) =>
@@ -52,26 +52,15 @@ export default function Names({ data, random = Math.random }: { data: ToolData; 
     <div className="flex flex-col gap-5">
       <NovelPicker novels={data.novels} value={novelId} onChange={setNovelId} />
       <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
-        <div className="flex flex-col gap-1">
-          <label htmlFor={sourceSelect} className="font-display text-sm font-semibold">
-            {t('Collection')}
-          </label>
-          <select
-            id={sourceSelect}
-            value={sourceId}
-            onChange={(event) => setSourceId(event.target.value)}
-            className={`${fieldClasses} min-h-11`}>
-            {NAME_GROUPS.map((group) => (
-              <optgroup key={group} label={t(NAME_GROUP_LABELS[group])}>
-                {nameOptions(group).map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {t(option.label)}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </div>
+        <Combobox
+          label={t('Collection')}
+          value={sourceId}
+          onChange={setSourceId}
+          groups={NAME_GROUPS.map((group) => ({
+            label: t(NAME_GROUP_LABELS[group]),
+            options: nameOptions(group).map((option) => ({ value: option.id, label: t(option.label) })),
+          }))}
+        />
         <div className="flex flex-col gap-1">
           <label htmlFor={genderSelect} className="font-display text-sm font-semibold">
             {t('Gender')}

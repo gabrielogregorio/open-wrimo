@@ -24,6 +24,10 @@ export const ptBR: Record<string, string> = {
   'This account was deleted at its owner’s request.': 'Esta conta foi excluída a pedido de quem a criou.',
   'Terms of Use': 'Termos de uso',
   'About the site': 'Sobre o site',
+  Search: 'Pesquisar',
+  'Open the list': 'Abrir a lista',
+  'Close the list': 'Fechar a lista',
+  'Nothing found.': 'Nada encontrado.',
   'The terms have changed': 'Os termos mudaram',
   'To keep using the writing area, read what changed and accept the version of {date}.':
     'Para continuar usando a área de escrita, leia o que mudou e aceite a versão de {date}.',
