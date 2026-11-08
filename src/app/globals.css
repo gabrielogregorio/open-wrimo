@@ -68,6 +68,23 @@
   ::selection {
     background-color: color-mix(in srgb, var(--accent) 30%, transparent);
   }
+
+  /* The browser paints autofilled fields blue and ignores background-color, so a wide inset shadow
+     covers that blue with a paper tone and the text keeps the ink color. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: var(--ink);
+    caret-color: var(--ink);
+    box-shadow: inset 0 0 0 100vmax var(--paper-deep);
+    transition: background-color 9999s ease-out 0s;
+  }
+
+  input:autofill {
+    box-shadow: inset 0 0 0 100vmax var(--paper-deep);
+  }
 }
 
 @layer components {
