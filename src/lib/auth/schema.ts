@@ -45,6 +45,10 @@ export const signUpSchema = z.object({
     .string()
     .min(PASSWORD_MIN_LENGTH, { error: 'Use 10 to 128 characters.' })
     .max(PASSWORD_MAX_LENGTH, { error: 'Use 10 to 128 characters.' }),
+  acceptTerms: z.preprocess(
+    (value) => value === 'on' || value === true,
+    z.literal(true, { error: 'Accept the Terms of Use and Privacy Policy to create an account.' }),
+  ),
 });
 
 export type SignInInput = z.infer<typeof signInSchema>;

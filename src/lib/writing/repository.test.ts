@@ -341,6 +341,16 @@ describe('createWritingRepository', () => {
     });
     await expect(writing.findPublicWriter('fechada')).resolves.toBeNull();
     await expect(writing.findPublicWriter('ninguem')).resolves.toBeNull();
+
+    const leaving = await addWriter('Saindo', 'saindo');
+    await writing.saveProfile(leaving, { ...PROFILE, name: 'Saindo', username: 'saindo' }, ALL_SECTIONS, NOW);
+    await collections(testDatabase.database).users.updateOne(
+      { _id: new ObjectId(leaving) },
+      { $set: { deletionRequestedAt: NOW } },
+    );
+
+    await expect(writing.findPublicWriter('saindo')).resolves.toBeNull();
+    expect((await writing.listCommunity({ query: 'saindo', sort: 'name', page: 1 })).writers).toEqual([]);
   });
 
   it('lists public writers with their public novels, words and last day', async () => {

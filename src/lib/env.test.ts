@@ -54,6 +54,11 @@ describe('parseEnvironment', () => {
     expect(() => parseEnvironment({ MONGODB_URI: LOCAL_URI, JWT_SECRET: 'short' })).toThrow(/JWT_SECRET/);
   });
 
+  it('takes an optional cron secret of at least 32 characters', () => {
+    expect(parseEnvironment({ ...BASE, CRON_SECRET: JWT_SECRET }).CRON_SECRET).toBe(JWT_SECRET);
+    expect(() => parseEnvironment({ ...BASE, CRON_SECRET: 'short' })).toThrow(/CRON_SECRET/);
+  });
+
   it('refuses a connection string from another database', () => {
     expect(() => parseEnvironment({ JWT_SECRET, MONGODB_URI: 'postgres://localhost/openwrimo' })).toThrow(
       /Invalid environment: .*MONGODB_URI/s,

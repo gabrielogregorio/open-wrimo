@@ -1,13 +1,13 @@
 import { PROFILE_SECTIONS, type ProfileSection } from '@/lib/db/collections';
 import { saveProfile } from '@/lib/writing/service';
-import { bearerClaims, fileBytes, formResponse, stringFields, unauthorized } from '@/server/api';
+import { bearerWriter, fileBytes, formResponse, stringFields } from '@/server/api';
 import { writingContextFor } from '@/server/session';
 
 export async function PUT(request: Request): Promise<Response> {
-  const claims = await bearerClaims(request);
+  const claims = await bearerWriter(request);
 
-  if (!claims) {
-    return unauthorized();
+  if (claims instanceof Response) {
+    return claims;
   }
 
   const form = await request.formData();

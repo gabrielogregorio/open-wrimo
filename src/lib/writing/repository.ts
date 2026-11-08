@@ -500,7 +500,11 @@ export const createWritingRepository = (database: Db) => {
     },
 
     async findPublicWriter(username: string): Promise<{ userId: string; name: string; username: string } | null> {
-      const user = await users.findOne({ username }, { projection: { name: 1, username: 1 } });
+      // An account waiting for deletion is hidden from everyone at once.
+      const user = await users.findOne(
+        { username, deletionRequestedAt: { $exists: false } },
+        { projection: { name: 1, username: 1 } },
+      );
 
       if (!user) {
         return null;
@@ -522,6 +526,7 @@ export const createWritingRepository = (database: Db) => {
         .find(
           {
             _id: { $in: publicProfiles.map((profile) => profile.userId) },
+            deletionRequestedAt: { $exists: false },
             ...(matcher ? { $or: [{ name: matcher }, { username: matcher }] } : {}),
           },
           { projection: { name: 1, username: 1 } },

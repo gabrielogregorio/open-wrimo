@@ -17,6 +17,44 @@ export const ptBR: Record<string, string> = {
   'Enter your password.': 'Informe sua senha.',
   'Open Wrimo · write every day, read slowly.': 'Open Wrimo · escreva todo dia, leia devagar.',
   'Contribute on GitHub': 'Contribua no GitHub',
+  'I have read and accept the': 'Li e aceito os',
+  'Terms of Use and Privacy Policy': 'Termos de Uso e a Política de Privacidade',
+  'Accept the Terms of Use and Privacy Policy to create an account.':
+    'Aceite os Termos de Uso e a Política de Privacidade para criar a conta.',
+  'This account was deleted at its owner’s request.': 'Esta conta foi excluída a pedido de quem a criou.',
+  'Terms of Use': 'Termos de uso',
+  'About the site': 'Sobre o site',
+  'The terms have changed': 'Os termos mudaram',
+  'To keep using the writing area, read what changed and accept the version of {date}.':
+    'Para continuar usando a área de escrita, leia o que mudou e aceite a versão de {date}.',
+  'What changed': 'O que mudou',
+  'Read the full Terms of Use and Privacy Policy': 'Ler os Termos de Uso e a Política de Privacidade completos',
+  'I have read and accept the new terms': 'Li e aceito os novos termos',
+  'If you do not agree, you can still export your data and delete your account, or sign out.':
+    'Se não concordar, você ainda pode exportar seus dados e excluir sua conta, ou sair.',
+  'My account and data': 'Minha conta e dados',
+  'Your account is set to be deleted': 'Sua conta está marcada para exclusão',
+  'It is hidden from now on. You can change your mind by signing in again within {grace} days; after that, everything is deleted for good within {deadline} days of your request.':
+    'Ela fica escondida a partir de agora. Você pode desistir entrando de novo em até {grace} dias; depois disso, tudo é apagado de forma definitiva em até {deadline} dias contados do pedido.',
+  'What you saved in the Tools stays in this browser until you clear the site data.':
+    'O que você salvou nas Ferramentas continua neste navegador até você limpar os dados do site.',
+  'Requested on {date}. You can cancel until {grace}; it is deleted for good by {deadline}.':
+    'Pedido em {date}. Você pode cancelar até {grace}; a exclusão definitiva acontece até {deadline}.',
+  'Cancel the deletion and keep my account': 'Cancelar a exclusão e manter minha conta',
+  'Export my data': 'Exportar meus dados',
+  'Download everything you wrote down here (novels, goals, word counts and profile) as a JSON file. Do it often: it is your copy.':
+    'Baixe tudo o que você registrou aqui (romances, metas, contagens e perfil) num arquivo JSON. Faça isso com frequência: é a sua cópia.',
+  'Download my data (.json)': 'Baixar meus dados (.json)',
+  'What you keep in the Tools lives in this browser; take it with the Full backup tool.':
+    'O que você guarda nas Ferramentas fica neste navegador; leve com a ferramenta Backup completo.',
+  'You accepted the version of {version} on {date}.': 'Você aceitou a versão de {version} em {date}.',
+  'You have not accepted the current version yet.': 'Você ainda não aceitou a versão atual.',
+  'Read the terms': 'Ler os termos',
+  'Delete my account': 'Excluir minha conta',
+  'Your account is hidden and you are signed out right away. You can cancel by signing in again within {grace} days; after that, your novels, goals, counts, profile and images are deleted for good within {deadline} days.':
+    'Sua conta é escondida e você sai na hora. Dá para cancelar entrando de novo em até {grace} dias; depois disso, seus romances, metas, contagens, perfil e imagens são apagados de forma definitiva em até {deadline} dias.',
+  'I understand, and I have exported what I want to keep.': 'Entendo, e já exportei o que quero guardar.',
+  'Tick the box to confirm.': 'Marque a caixa para confirmar.',
   '(opens in a new tab)': '(abre em nova aba)',
   'Hello, {name}': 'Olá, {name}',
   'Invalid email or password.': 'E-mail ou senha incorretos.',

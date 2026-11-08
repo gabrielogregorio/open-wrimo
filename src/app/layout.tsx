@@ -3,6 +3,7 @@ import '@fontsource-variable/literata';
 import './globals.css';
 import { Code2 } from 'lucide-react';
 import type { Metadata, Viewport } from 'next';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { cookies } from 'next/headers';
 import { I18nProvider } from '@/components/i18n-provider';
@@ -56,15 +57,22 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <footer className="border-t border-rule">
             <div className="mx-auto flex max-w-5xl flex-col items-center gap-1 px-4 py-6 text-center text-sm text-ink-soft">
               <p className="italic">{t('Open Wrimo · write every day, read slowly.')}</p>
-              <a
-                href={REPOSITORY_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center gap-1.5 font-display underline underline-offset-4 hover:text-accent">
-                <Code2 className="h-4 w-4" aria-hidden="true" />
-                {t('Contribute on GitHub')}
-                <span className="sr-only">{t('(opens in a new tab)')}</span>
-              </a>
+              <nav aria-label={t('About the site')} className="flex flex-wrap items-center justify-center gap-x-4">
+                <Link
+                  href="/termos"
+                  className="inline-flex min-h-11 items-center font-display underline underline-offset-4 hover:text-accent">
+                  {t('Terms of Use')}
+                </Link>
+                <a
+                  href={REPOSITORY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center gap-1.5 font-display underline underline-offset-4 hover:text-accent">
+                  <Code2 className="h-4 w-4" aria-hidden="true" />
+                  {t('Contribute on GitHub')}
+                  <span className="sr-only">{t('(opens in a new tab)')}</span>
+                </a>
+              </nav>
             </div>
           </footer>
         </I18nProvider>

@@ -1,7 +1,10 @@
+import { createAccessLog } from '@/lib/account/account';
 import { collections } from '@/lib/db/collections';
+import { TERMS_VERSION } from '@/lib/legal/terms';
 import { startTestDatabase, type TestDatabase } from '@/test/mongo';
 import { LOGIN_RULES, createRateLimiter } from './rate-limit';
 import {
+  ACCOUNT_CLOSED,
   EMAIL_TAKEN,
   INVALID_CREDENTIALS,
   TOO_MANY_ATTEMPTS,
@@ -36,6 +39,7 @@ describe('auth service', () => {
       users: createUserRepository(testDatabase.database),
       sessions: createSessionRepository(testDatabase.database),
       limiter: createRateLimiter(testDatabase.database),
+      accessLog: createAccessLog(testDatabase.database),
       now: () => NOW,
     };
   });
@@ -56,14 +60,50 @@ describe('auth service', () => {
       .replace(/[^a-z0-9]+/g, '-');
 
   const register = (email: string, address: string | null = null, username = usernameFor(email)) =>
-    signUp(dependencies, { name: 'Clara', username, email, password: PASSWORD }, address);
+    signUp(dependencies, { name: 'Clara', username, email, password: PASSWORD, acceptTerms: 'on' }, address, 'Firefox');
   const session = { ok: true, refreshToken: expect.stringMatching(/^[\w-]{43}$/), userId: expect.any(String) };
 
   it('signs up with a normalized email and opens a session', async () => {
     const result = await register('  Clara@Example.com ');
 
     expect(result).toEqual({ ...session, username: 'clara' });
-    expect((await dependencies.users.findByEmail('clara@example.com'))?.name).toBe('Clara');
+    const user = await dependencies.users.findByEmail('clara@example.com');
+    expect(user?.name).toBe('Clara');
+    expect(user).toMatchObject({ termsVersion: TERMS_VERSION, termsAcceptedAt: NOW });
+    expect(await collections(testDatabase.database).accessLogs.findOne({ userId: user?._id })).toMatchObject({
+      action: 'register',
+      userAgent: 'Firefox',
+    });
+  });
+
+  it('refuses to create an account without accepting the terms', async () => {
+    await expect(
+      signUp(dependencies, { name: 'Lia', username: 'lia', email: 'lia@example.com', password: PASSWORD }, null),
+    ).resolves.toEqual({
+      ok: false,
+      fieldErrors: { acceptTerms: 'Accept the Terms of Use and Privacy Policy to create an account.' },
+    });
+  });
+
+  it('lets a writer in during the deletion grace period, and never after it', async () => {
+    await register('leaving@example.com');
+    await register('gone@example.com');
+    const { users } = collections(testDatabase.database);
+    await users.updateOne({ email: 'leaving@example.com' }, { $set: { deletionRequestedAt: NOW } });
+    await users.updateOne(
+      { email: 'gone@example.com' },
+      { $set: { deletionRequestedAt: new Date(NOW.getTime() - 31 * 86_400_000) } },
+    );
+
+    await expect(
+      signIn(dependencies, { email: 'leaving@example.com', password: PASSWORD }, null),
+    ).resolves.toMatchObject({
+      ok: true,
+    });
+    await expect(signIn(dependencies, { email: 'gone@example.com', password: PASSWORD }, null)).resolves.toEqual({
+      ok: false,
+      error: ACCOUNT_CLOSED,
+    });
   });
 
   it('refuses the same email twice', async () => {
@@ -88,7 +128,11 @@ describe('auth service', () => {
 
   it('reports every invalid sign up field', async () => {
     await expect(
-      signUp(dependencies, { name: '', username: 'no spaces!', email: 'not-an-email', password: 'short' }, null),
+      signUp(
+        dependencies,
+        { name: '', username: 'no spaces!', email: 'not-an-email', password: 'short', acceptTerms: 'on' },
+        null,
+      ),
     ).resolves.toEqual({
       ok: false,
       fieldErrors: {

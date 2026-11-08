@@ -5,7 +5,9 @@ const PASSWORD = 'a long enough secret';
 
 test('the API signs up, rotates refresh tokens and revokes them on sign out', async ({ request }) => {
   const writer = uniqueWriter('api');
-  const registered = await request.post('/api/v1/auth/register', { data: { ...writer, password: PASSWORD } });
+  const registered = await request.post('/api/v1/auth/register', {
+    data: { ...writer, password: PASSWORD, acceptTerms: true },
+  });
   const tokens = await registered.json();
 
   expect(registered.status()).toBe(201);
@@ -33,7 +35,7 @@ test('the API signs up, rotates refresh tokens and revokes them on sign out', as
 test('the API creates a novel with a cover, a goal and progress', async ({ request }) => {
   const writer = uniqueWriter('apinovel');
   const { accessToken } = await (
-    await request.post('/api/v1/auth/register', { data: { ...writer, password: PASSWORD } })
+    await request.post('/api/v1/auth/register', { data: { ...writer, password: PASSWORD, acceptTerms: true } })
   ).json();
   const headers = { authorization: `Bearer ${accessToken}` };
 
@@ -75,7 +77,7 @@ test('the API creates a novel with a cover, a goal and progress', async ({ reque
 test('the API accepts two images per second for each writer', async ({ request }) => {
   const writer = uniqueWriter('apirate');
   const { accessToken } = await (
-    await request.post('/api/v1/auth/register', { data: { ...writer, password: PASSWORD } })
+    await request.post('/api/v1/auth/register', { data: { ...writer, password: PASSWORD, acceptTerms: true } })
   ).json();
   const avatar = await pngImage(200, 200);
   const send = () =>

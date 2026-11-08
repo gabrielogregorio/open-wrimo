@@ -13,7 +13,13 @@ import {
   PROJECT_TYPE_LABELS,
   UNIT_LABELS,
 } from '@/components/writing-labels';
-import { EMAIL_TAKEN, INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS, USERNAME_TAKEN } from '@/lib/auth/service';
+import {
+  EMAIL_TAKEN,
+  INVALID_CREDENTIALS,
+  TOO_MANY_ATTEMPTS,
+  USERNAME_TAKEN,
+  ACCOUNT_CLOSED,
+} from '@/lib/auth/service';
 import { LIFETIME_BADGES, PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
 import { EVENTS } from '@/lib/writing/events';
 import { IMAGE_STILL_TOO_BIG, IMAGE_UNREADABLE, IMAGE_UPLOAD_TOO_BIG, IMAGE_WRONG_TYPE } from '@/lib/storage/images';
@@ -103,6 +109,7 @@ describe('pt-BR dictionary', () => {
       badge.description,
     ]),
     INVALID_CREDENTIALS,
+    ACCOUNT_CLOSED,
     TOO_MANY_ATTEMPTS,
     EMAIL_TAKEN,
     USERNAME_TAKEN,

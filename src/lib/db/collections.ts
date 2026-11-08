@@ -26,6 +26,8 @@ export type AccessLogDocument = {
   action: AccessAction;
   address: string | null;
   userAgent: string;
+  /** For uploads, the stored image key, so deleting the account can remove the file. */
+  detail?: string;
   createdAt: Date;
   expiresAt: Date;
 };

@@ -1,14 +1,31 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { AchievementWatcher, type EarnedAchievement } from '@/components/achievement-watcher';
 import { GoalCelebration, type BeatenGoal } from '@/components/goal-celebration';
 import { LIFETIME_BADGES, PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
+import { createAccountRepository } from '@/lib/account/account';
+import { getDatabase } from '@/lib/db/client';
+import { needsTermsAcceptance } from '@/lib/legal/terms';
 import { getTranslator } from '@/server/i18n';
 import { lifetimeBadges, loadNotebook, participationBadges, projectBadges } from '@/server/notebook';
+import { requireUser } from '@/server/session';
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function WritingLayout({ children }: { children: ReactNode }) {
+  const user = await requireUser();
+  const account = await createAccountRepository(await getDatabase()).status(user.id);
+
+  // An account waiting for deletion goes to its account page to cancel; new terms are shown before writing.
+  if (account?.deletionRequestedAt) {
+    redirect('/conta');
+  }
+
+  if (needsTermsAcceptance(account?.termsVersion)) {
+    redirect('/termos/aceitar');
+  }
+
   const notebook = await loadNotebook();
   const t = await getTranslator();
   const label = (text: string, mark?: string): string => t(text, { count: mark ?? '' });

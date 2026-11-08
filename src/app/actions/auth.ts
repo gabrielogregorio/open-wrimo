@@ -8,7 +8,7 @@ import { createSessionRepository } from '@/lib/auth/session';
 import { REFRESH_COOKIE } from '@/lib/auth/tokens';
 import { getDatabase } from '@/lib/db/client';
 import { formValues, type FormState } from '@/lib/form';
-import { authDependencies, clientAddress } from '@/server/session';
+import { authDependencies, clientInfo } from '@/server/session';
 import { clearTokenCookies, storeTokenCookies, tokenPair } from '@/server/tokens';
 
 const finish = async (result: AuthResult, values: Record<string, string>, next: unknown): Promise<FormState> => {
@@ -27,16 +27,22 @@ const finish = async (result: AuthResult, values: Record<string, string>, next: 
 
 export async function signInAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const input = formValues(formData, ['email', 'password']);
-  const result = await signIn(await authDependencies(), input, await clientAddress());
+  const client = await clientInfo();
+  const result = await signIn(await authDependencies(), input, client.address, client.userAgent);
 
   return finish(result, { email: input.email }, formData.get('next'));
 }
 
 export async function signUpAction(_previous: FormState, formData: FormData): Promise<FormState> {
-  const input = formValues(formData, ['name', 'username', 'email', 'password']);
-  const result = await signUp(await authDependencies(), input, await clientAddress());
+  const input = formValues(formData, ['name', 'username', 'email', 'password', 'acceptTerms']);
+  const client = await clientInfo();
+  const result = await signUp(await authDependencies(), input, client.address, client.userAgent);
 
-  return finish(result, { name: input.name, username: input.username, email: input.email }, '/write');
+  return finish(
+    result,
+    { name: input.name, username: input.username, email: input.email, acceptTerms: input.acceptTerms ?? '' },
+    '/write',
+  );
 }
 
 export async function signOutAction(): Promise<void> {

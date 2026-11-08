@@ -51,4 +51,35 @@ describe('AuthForm', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
   });
+
+  it('asks to accept the terms on sign up, links them and keeps the choice after an error', async () => {
+    const action = vi.fn(async (_state: FormState, formData: FormData): Promise<FormState> => ({
+      fieldErrors: formData.get('acceptTerms')
+        ? { email: 'This email is already registered.' }
+        : { acceptTerms: 'Accept the Terms of Use and Privacy Policy to create an account.' },
+      values: { acceptTerms: String(formData.get('acceptTerms') ?? '') },
+    }));
+    renderWithLocale(<AuthForm mode="sign-up" action={action} />);
+    const terms = screen.getByRole('checkbox', { name: /I have read and accept the/ });
+
+    expect(terms).not.toBeChecked();
+    expect(screen.getByRole('link', { name: 'Terms of Use and Privacy Policy' })).toHaveAttribute('href', '/termos');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
+
+    expect(
+      await screen.findByText('Accept the Terms of Use and Privacy Policy to create an account.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /I have read and accept the/ })).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+
+    await userEvent.click(screen.getByRole('checkbox', { name: /I have read and accept the/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
+
+    expect(await screen.findByText('This email is already registered.')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /I have read and accept the/ })).toBeChecked();
+    expect(action.mock.calls[1][1].get('acceptTerms')).toBe('on');
+  });
 });

@@ -93,6 +93,9 @@ export default async function ProfilePage() {
             <Link href="/write/profile/edit" className="underline underline-offset-4">
               {t('Edit profile')}
             </Link>
+            <Link href="/conta" className="underline underline-offset-4">
+              {t('My account and data')}
+            </Link>
             {profile.isPublic ? (
               <Link href={`/u/${user.username}`} className="text-accent underline underline-offset-4">
                 {t('See my public profile')}

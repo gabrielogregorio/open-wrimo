@@ -1,4 +1,6 @@
+import { deletionState, type AccessLog } from '@/lib/account/account';
 import { fieldErrorsFrom, type FieldErrors } from '@/lib/form';
+import { TERMS_VERSION } from '@/lib/legal/terms';
 import { hashPassword, verifyPassword } from './password';
 import { LOGIN_RULES, REGISTER_RULES, minutesUntil, type RateLimiter, type RateRule } from './rate-limit';
 import { signInSchema, signUpSchema } from './schema';
@@ -9,11 +11,13 @@ export const INVALID_CREDENTIALS = 'Invalid email or password.';
 export const TOO_MANY_ATTEMPTS = 'Too many attempts. Try again in {minutes} minutes.';
 export const EMAIL_TAKEN = 'This email is already registered.';
 export const USERNAME_TAKEN = 'This username is taken.';
+export const ACCOUNT_CLOSED = 'This account was deleted at its owner’s request.';
 
 export type AuthDependencies = {
   users: UserRepository;
   sessions: SessionRepository;
   limiter: RateLimiter;
+  accessLog: AccessLog;
   now: () => Date;
 };
 
@@ -46,6 +50,7 @@ export const signIn = async (
   dependencies: AuthDependencies,
   input: Record<string, unknown>,
   clientAddress: string | null,
+  userAgent = '',
 ): Promise<AuthResult> => {
   const parsed = signInSchema.safeParse(input);
 
@@ -83,7 +88,16 @@ export const signIn = async (
     return { ok: false, error: INVALID_CREDENTIALS };
   }
 
+  // Within the grace period the writer may sign in to cancel the deletion; after it, never again.
+  if (deletionState(user.deletionRequestedAt, now) === 'closed') {
+    return { ok: false, error: ACCOUNT_CLOSED };
+  }
+
   await dependencies.limiter.reset(emailKey);
+  await dependencies.accessLog.record(
+    { userId: user._id.toHexString(), action: 'login', address: clientAddress, userAgent },
+    now,
+  );
 
   return {
     ok: true,
@@ -97,6 +111,7 @@ export const signUp = async (
   dependencies: AuthDependencies,
   input: Record<string, unknown>,
   clientAddress: string | null,
+  userAgent = '',
 ): Promise<AuthResult> => {
   const parsed = signUpSchema.safeParse(input);
 
@@ -130,11 +145,18 @@ export const signUp = async (
     email,
     passwordHash: await hashPassword(password),
     createdAt: now,
+    termsVersion: TERMS_VERSION,
+    termsAcceptedAt: now,
   });
 
   if (!userId) {
     return { ok: false, fieldErrors: { email: EMAIL_TAKEN } };
   }
+
+  await dependencies.accessLog.record(
+    { userId: userId.toHexString(), action: 'register', address: clientAddress, userAgent },
+    now,
+  );
 
   return {
     ok: true,

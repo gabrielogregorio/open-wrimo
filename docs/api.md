@@ -15,13 +15,13 @@ Send the access token as `Authorization: Bearer <accessToken>`. When a call retu
 refresh token and repeat the call with the new access token. Every refresh returns a new refresh token; keep only
 the newest. Using an old refresh token again revokes the whole session.
 
-| Method and path              | Body                                  | Success                           |
-| ---------------------------- | ------------------------------------- | --------------------------------- |
-| `POST /api/v1/auth/register` | `{ name, username, email, password }` | 201 with tokens                   |
-| `POST /api/v1/auth/login`    | `{ email, password }`                 | 200 with tokens; 429 when limited |
-| `POST /api/v1/auth/refresh`  | `{ refreshToken }`                    | 200 with new tokens, 401 if not   |
-| `POST /api/v1/auth/logout`   | `{ refreshToken }`                    | 204, the session is revoked       |
-| `GET /api/v1/me`             | none                                  | `{ id, name, email, username }`   |
+| Method and path              | Body                                                     | Success                           |
+| ---------------------------- | -------------------------------------------------------- | --------------------------------- |
+| `POST /api/v1/auth/register` | `{ name, username, email, password, acceptTerms: true }` | 201 with tokens                   |
+| `POST /api/v1/auth/login`    | `{ email, password }`                                    | 200 with tokens; 429 when limited |
+| `POST /api/v1/auth/refresh`  | `{ refreshToken }`                                       | 200 with new tokens, 401 if not   |
+| `POST /api/v1/auth/logout`   | `{ refreshToken }`                                       | 204, the session is revoked       |
+| `GET /api/v1/me`             | none                                                     | `{ id, name, email, username }`   |
 
 `username` takes 3 to 20 lowercase letters, numbers and dashes. Passwords take 10 to 128 characters.
 
