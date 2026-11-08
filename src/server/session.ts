@@ -92,3 +92,11 @@ export const writingContextFor = async (
     translate: await getTranslator(),
   };
 };
+
+const MAX_USER_AGENT_LENGTH = 300;
+
+/** The address and browser of the current request, for access records and reports. */
+export const clientInfo = async (): Promise<{ address: string | null; userAgent: string }> => ({
+  address: await clientAddress(),
+  userAgent: ((await headers()).get('user-agent') ?? '').slice(0, MAX_USER_AGENT_LENGTH),
+});
