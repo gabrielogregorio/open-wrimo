@@ -1,0 +1,105 @@
+// An EPUB 3 book: the mimetype stored first, the container, the package document, a navigation
+// document, one XHTML file per chapter and a small stylesheet.
+import { blocksOf, escapeXml, type Chapter } from './text';
+import { createZip } from './zip';
+
+export type EpubInput = { id: string; title: string; author: string; chapters: Chapter[]; contentsLabel: string };
+
+export const EPUB_TYPE = 'application/epub+zip';
+
+const XML_HEADER = '<?xml version="1.0" encoding="UTF-8"?>';
+
+const CONTAINER =
+  `${XML_HEADER}<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">` +
+  '<rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>';
+
+export const EPUB_STYLE = [
+  'body { font-family: serif; line-height: 1.5; margin: 0 1em; }',
+  'h1 { text-align: center; margin: 3em 0 1.5em; font-size: 1.6em; }',
+  'p { margin: 0; text-indent: 1.5em; text-align: justify; }',
+  'h1 + p, p.break + p { text-indent: 0; }',
+  'p.break { text-align: center; text-indent: 0; margin: 1em 0; }',
+  '.title-page { text-align: center; margin-top: 30%; }',
+  '.title-page p { text-indent: 0; text-align: center; }',
+].join('\n');
+
+const page = (title: string, body: string, extraNamespace = ''): string =>
+  `${XML_HEADER}<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"${extraNamespace} xml:lang="pt-BR" lang="pt-BR">` +
+  `<head><meta charset="utf-8"/><title>${escapeXml(title)}</title><link rel="stylesheet" type="text/css" href="style.css"/></head>` +
+  `<body>${body}</body></html>`;
+
+const chapterFile = (index: number): string => `chapter-${String(index + 1).padStart(3, '0')}.xhtml`;
+
+export const chapterXhtml = (chapter: Chapter): string =>
+  page(
+    chapter.title,
+    `<section><h1>${escapeXml(chapter.title)}</h1>` +
+      blocksOf(chapter.text)
+        .map((block) => (block.kind === 'break' ? '<p class="break">* * *</p>' : `<p>${escapeXml(block.text)}</p>`))
+        .join('') +
+      '</section>',
+  );
+
+const navXhtml = (input: EpubInput): string =>
+  page(
+    input.contentsLabel,
+    `<nav epub:type="toc" id="toc"><h1>${escapeXml(input.contentsLabel)}</h1><ol>` +
+      input.chapters
+        .map((chapter, index) => `<li><a href="${chapterFile(index)}">${escapeXml(chapter.title)}</a></li>`)
+        .join('') +
+      '</ol></nav>',
+    ' xmlns:epub="http://www.idpf.org/2007/ops"',
+  );
+
+const titleXhtml = (input: EpubInput): string =>
+  page(
+    input.title,
+    `<section class="title-page"><h1>${escapeXml(input.title)}</h1><p>${escapeXml(input.author)}</p></section>`,
+  );
+
+export const packageXml = (input: EpubInput, modified: Date): string => {
+  const items = input.chapters
+    .map(
+      (_chapter, index) => `<item id="c${index + 1}" href="${chapterFile(index)}" media-type="application/xhtml+xml"/>`,
+    )
+    .join('');
+  const spine = input.chapters.map((_chapter, index) => `<itemref idref="c${index + 1}"/>`).join('');
+
+  return (
+    `${XML_HEADER}<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id" xml:lang="pt-BR">` +
+    '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">' +
+    `<dc:identifier id="book-id">urn:uuid:${escapeXml(input.id)}</dc:identifier>` +
+    `<dc:title>${escapeXml(input.title)}</dc:title><dc:creator>${escapeXml(input.author)}</dc:creator>` +
+    `<dc:language>pt-BR</dc:language><meta property="dcterms:modified">${modified.toISOString().slice(0, 19)}Z</meta>` +
+    '</metadata><manifest>' +
+    '<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>' +
+    '<item id="title" href="title.xhtml" media-type="application/xhtml+xml"/>' +
+    '<item id="style" href="style.css" media-type="text/css"/>' +
+    items +
+    `</manifest><spine><itemref idref="title"/>${spine}</spine></package>`
+  );
+};
+
+export const buildEpub = (input: EpubInput, modified: Date = new Date()): Uint8Array =>
+  createZip(
+    [
+      { name: 'mimetype', data: EPUB_TYPE },
+      { name: 'META-INF/container.xml', data: CONTAINER },
+      { name: 'OEBPS/content.opf', data: packageXml(input, modified) },
+      { name: 'OEBPS/nav.xhtml', data: navXhtml(input) },
+      { name: 'OEBPS/title.xhtml', data: titleXhtml(input) },
+      { name: 'OEBPS/style.css', data: EPUB_STYLE },
+      ...input.chapters.map((chapter, index) => ({ name: `OEBPS/${chapterFile(index)}`, data: chapterXhtml(chapter) })),
+    ],
+    modified,
+  );
+
+// A version 4 UUID from getRandomValues, which works on plain http too (randomUUID needs https).
+export const randomUuid = (): string => {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+};
