@@ -1,6 +1,6 @@
 {
   "name": "openwrimo",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": true,
   "type": "module",
   "description": "A calm reading log: keep your shelf, track pages and bookmark passages",

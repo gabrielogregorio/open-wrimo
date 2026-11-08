@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.3
 
 - A cover or profile picture chosen before the form came back with an error is still sent on the next save; before,
   the preview kept showing it but the novel or profile was saved without it.
