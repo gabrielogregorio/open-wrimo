@@ -14,7 +14,7 @@ test('tools can be starred, and the focus editor keeps its text on the device', 
   await page.waitForLoadState('networkidle');
   await page.locator('textarea').first().fill('A luz do farol girava sobre o mar escuro.');
   await expect(page.getByText('9 palavras').first()).toBeVisible();
-  await page.waitForTimeout(1000);
+  await expect(page.getByText('Salvo neste aparelho', { exact: true })).toBeVisible();
   await page.reload();
   await page.waitForLoadState('networkidle');
   await expect(page.locator('textarea').first()).toHaveValue('A luz do farol girava sobre o mar escuro.');
