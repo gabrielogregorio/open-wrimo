@@ -76,6 +76,21 @@ describe('UpdateForm', () => {
     expect(screen.getByLabelText('How many words did you write?')).toBeInTheDocument();
   });
 
+  it('offers the moods in the feminine for she/her and in the masculine otherwise', () => {
+    const { unmount } = renderWithLocale(
+      <UpdateForm action={saved} books={books} selectedGoal="g1" today="2026-11-05" pronouns="she" />,
+      'pt-BR',
+    );
+
+    expect(screen.getByRole('option', { name: 'Travada' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Animada' })).toBeInTheDocument();
+    unmount();
+    renderWithLocale(<UpdateForm action={saved} books={books} selectedGoal="g1" today="2026-11-05" />, 'pt-BR');
+
+    expect(screen.getByRole('option', { name: 'Travado' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Feliz' })).toBeInTheDocument();
+  });
+
   it('sends the update and confirms it was saved', async () => {
     const action = vi.fn(async (_state: FormState, _formData: FormData): Promise<FormState> => ({ saved: true }));
     renderWithLocale(<UpdateForm action={action} books={books} selectedGoal="g1" today="2026-11-05" />);

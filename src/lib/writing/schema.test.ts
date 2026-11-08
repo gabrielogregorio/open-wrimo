@@ -91,7 +91,9 @@ describe('profile input', () => {
       writingTime: '',
       favoriteBooks: '',
       favoriteAuthors: '',
+      pronouns: '',
     });
+    expect(profileInputSchema.parse({ name: 'Bia', username: 'bia', pronouns: 'she' }).pronouns).toBe('she');
   });
 
   it.each([
@@ -99,6 +101,7 @@ describe('profile input', () => {
     [{ username: 'a'.repeat(21) }, 'Use 3 to 20 lowercase letters, numbers and dashes.'],
     [{ username: 'no_underscore' }, 'Use 3 to 20 lowercase letters, numbers and dashes.'],
     [{ name: '' }, 'Enter a name up to 80 characters.'],
+    [{ pronouns: 'they' }, 'Choose your pronouns from the list.'],
   ])('refuses %o', (change, message) => {
     expect(firstError(profileInputSchema.safeParse({ name: 'Bia', username: 'bia', ...change }))).toBe(message);
   });

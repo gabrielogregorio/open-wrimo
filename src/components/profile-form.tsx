@@ -5,12 +5,14 @@ import { useActionState } from 'react';
 import type { FormState } from '@/lib/form';
 import { PROFILE_SECTIONS } from '@/lib/db/collections';
 import type { ProfileView } from '@/lib/writing/repository';
+import { PRONOUNS } from '@/lib/writing/schema';
 import { FormAlert } from './form-alert';
 import { FormField, fieldClasses } from './form-field';
 import { useI18n } from './i18n-provider';
 import { UsernameInput } from './username-input';
 import { ImageField } from './image-field';
 import { SubmitButton } from './submit-button';
+import { PRONOUN_LABELS } from './writing-labels';
 
 type ProfileFormProps = {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
@@ -77,6 +79,30 @@ export function ProfileForm({ action, profile, name, username }: ProfileFormProp
         defaultValue={values.username}
         error={fieldError('username')}
       />
+      <div className="flex flex-col gap-1">
+        <label htmlFor="field-pronouns" className="font-display text-sm font-semibold">
+          {t('Pronouns')}
+        </label>
+        <select
+          key={values.pronouns}
+          id="field-pronouns"
+          name="pronouns"
+          defaultValue={values.pronouns}
+          aria-describedby="field-pronouns-hint"
+          aria-invalid={fieldError('pronouns') ? true : undefined}
+          className={fieldClasses}>
+          <option value="">{t('Rather not say')}</option>
+          {PRONOUNS.map((pronoun) => (
+            <option key={pronoun} value={pronoun}>
+              {t(PRONOUN_LABELS[pronoun])}
+            </option>
+          ))}
+        </select>
+        <p id="field-pronouns-hint" className="text-xs text-ink-soft">
+          {t('Moods and texts about you use the form you pick.')}
+        </p>
+        {fieldError('pronouns') ? <p className="text-sm text-danger">{fieldError('pronouns')}</p> : null}
+      </div>
       <fieldset className="flex flex-col gap-3 rounded-sm border border-rule p-4">
         <legend className="px-1 font-display text-sm font-semibold">{t('Public profile')}</legend>
         <label className="flex items-center gap-2 text-sm">

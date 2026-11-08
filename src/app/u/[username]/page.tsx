@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { BadgeHex } from '@/components/badge-hex';
 import { RichText } from '@/components/rich-text';
 import { getDatabase } from '@/lib/db/client';
+import { PRONOUN_LABELS } from '@/components/writing-labels';
 import { formatNumber } from '@/lib/i18n/format';
 import {
   LIFETIME_BADGES,
@@ -142,7 +143,10 @@ export default async function PublicProfilePage({ params }: PageProps<'/u/[usern
         )}
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-4xl font-semibold">{writer.name}</h1>
-          <p className="text-ink-soft">@{writer.username}</p>
+          <p className="text-ink-soft">
+            @{writer.username}
+            {profile.pronouns ? ` · ${t(PRONOUN_LABELS[profile.pronouns])}` : ''}
+          </p>
           <p className="text-sm text-ink-soft">{[profile.location, profile.writingTime].filter(Boolean).join(' · ')}</p>
         </div>
       </section>

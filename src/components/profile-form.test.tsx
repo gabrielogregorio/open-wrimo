@@ -11,6 +11,7 @@ const profile: ProfileView = {
   writingTime: 'Late',
   favoriteBooks: 'Dune',
   favoriteAuthors: 'Le Guin',
+  pronouns: 'he',
   avatarUrl: '/api/images/avatar',
   isPublic: true,
   shown: { bio: true, stats: false, favorites: true, badges: false },
@@ -28,6 +29,8 @@ describe('ProfileForm', () => {
     expect(screen.getByLabelText('When I write')).toHaveValue('Late');
     expect(screen.getByLabelText('Favorite books')).toHaveValue('Dune');
     expect(screen.getByLabelText('Favorite authors')).toHaveValue('Le Guin');
+    expect(screen.getByLabelText('Pronouns')).toHaveValue('he');
+    expect(screen.getByRole('option', { name: 'she/her' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Anyone with the link can see my profile' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Numbers' })).not.toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Favorites' })).toBeChecked();
@@ -41,12 +44,17 @@ describe('ProfileForm', () => {
     expect(formData.get('name')).toBe('Ana');
     expect(formData.get('isPublic')).toBe('on');
     expect(formData.getAll('show')).toEqual(['bio', 'favorites']);
+    expect(formData.get('pronouns')).toBe('he');
   });
 
   it('shows the errors and keeps the typed values', async () => {
     const action = async (): Promise<FormState> => ({
       error: 'Something went wrong.',
-      fieldErrors: { name: 'Enter a name up to 80 characters.', bio: 'Too long.' },
+      fieldErrors: {
+        name: 'Enter a name up to 80 characters.',
+        bio: 'Too long.',
+        pronouns: 'Choose your pronouns from the list.',
+      },
       values: {
         name: 'Bia',
         username: 'bia',
@@ -56,6 +64,7 @@ describe('ProfileForm', () => {
         writingTime: 'Dawn',
         favoriteBooks: '',
         favoriteAuthors: '',
+        pronouns: 'she',
       },
     });
     renderWithLocale(
@@ -72,5 +81,8 @@ describe('ProfileForm', () => {
     expect(screen.getByText('Too long.')).toBeInTheDocument();
     expect(screen.getByLabelText('Where I write')).toHaveValue('Porto');
     expect(screen.getByLabelText('Favorite books')).not.toHaveAttribute('aria-invalid');
+    expect(screen.getByLabelText('Pronouns')).toHaveValue('she');
+    expect(screen.getByLabelText('Pronouns')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByText('Choose your pronouns from the list.')).toBeInTheDocument();
   });
 });

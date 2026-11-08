@@ -241,6 +241,7 @@ describe('createWritingRepository', () => {
     writingTime: 'À noite',
     favoriteBooks: 'Dom Casmurro',
     favoriteAuthors: 'Clarice',
+    pronouns: 'she' as const,
     isPublic: true,
   };
   const ALL_SECTIONS = { bio: true, stats: true, favorites: true, badges: true };

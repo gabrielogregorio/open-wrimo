@@ -29,8 +29,25 @@ const optionalPeriod = z.preprocess(
   z.enum(GOAL_PERIODS, { error: 'Choose how often the goal repeats.' }).nullable(),
 );
 
-export const MOODS = ['inspired', 'steady', 'tired', 'stuck', 'proud'] as const;
+export const MOODS = [
+  'inspired',
+  'excited',
+  'happy',
+  'focused',
+  'steady',
+  'calm',
+  'proud',
+  'tired',
+  'stuck',
+  'anxious',
+  'frustrated',
+  'distracted',
+] as const;
 export type Mood = (typeof MOODS)[number];
+
+// Chosen on the profile; Portuguese moods and texts about the writer agree with it.
+export const PRONOUNS = ['he', 'she'] as const;
+export type Pronoun = (typeof PRONOUNS)[number];
 
 export const GOAL_FILTERS = ['all', 'active', 'upcoming', 'ended'] as const;
 export type GoalFilter = (typeof GOAL_FILTERS)[number];
@@ -203,6 +220,10 @@ export const profileInputSchema = z.object({
   writingTime: text(120, 'Keep it under 120 characters.'),
   favoriteBooks: text(1000, 'Keep the list under 1000 characters.'),
   favoriteAuthors: text(1000, 'Keep the list under 1000 characters.'),
+  pronouns: z.preprocess(
+    (value) => value ?? '',
+    z.enum(['', ...PRONOUNS], { error: 'Choose your pronouns from the list.' }),
+  ),
 });
 
 export type ProfileInput = z.infer<typeof profileInputSchema>;
@@ -215,6 +236,7 @@ export const PROFILE_FIELDS = [
   'writingTime',
   'favoriteBooks',
   'favoriteAuthors',
+  'pronouns',
 ] as const;
 export const GOAL_FIELDS = ['name', 'unit', 'target', 'startDate', 'endDate', 'period'] as const;
 export const ENTRY_FIELDS = ['mode', 'count', 'date', 'mood', 'place'] as const;

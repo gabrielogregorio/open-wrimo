@@ -32,7 +32,7 @@ the newest. Using an old refresh token again revokes the whole session.
 | `POST /api/v1/novels`              | multipart: `title`, `status`, `type`, `genres` (comma list), optional `summary`, `excerpt` (HTML), `pinterestUrl`, `playlistUrl`, `featured=on`, `isPublic=on`, `wordsBefore`, `event`, `period` + `periodTarget`, file `cover` | 201 `{ id, cover }` |
 | `POST /api/v1/novels/{id}/goals`   | `{ name, unit, target, startDate, endDate, period }`                                                                                                                                                                            | 201 `{ id }`        |
 | `POST /api/v1/goals/{id}/progress` | `{ mode: "add" \| "set", count, date, mood, place, source? }`                                                                                                                                                                   | 201 `{ id, saved }` |
-| `PUT /api/v1/profile`              | multipart: `name`, `username`, `isPublic=on`, `bio`, `location`, `writingTime`, `favoriteBooks`, `favoriteAuthors`, repeated `show` (`bio`, `stats`, `favorites`, `badges`), file `avatar`                                      | 200 `{ saved }`     |
+| `PUT /api/v1/profile`              | multipart: `name`, `username`, `isPublic=on`, `bio`, `location`, `writingTime`, `favoriteBooks`, `favoriteAuthors`, `pronouns`, repeated `show` (`bio`, `stats`, `favorites`, `badges`), file `avatar`                          | 200 `{ saved }`     |
 
 Values:
 
@@ -41,7 +41,9 @@ Values:
 - `unit`: `words`, `hours`, `minutes`, `lines`, `pages`
 - `period`: empty for a goal between `startDate` and `endDate`, or `daily`, `monthly`, `yearly`
 - `event`: `november`, `april-camp`, `july-camp`
-- `mood`: empty, `inspired`, `steady`, `tired`, `stuck`, `proud`
+- `mood`: empty, `inspired`, `excited`, `happy`, `focused`, `steady`, `calm`, `proud`, `tired`, `stuck`, `anxious`,
+  `frustrated`, `distracted`
+- `pronouns`: empty, `he` (ele/dele) or `she` (ela/dela); the Portuguese moods follow it
 - Dates are `YYYY-MM-DD`. Counts go from 0 to 10000000 per update.
 - `wordsBefore`: words written before the novel was tracked here, 0 to 10000000. They add to the novel's
   total and to the lifetime total, not to goals or streaks.

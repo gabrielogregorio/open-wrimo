@@ -2,14 +2,14 @@
 
 import { useActionState, useState } from 'react';
 import type { FormState } from '@/lib/form';
-import { MOODS } from '@/lib/writing/schema';
+import { MOODS, type Pronoun } from '@/lib/writing/schema';
 import { CoverShelf, type ShelfBook } from './cover-shelf';
 import { FormAlert } from './form-alert';
 import { FormField, fieldClasses } from './form-field';
 import { useI18n } from './i18n-provider';
 import { NumberInput } from './number-input';
 import { SubmitButton } from './submit-button';
-import { MOOD_LABELS } from './writing-labels';
+import { moodLabel } from './writing-labels';
 
 export type GoalChoice = { id: string; label: string; detail?: string; unitLabel: string; total: number };
 export type BookChoice = ShelfBook & { goals: GoalChoice[] };
@@ -21,9 +21,19 @@ type UpdateFormProps = {
   today: string;
   fixedCount?: number;
   compact?: boolean;
+  /** The writer's pronouns, so the moods agree in Portuguese. */
+  pronouns?: Pronoun | '';
 };
 
-export function UpdateForm({ action, books, selectedGoal, today, fixedCount, compact = false }: UpdateFormProps) {
+export function UpdateForm({
+  action,
+  books,
+  selectedGoal,
+  today,
+  fixedCount,
+  compact = false,
+  pronouns = '',
+}: UpdateFormProps) {
   const { t } = useI18n();
   const [state, formAction] = useActionState(action, {});
   const [goalId, setGoalId] = useState(state.values?.goal ?? selectedGoal);
@@ -121,7 +131,7 @@ export function UpdateForm({ action, books, selectedGoal, today, fixedCount, com
               <option value="">{t('Rather not say')}</option>
               {MOODS.map((mood) => (
                 <option key={mood} value={mood}>
-                  {t(MOOD_LABELS[mood])}
+                  {t(moodLabel(mood, pronouns))}
                 </option>
               ))}
             </select>

@@ -1,5 +1,5 @@
 import type { EventId } from '@/lib/writing/events';
-import type { GoalFilter, GoalPeriod, GoalUnit, Mood, ProjectStatus, ProjectType } from '@/lib/writing/schema';
+import type { GoalFilter, GoalPeriod, GoalUnit, Mood, Pronoun, ProjectStatus, ProjectType } from '@/lib/writing/schema';
 
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   'not-started': 'Not started (0%)',
@@ -29,10 +29,41 @@ export const UNIT_LABELS: Record<GoalUnit, string> = {
 
 export const MOOD_LABELS: Record<Mood, string> = {
   inspired: 'Inspired',
+  excited: 'Excited',
+  happy: 'Happy',
+  focused: 'Focused',
   steady: 'Steady',
+  calm: 'Calm',
+  proud: 'Proud',
   tired: 'Tired',
   stuck: 'Stuck',
-  proud: 'Proud',
+  anxious: 'Anxious',
+  frustrated: 'Frustrated',
+  distracted: 'Distracted',
+};
+
+// English has no gender for these, so the feminine Portuguese forms get keys of their own.
+export const SHE_MOOD_LABELS: Record<Mood, string> = {
+  inspired: 'Inspired (she)',
+  excited: 'Excited (she)',
+  happy: 'Happy (she)',
+  focused: 'Focused (she)',
+  steady: 'Steady (she)',
+  calm: 'Calm (she)',
+  proud: 'Proud (she)',
+  tired: 'Tired (she)',
+  stuck: 'Stuck (she)',
+  anxious: 'Anxious (she)',
+  frustrated: 'Frustrated (she)',
+  distracted: 'Distracted (she)',
+};
+
+export const moodLabel = (mood: Mood, pronouns: Pronoun | ''): string =>
+  pronouns === 'she' ? SHE_MOOD_LABELS[mood] : MOOD_LABELS[mood];
+
+export const PRONOUN_LABELS: Record<Pronoun, string> = {
+  he: 'he/him',
+  she: 'she/her',
 };
 
 export const EVENT_LABELS: Record<EventId, string> = {

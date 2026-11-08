@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BadgeHex } from '@/components/badge-hex';
+import { PRONOUN_LABELS } from '@/components/writing-labels';
 import { formatNumber } from '@/lib/i18n/format';
 import { LIFETIME_BADGES, PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
 import { writingPace } from '@/lib/writing/stats';
@@ -84,7 +85,10 @@ export default async function ProfilePage() {
             {[profile.location, profile.writingTime].filter(Boolean).join(' · ') ||
               t('Tell where and when you write in your profile.')}
           </p>
-          <p className="text-sm text-ink-soft">@{user.username}</p>
+          <p className="text-sm text-ink-soft">
+            @{user.username}
+            {profile.pronouns ? ` · ${t(PRONOUN_LABELS[profile.pronouns])}` : ''}
+          </p>
           <div className="flex flex-wrap gap-4 text-sm">
             <Link href="/write/profile/edit" className="underline underline-offset-4">
               {t('Edit profile')}

@@ -90,6 +90,8 @@ export type ProfileDocument = {
   writingTime: string;
   favoriteBooks: string;
   favoriteAuthors: string;
+  /** Older profiles lack it. */
+  pronouns?: '' | 'he' | 'she';
   avatarUrl: string | null;
   avatarKey: string | null;
   isPublic?: boolean;
