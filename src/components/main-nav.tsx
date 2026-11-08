@@ -1,5 +1,6 @@
 'use client';
 
+import { PenLine, UserRound, Users, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { sectionOf } from '@/lib/navigation';
@@ -17,10 +18,10 @@ type MainNavProps = {
 export function MainNav({ label, writing, tools, community, profile, update, sprint }: MainNavProps) {
   const current = sectionOf(usePathname());
   const tabs = [
-    { section: 'writing', href: '/write', text: writing },
-    { section: 'tools', href: '/write/tools', text: tools },
-    { section: 'community', href: '/write/community', text: community },
-    { section: 'profile', href: '/write/profile', text: profile },
+    { section: 'writing', href: '/write', text: writing, Icon: PenLine },
+    { section: 'tools', href: '/write/tools', text: tools, Icon: Wrench },
+    { section: 'community', href: '/write/community', text: community, Icon: Users },
+    { section: 'profile', href: '/write/profile', text: profile, Icon: UserRound },
   ] as const;
   const page = (section: string) => (current === section ? ('page' as const) : undefined);
 
@@ -29,8 +30,16 @@ export function MainNav({ label, writing, tools, community, profile, update, spr
       aria-label={label}
       className="main-nav order-last -mx-4 flex w-[calc(100%+2rem)] items-center gap-3 overflow-x-auto px-4 font-display text-[0.8125rem] sm:order-none sm:mx-0 sm:w-auto sm:gap-5 sm:overflow-visible sm:px-0 sm:text-sm">
       {tabs.map((tab) => (
-        <Link key={tab.section} href={tab.href} aria-current={page(tab.section)} className="nav-tab">
-          {tab.text}
+        <Link
+          key={tab.section}
+          href={tab.href}
+          aria-current={page(tab.section)}
+          aria-label={tab.text}
+          title={tab.text}
+          className="nav-tab">
+          {/* Below 400px the tabs are icons; the label keeps their name for screen readers. */}
+          <tab.Icon className="hidden h-5 w-5 max-[399px]:block" aria-hidden="true" />
+          <span className="max-[399px]:hidden">{tab.text}</span>
         </Link>
       ))}
       <span className="flex shrink-0 overflow-hidden rounded-sm border border-accent">
