@@ -1,5 +1,12 @@
+import { ptBRToolsRhythm } from './pt-BR-tools-rhythm';
+import { ptBRToolsStory } from './pt-BR-tools-story';
+import { ptBRToolsWrite } from './pt-BR-tools-write';
+
 // Texts of the tools area. Each tool group keeps its own file next to this one and is spread in here.
 export const ptBRTools: Record<string, string> = {
+  ...ptBRToolsWrite,
+  ...ptBRToolsStory,
+  ...ptBRToolsRhythm,
   Tools: 'Ferramentas',
   'All tools': 'Todas as ferramentas',
   Favorites: 'Favoritas',
