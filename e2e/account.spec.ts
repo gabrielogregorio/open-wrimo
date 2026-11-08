@@ -22,8 +22,7 @@ test('a writer exports the data, asks to delete the account, is signed out and c
   ]);
   expect(download.suggestedFilename()).toMatch(/\.json$/);
 
-  await page.getByRole('button', { name: 'Excluir minha conta' }).click();
-  await expect(page.getByText('Marque a caixa para confirmar.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Excluir minha conta' })).toBeDisabled();
   await page.getByRole('checkbox', { name: /Entendo, e já exportei/ }).check();
   await page.getByRole('button', { name: 'Excluir minha conta' }).click();
   await page.waitForURL('**/conta/excluida');
