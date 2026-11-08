@@ -124,4 +124,6 @@ export const ptBRToolsStory: Record<string, string> = {
   'What happens now?': 'E agora, o que acontece?',
   'Roll the die': 'Jogar o dado',
   'Last rolls': 'Últimas jogadas',
+  'Rare twist': 'Reviravolta rara',
+  rare: 'rara',
 };

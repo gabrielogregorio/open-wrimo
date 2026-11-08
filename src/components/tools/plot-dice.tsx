@@ -6,7 +6,8 @@ import { rollFace, rollTwist } from '@/lib/tools/story/plot-dice';
 import { newEntryId, type Random } from '@/lib/tools/story/random';
 import { NovelPicker, cardClasses, primaryClasses, useNovelChoice, useStoryList } from './story/story-ui';
 
-type Roll = { id: string; face: number; twist: string };
+// Rolls saved before rare twists existed have no `rare` flag.
+type Roll = { id: string; face: number; twist: string; rare?: boolean };
 
 const HISTORY_SIZE = 10;
 const FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
@@ -30,7 +31,7 @@ export default function PlotDice({ data, random = Math.random }: { data: ToolDat
   const latest = history.at(0);
 
   const roll = () => {
-    const next = { id: newEntryId(), face: rollFace(random), twist: rollTwist(random, latest?.twist) };
+    const next: Roll = { id: newEntryId(), face: rollFace(random), ...rollTwist(random, latest?.twist) };
     save([next, ...history].slice(0, HISTORY_SIZE));
   };
 
@@ -42,6 +43,12 @@ export default function PlotDice({ data, random = Math.random }: { data: ToolDat
         <span key={latest?.id} aria-hidden="true" className="plot-dice-face inline-block text-7xl leading-none">
           {FACES[(latest?.face ?? 1) - 1]}
         </span>
+        {latest?.rare ? (
+          <p className="font-display text-xs font-semibold tracking-widest text-accent uppercase">
+            <span aria-hidden="true">✦ </span>
+            {t('Rare twist')}
+          </p>
+        ) : null}
         <p className="font-display text-xl">{latest ? latest.twist : t('What happens now?')}</p>
         <button type="button" onClick={roll} className={primaryClasses}>
           {t('Roll the die')}
@@ -54,7 +61,10 @@ export default function PlotDice({ data, random = Math.random }: { data: ToolDat
             {history.slice(1).map((entry) => (
               <li key={entry.id} className="flex gap-2">
                 <span aria-hidden="true">{FACES[entry.face - 1]}</span>
-                <span>{entry.twist}</span>
+                <span>
+                  {entry.twist}
+                  {entry.rare ? <span className="ml-1 text-accent">({t('rare')})</span> : null}
+                </span>
               </li>
             ))}
           </ol>

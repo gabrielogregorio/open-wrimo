@@ -1,4 +1,4 @@
-import { TWISTS, rollFace, rollTwist } from './plot-dice';
+import { RARE_ODDS, RARE_TWISTS, TWISTS, rollFace, rollTwist } from './plot-dice';
 import { newEntryId, pickOne, pickOther, storyKey } from './random';
 
 // Returns the given values in turn, repeating the last one.
@@ -27,10 +27,17 @@ describe('random helpers', () => {
 });
 
 describe('plot dice', () => {
-  it('has at least 60 twists and rolls a different one', () => {
-    expect(TWISTS.length).toBeGreaterThanOrEqual(60);
-    expect(rollTwist(() => 0)).toBe(TWISTS[0]);
-    expect(rollTwist(sequence(0, 0.5), TWISTS[0])).not.toBe(TWISTS[0]);
+  it('has many twists, all different, and rolls a different one', () => {
+    expect(TWISTS.length).toBeGreaterThanOrEqual(150);
+    expect(RARE_TWISTS.length).toBeGreaterThanOrEqual(30);
+    expect(new Set([...TWISTS, ...RARE_TWISTS]).size).toBe(TWISTS.length + RARE_TWISTS.length);
+    expect(rollTwist(() => 0)).toEqual({ twist: TWISTS[0], rare: false });
+    expect(rollTwist(sequence(0, 0, 0.5), TWISTS[0]).twist).not.toBe(TWISTS[0]);
+  });
+
+  it('rolls a rare twist only at the top 1 in RARE_ODDS of the first draw', () => {
+    expect(rollTwist(sequence(1 - 1 / RARE_ODDS, 0))).toEqual({ twist: RARE_TWISTS[0], rare: true });
+    expect(rollTwist(sequence(0.94, 0))).toEqual({ twist: TWISTS[0], rare: false });
   });
 
   it('shows a face from 1 to 6', () => {
