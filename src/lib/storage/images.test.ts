@@ -62,6 +62,43 @@ describe('prepareImage', () => {
     });
   });
 
+  it('crops an avatar to a 512 px square, even from a small or wide picture', async () => {
+    await expect(prepareImage(await picture(4000, 3000), { shape: 'avatar' })).resolves.toMatchObject({
+      image: { width: 512, height: 512 },
+    });
+    await expect(prepareImage(await picture(64, 48), { shape: 'avatar' })).resolves.toMatchObject({
+      image: { width: 512, height: 512 },
+    });
+  });
+
+  it('keeps every frame of an animated GIF, as a cover or as an avatar', async () => {
+    const frame = (color: string) =>
+      sharp({ create: { width: 2400, height: 1600, channels: 3, background: color } })
+        .png()
+        .toBuffer();
+    const gif = new Uint8Array(
+      await sharp([await frame('#ff0000'), await frame('#0000ff'), await frame('#00ff00')], {
+        join: { animated: true },
+      })
+        .gif({ delay: [100, 100, 100] })
+        .toBuffer(),
+    );
+
+    const cover = await prepareImage(gif);
+    expect(cover).toMatchObject({ image: { kind: WEBP, width: 1620, height: 1080 } });
+    const coverInfo = await sharp((cover as { image: { bytes: Uint8Array } }).image.bytes, {
+      animated: true,
+    }).metadata();
+    expect(coverInfo).toMatchObject({ format: 'webp', pages: 3 });
+
+    const avatar = await prepareImage(gif, { shape: 'avatar' });
+    expect(avatar).toMatchObject({ image: { width: 512, height: 512 } });
+    const avatarInfo = await sharp((avatar as { image: { bytes: Uint8Array } }).image.bytes, {
+      animated: true,
+    }).metadata();
+    expect(avatarInfo.pages).toBe(3);
+  });
+
   it('refuses uploads of 5 MB or more before converting', async () => {
     const big = new Uint8Array(MAX_UPLOAD_BYTES);
     big.set([0x89, 0x50, 0x4e, 0x47]);
@@ -71,7 +108,7 @@ describe('prepareImage', () => {
 
   it('refuses a result of 2 MB or more after converting', async () => {
     await expect(
-      prepareImage(await picture(64, 48), { maxUploadBytes: MAX_UPLOAD_BYTES, maxStoredBytes: 10 }),
+      prepareImage(await picture(64, 48), { limits: { maxUploadBytes: MAX_UPLOAD_BYTES, maxStoredBytes: 10 } }),
     ).resolves.toEqual({
       error: IMAGE_STILL_TOO_BIG,
     });

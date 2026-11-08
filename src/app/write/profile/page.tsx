@@ -15,7 +15,8 @@ import {
   participationBadges,
   wordsFor,
 } from '@/server/notebook';
-import { requireWriter } from '@/server/session';
+import { getAccountStatus, requireWriter } from '@/server/session';
+import { ADMIN_PAGES } from '../admin/admin-nav';
 import { NovelCard } from '../novel-card';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -30,6 +31,8 @@ export default async function ProfilePage() {
   const locale = await getLocale();
   const notebook = await loadNotebook();
   const profile = await notebook.context.writing.getProfile(user.id);
+  // Admin rights are only set in the database; the links show only to an admin, and the pages check again.
+  const isAdmin = (await getAccountStatus(user.id))?.isAdmin === true;
   const pace = writingPace(
     notebook.entries.filter((entry) => entry.unit === 'words'),
     notebook.today,
@@ -104,6 +107,16 @@ export default async function ProfilePage() {
               <span className="text-ink-soft">{t('Your profile is private.')}</span>
             )}
           </div>
+          {isAdmin ? (
+            <nav aria-label={t('Administration')} className="flex flex-wrap items-center gap-4 text-sm">
+              <span className="font-display font-semibold">{t('Administration')}:</span>
+              {ADMIN_PAGES.map((page) => (
+                <Link key={page.href} href={page.href} className="text-accent underline underline-offset-4">
+                  {t(page.label)}
+                </Link>
+              ))}
+            </nav>
+          ) : null}
         </div>
       </section>
 

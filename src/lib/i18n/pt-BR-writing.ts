@@ -271,8 +271,10 @@ export const ptBRWriting: Record<string, string> = {
   'Old school': 'À moda antiga',
   'One more chapter closed.': 'Mais um capítulo fechado.',
   Other: 'Outro',
-  'PNG, JPEG, WebP or GIF under 5 MB. It becomes WebP up to 1920×1080.':
-    'PNG, JPEG, WebP ou GIF com menos de 5 MB. Vira WebP de até 1920×1080.',
+  'PNG, JPEG, WebP or GIF under 5 MB. It becomes WebP up to 1920×1080; GIFs stay animated.':
+    'PNG, JPEG, WebP ou GIF com menos de 5 MB. Vira WebP de até 1920×1080; GIF continua animado.',
+  'PNG, JPEG, WebP or GIF under 5 MB. It becomes a 512×512 WebP square; GIFs stay animated.':
+    'PNG, JPEG, WebP ou GIF com menos de 5 MB. Vira um quadrado WebP de 512×512; GIF continua animado.',
   Pantser: 'Sem roteiro',
   Par: 'Ritmo esperado',
   'Par day': 'Dia no ritmo',

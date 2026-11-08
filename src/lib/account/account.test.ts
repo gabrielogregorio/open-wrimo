@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { collections } from '@/lib/db/collections';
-import type { ImageStorage } from '@/lib/storage/storage';
+import type { OwnedImageStorage } from '@/lib/storage/storage';
 import { startTestDatabase, type TestDatabase } from '@/test/mongo';
 import { TERMS_VERSION } from '@/lib/legal/terms';
 import {
@@ -134,6 +134,69 @@ describe('account', () => {
     expect((records.at(-1)?.expiresAt.getTime() ?? 0) - NOW.getTime()).toBe(183 * DAY);
   });
 
+  it('also deletes old editor images found in the texts, but never one another account uses or uploaded', async () => {
+    const database = testDatabase.database;
+    const { projects, profiles, posts } = collections(database);
+    const goneId = await addUser('old@example.com', { deletionRequestedAt: new Date(NOW.getTime() - 31 * DAY) });
+    const otherId = await addUser('other@example.com');
+    const gone = new ObjectId(goneId);
+    const cloud = 'https://res.cloudinary.com/demo/image/upload/v17/openwrimo/inline/abc.webp';
+    const img = (src: string) => `<img src="${src}" alt="">`;
+    const othersNew = `/media/inline/${otherId}/new.webp`;
+
+    await projects.insertOne({
+      userId: gone,
+      coverKey: null,
+      excerpt: `<p>a</p>${img('/media/inline/old.webp')}${img(cloud)}${img('/media/inline/theirs.webp')}${img(othersNew)}`,
+    } as never);
+    await projects.insertOne({ userId: gone, coverKey: null, excerpt: img('/media/inline/old.webp') } as never);
+    await profiles.insertOne({ userId: gone, avatarKey: null, bio: img('/media/inline/bio.webp') } as never);
+    await posts.insertOne({
+      userId: gone,
+      imageKey: null,
+      body: `${img('/media/inline/post.webp')}${img('/media/inline/logged.webp')}${img('/media/covers/c.webp')}`,
+    } as never);
+    await projects.insertOne({ userId: new ObjectId(otherId), excerpt: img('/media/inline/theirs.webp') } as never);
+    await createAccessLog(database).record(
+      { userId: otherId, action: 'upload', address: null, userAgent: '', detail: 'inline/logged.webp' },
+      NOW,
+    );
+    await createAccessLog(database).record(
+      { userId: goneId, action: 'upload', address: null, userAgent: '', detail: 'inline/old.webp' },
+      NOW,
+    );
+
+    await collections(database).imageMigrations.insertOne({
+      userId: gone,
+      fromKey: 'covers/copied.webp',
+      fromUrl: '/media/covers/copied.webp',
+      toKey: `covers/${goneId}/copied.webp`,
+      toUrl: `/media/covers/${goneId}/copied.webp`,
+      copiedAt: NOW,
+    });
+    const removed: string[] = [];
+    const emptied: string[] = [];
+    const storage: OwnedImageStorage = {
+      save: vi.fn(),
+      copy: vi.fn(),
+      urlFor: (key: string) => key,
+      remove: async (key) => void removed.push(key),
+      removeFolder: async (folder) => void emptied.push(folder),
+    };
+
+    expect(await purgeAccount(database, storage, goneId, NOW)).toEqual({ deleted: true, images: 5 });
+    expect(await collections(database).imageMigrations.countDocuments({ userId: gone })).toBe(0);
+    expect(removed.sort()).toEqual([
+      'covers/copied.webp',
+      'inline/bio.webp',
+      'inline/old.webp',
+      'inline/post.webp',
+      'openwrimo/inline/abc',
+    ]);
+    expect(await projects.countDocuments({ userId: new ObjectId(otherId) })).toBe(1);
+    expect(emptied.sort()).toEqual([`avatars/${goneId}`, `covers/${goneId}`, `inline/${goneId}`, `posts/${goneId}`]);
+  });
+
   it('previews the accounts waiting for deletion and purges one by hand only after the grace period', async () => {
     const database = testDatabase.database;
     const { users } = collections(database);
@@ -170,8 +233,11 @@ describe('account', () => {
     expect(preview[2].counts).toEqual({ novels: 0, goals: 0, entries: 0, posts: 0, images: 0, profile: false });
 
     const removed: string[] = [];
-    const storage: ImageStorage = {
+    const storage: OwnedImageStorage = {
       save: vi.fn(),
+      copy: vi.fn(),
+      urlFor: (key: string) => key,
+      removeFolder: async () => undefined,
       remove: async (key) => {
         removed.push(key);
 

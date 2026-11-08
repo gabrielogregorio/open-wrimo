@@ -61,6 +61,19 @@ export type ReportDocument = {
   resolvedAt: Date | null;
 };
 
+/**
+ * One image copied into its owner's folder by `pnpm run images:owners`. The original stays until
+ * `--remove-old`, so `--undo` can point everything back, and deleting the account removes both.
+ */
+export type ImageMigrationDocument = {
+  userId: ObjectId;
+  fromKey: string;
+  fromUrl: string;
+  toKey: string;
+  toUrl: string;
+  copiedAt: Date;
+};
+
 export type SessionDocument = {
   tokenHash: string;
   userId: ObjectId;
@@ -171,6 +184,7 @@ export const collections = (database: Db) => ({
   profiles: database.collection<ProfileDocument>('profiles'),
   accessLogs: database.collection<AccessLogDocument>('access_logs'),
   reports: database.collection<ReportDocument>('reports'),
+  imageMigrations: database.collection<ImageMigrationDocument>('image_migrations'),
 });
 
 const migrateUsernames = async (database: Db): Promise<void> => {
@@ -186,8 +200,19 @@ const migrateUsernames = async (database: Db): Promise<void> => {
 
 export const ensureIndexes = async (database: Db): Promise<void> => {
   await migrateUsernames(database);
-  const { users, sessions, rateLimits, projects, goals, entries, posts, profiles, accessLogs, reports } =
-    collections(database);
+  const {
+    users,
+    sessions,
+    rateLimits,
+    projects,
+    goals,
+    entries,
+    posts,
+    profiles,
+    accessLogs,
+    reports,
+    imageMigrations,
+  } = collections(database);
 
   await Promise.all([
     users.createIndex({ email: 1 }, { unique: true }),
@@ -205,5 +230,6 @@ export const ensureIndexes = async (database: Db): Promise<void> => {
     accessLogs.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
     accessLogs.createIndex({ userId: 1, createdAt: -1 }),
     reports.createIndex({ status: 1, createdAt: -1 }),
+    imageMigrations.createIndex({ userId: 1 }),
   ]);
 };

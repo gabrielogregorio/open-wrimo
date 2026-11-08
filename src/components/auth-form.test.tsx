@@ -82,4 +82,38 @@ describe('AuthForm', () => {
     expect(screen.getByRole('checkbox', { name: /I have read and accept the/ })).toBeChecked();
     expect(action.mock.calls[1][1].get('acceptTerms')).toBe('on');
   });
+
+  it('keeps the typed password after a refused sign up and shows or hides it', async () => {
+    const user = userEvent.setup();
+    const action = async (): Promise<FormState> => ({ fieldErrors: { email: 'Enter a valid email address.' } });
+    renderWithLocale(<AuthForm mode="sign-up" action={action} />);
+    const password = screen.getByLabelText('Password');
+
+    await user.type(password, 'a long enough secret');
+    expect(password).toHaveAttribute('type', 'password');
+    await user.click(screen.getByRole('button', { name: 'Create account' }));
+
+    expect(await screen.findByText('Enter a valid email address.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toHaveValue('a long enough secret');
+
+    await user.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text');
+    expect(screen.getByRole('button', { name: 'Hide password' })).toHaveAttribute('aria-pressed', 'true');
+    await user.click(screen.getByRole('button', { name: 'Hide password' }));
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password');
+  });
+
+  it('clears the password after a refused sign in, but still shows or hides it', async () => {
+    const user = userEvent.setup();
+    const action = async (): Promise<FormState> => ({ error: 'Invalid email or password.' });
+    renderWithLocale(<AuthForm mode="sign-in" action={action} />);
+
+    await user.type(screen.getByLabelText('Password'), 'wrong password');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toHaveValue('');
+    await user.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text');
+  });
 });

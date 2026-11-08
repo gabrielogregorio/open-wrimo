@@ -2,7 +2,7 @@ import { fieldErrorsFrom, type FormState } from '@/lib/form';
 import { UPLOAD_RULE, type RateLimiter } from '@/lib/auth/rate-limit';
 import { prepareImage } from '@/lib/storage/images';
 import type { ProfileSection } from '@/lib/db/collections';
-import type { ImageStorage, StoredImage } from '@/lib/storage/storage';
+import { ownerFolder, type ImageFolder, type ImageStorage, type StoredImage } from '@/lib/storage/storage';
 import { onlyPersonalBadges } from './badges';
 import { addDays, localDate, localHour } from './dates';
 import { eventGoal } from './events';
@@ -39,14 +39,14 @@ const fillIn = (text: string, values: Record<string, string | number>): string =
 const storeImage = async (
   { storage, limiter, userId, now, onImageStored }: WritingContext,
   bytes: Uint8Array,
-  folder: string,
+  folder: ImageFolder,
   field: string,
 ): Promise<{ image: StoredImage } | { fieldErrors: Record<string, string> }> => {
   if (!(await limiter.consume(`upload:${userId}`, UPLOAD_RULE, now)).allowed) {
     return { fieldErrors: { [field]: UPLOADS_TOO_FAST } };
   }
 
-  const prepared = await prepareImage(bytes);
+  const prepared = await prepareImage(bytes, { shape: folder === 'avatars' ? 'avatar' : 'free' });
 
   if ('error' in prepared) {
     return { fieldErrors: { [field]: prepared.error } };
@@ -55,7 +55,12 @@ const storeImage = async (
   let image: StoredImage;
 
   try {
-    image = await storage.save({ bytes: prepared.image.bytes, kind: prepared.image.kind, folder });
+    // Each account has its own folder, so deleting the account can empty it without a list of files.
+    image = await storage.save({
+      bytes: prepared.image.bytes,
+      kind: prepared.image.kind,
+      folder: ownerFolder(folder, userId),
+    });
   } catch (error) {
     console.error('Image storage failed', error);
 

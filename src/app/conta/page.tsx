@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cancelDeletionAction, requestDeletionAction } from '@/app/actions/account';
 import { signOutAction } from '@/app/actions/auth';
+import { ConfirmedSubmit } from '@/components/confirmed-submit';
 import { SubmitButton } from '@/components/submit-button';
 import { createAccountRepository } from '@/lib/account/account';
 import { getDatabase } from '@/lib/db/client';
@@ -106,24 +107,12 @@ export default async function AccountPage({ searchParams }: PageProps<'/conta'>)
             )}
           </p>
           <form action={requestDeletionAction} className="flex flex-col gap-3">
-            <label className="flex items-start gap-3 text-sm">
-              <input
-                type="checkbox"
-                name="confirm"
-                className="mt-0.5 h-5 w-5 shrink-0"
-                aria-invalid={askedToConfirm ? true : undefined}
-                aria-describedby={askedToConfirm ? 'confirm-error' : undefined}
-              />
-              <span>{t('I understand, and I have exported what I want to keep.')}</span>
-            </label>
-            {askedToConfirm ? (
-              <p id="confirm-error" className="text-sm text-danger">
-                {t('Tick the box to confirm.')}
-              </p>
-            ) : null}
-            <SubmitButton variant="danger" pendingLabel={t('Deleting…')}>
+            <ConfirmedSubmit
+              confirmLabel={t('I understand, and I have exported what I want to keep.')}
+              error={askedToConfirm ? t('Tick the box to confirm.') : undefined}
+              pendingLabel={t('Deleting…')}>
               {t('Delete my account')}
-            </SubmitButton>
+            </ConfirmedSubmit>
           </form>
         </section>
       )}

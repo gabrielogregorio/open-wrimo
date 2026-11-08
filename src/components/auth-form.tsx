@@ -6,6 +6,7 @@ import type { FormState } from '@/lib/form';
 import { FormAlert } from './form-alert';
 import { FormField } from './form-field';
 import { useI18n } from './i18n-provider';
+import { PasswordField } from './password-field';
 import { UsernameInput } from './username-input';
 import { SubmitButton } from './submit-button';
 
@@ -88,14 +89,12 @@ export function AuthForm({ mode, action, next }: AuthFormProps) {
         error={fieldError('email')}
         required
       />
-      <FormField
+      <PasswordField
         label={t('Password')}
-        name="password"
-        type="password"
         autoComplete={isSignUp ? 'new-password' : 'current-password'}
         hint={isSignUp ? t('At least 10 characters.') : undefined}
         error={fieldError('password')}
-        required
+        keepValue={isSignUp}
       />
       {isSignUp ? (
         <TermsConsent checked={state.values?.acceptTerms === 'on'} error={fieldError('acceptTerms')} />

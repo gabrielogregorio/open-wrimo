@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState, type DragEvent } from 'react';
+import { useRef, useState, type DragEvent } from 'react';
 import { MAX_UPLOAD_BYTES } from '@/lib/storage/limits';
 import { BookMockup } from './book-mockup';
 import { useI18n } from './i18n-provider';
+import { previewOf } from './image-preview';
 
 type ImageFieldProps = {
   asBook?: boolean;
@@ -12,9 +13,19 @@ type ImageFieldProps = {
   currentUrl?: string | null;
   error?: string;
   removeLabel?: string;
+  /** The picture is cropped to a 512 px square on the server, as profile pictures are. */
+  square?: boolean;
 };
 
-export function ImageField({ asBook = false, name, label, currentUrl, error, removeLabel }: ImageFieldProps) {
+export function ImageField({
+  asBook = false,
+  name,
+  label,
+  currentUrl,
+  error,
+  removeLabel,
+  square = false,
+}: ImageFieldProps) {
   const { t } = useI18n();
   const [preview, setPreview] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -23,10 +34,12 @@ export function ImageField({ asBook = false, name, label, currentUrl, error, rem
   const id = `field-${name}`;
   const shownError = localError ?? error;
 
-  useEffect(() => () => (preview ? URL.revokeObjectURL(preview) : undefined), [preview]);
+  // Only the latest pick may set the preview, in case an older one finishes drawing later.
+  const latestPick = useRef(0);
 
   const pick = (target: HTMLInputElement): void => {
     const file = target.files?.[0];
+    latestPick.current += 1;
     setPreview(null);
     setLocalError(null);
 
@@ -41,7 +54,13 @@ export function ImageField({ asBook = false, name, label, currentUrl, error, rem
       return;
     }
 
-    setPreview(URL.createObjectURL(file));
+    const pickNumber = latestPick.current;
+    void previewOf(file).then((drawn) => {
+      // A file the browser cannot draw just has no preview; the server says what is wrong with it.
+      if (pickNumber === latestPick.current) {
+        setPreview(drawn);
+      }
+    });
   };
 
   const onDrop = (event: DragEvent<HTMLDivElement>): void => {
@@ -96,7 +115,9 @@ export function ImageField({ asBook = false, name, label, currentUrl, error, rem
         />
       </div>
       <p id={`${id}-hint`} className="text-xs text-ink-soft">
-        {t('PNG, JPEG, WebP or GIF under 5 MB. It becomes WebP up to 1920×1080.')}
+        {square
+          ? t('PNG, JPEG, WebP or GIF under 5 MB. It becomes a 512×512 WebP square; GIFs stay animated.')
+          : t('PNG, JPEG, WebP or GIF under 5 MB. It becomes WebP up to 1920×1080; GIFs stay animated.')}
       </p>
       {shownError ? (
         <p id={`${id}-error`} className="text-sm text-danger">
