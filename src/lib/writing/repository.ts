@@ -61,6 +61,7 @@ export const EMPTY_PROFILE: ProfileView = {
   writingTime: '',
   favoriteBooks: '',
   favoriteAuthors: '',
+  pronouns: '',
   avatarUrl: null,
   isPublic: false,
   shown: ALL_SHOWN,
@@ -107,6 +108,7 @@ const toProjectView = (project: StoredProject): ProjectView => ({
   playlistUrl: project.playlistUrl,
   featured: project.featured,
   isPublic: project.isPublic ?? false,
+  wordsBefore: project.wordsBefore ?? 0,
   awards: project.awards,
   coverUrl: project.coverUrl,
   updatedAt: project.updatedAt.toISOString(),
@@ -446,6 +448,7 @@ export const createWritingRepository = (database: Db) => {
             writingTime: profile.writingTime,
             favoriteBooks: profile.favoriteBooks,
             favoriteAuthors: profile.favoriteAuthors,
+            pronouns: profile.pronouns ?? '',
             avatarUrl: profile.avatarUrl,
             isPublic: profile.isPublic ?? false,
             shown: { ...ALL_SHOWN, ...profile.shown },
@@ -486,6 +489,7 @@ export const createWritingRepository = (database: Db) => {
             writingTime: '',
             favoriteBooks: '',
             favoriteAuthors: '',
+            pronouns: '',
             isPublic: false,
           },
         },
@@ -496,7 +500,11 @@ export const createWritingRepository = (database: Db) => {
     },
 
     async findPublicWriter(username: string): Promise<{ userId: string; name: string; username: string } | null> {
-      const user = await users.findOne({ username }, { projection: { name: 1, username: 1 } });
+      // An account waiting for deletion is hidden from everyone at once.
+      const user = await users.findOne(
+        { username, deletionRequestedAt: { $exists: false } },
+        { projection: { name: 1, username: 1 } },
+      );
 
       if (!user) {
         return null;
@@ -518,6 +526,7 @@ export const createWritingRepository = (database: Db) => {
         .find(
           {
             _id: { $in: publicProfiles.map((profile) => profile.userId) },
+            deletionRequestedAt: { $exists: false },
             ...(matcher ? { $or: [{ name: matcher }, { username: matcher }] } : {}),
           },
           { projection: { name: 1, username: 1 } },

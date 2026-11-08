@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { test as base, expect, type Page } from '@playwright/test';
+import { MongoClient } from 'mongodb';
 import sharp from 'sharp';
 
 export const PASSWORD = 'a long enough secret';
@@ -25,6 +27,7 @@ export const signUp = async (page: Page, writer: Writer): Promise<void> => {
   await page.getByLabel('Nome de usuário').fill(writer.username);
   await page.getByLabel('E-mail').fill(writer.email);
   await page.getByLabel('Senha').fill(PASSWORD);
+  await page.getByRole('checkbox', { name: /Li e aceito os/ }).check();
   await page.getByRole('button', { name: 'Criar conta' }).click();
   await expect(page).toHaveURL('/write');
 };
@@ -33,6 +36,24 @@ export const signIn = async (page: Page, email: string, password = PASSWORD): Pr
   await page.getByLabel('E-mail').fill(email);
   await page.getByLabel('Senha').fill(password);
   await page.getByRole('button', { name: 'Entrar' }).click();
+};
+
+/**
+ * Changes one account straight in the E2E database, for states with no screen of their own: an admin,
+ * terms accepted long ago or a deletion asked for weeks ago. scripts/serve-e2e.mts says where it is.
+ */
+export const updateAccount = async (username: string, fields: Record<string, unknown>): Promise<void> => {
+  const { uri, databaseName } = JSON.parse(readFileSync('node_modules/.cache/openwrimo-e2e-database.json', 'utf8')) as {
+    uri: string;
+    databaseName: string;
+  };
+  const client = await new MongoClient(uri).connect();
+
+  try {
+    await client.db(databaseName).collection('users').updateOne({ username }, { $set: fields });
+  } finally {
+    await client.close();
+  }
 };
 
 export const pngImage = async (width = 600, height = 900, color = '#1f3a5f'): Promise<Buffer> =>

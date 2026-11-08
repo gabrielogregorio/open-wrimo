@@ -35,6 +35,7 @@ const initialValues = (novel?: ProjectView): Record<string, string> => ({
   playlistUrl: novel?.playlistUrl ?? '',
   featured: novel?.featured ? 'on' : '',
   isPublic: novel?.isPublic ? 'on' : '',
+  wordsBefore: novel?.wordsBefore ? String(novel.wordsBefore) : '',
   event: '',
   period: '',
   periodTarget: '',
@@ -151,6 +152,14 @@ export function NovelForm({ action, cancelHref, novel, initialError }: NovelForm
         />
       </div>
       <GenreInput defaultValue={values.genres} error={fieldError('genres')} />
+      <NumberInput
+        label={t('Words written before')}
+        name="wordsBefore"
+        placeholder="0"
+        hint={t('Words you wrote before tracking here. They add to the novel total, not to goals or streaks.')}
+        defaultValue={values.wordsBefore}
+        error={fieldError('wordsBefore')}
+      />
       {novel ? null : (
         <fieldset className="grid gap-4 rounded-sm border border-rule p-4 sm:grid-cols-2">
           <legend className="px-1 font-display text-sm font-semibold">{t('Word goal that repeats')}</legend>

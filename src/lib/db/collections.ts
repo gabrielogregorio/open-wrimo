@@ -8,6 +8,57 @@ export type UserDocument = {
   name: string;
   passwordHash: string;
   createdAt: Date;
+  /** Turned on only by hand in the database; opens the moderation pages. */
+  isAdmin?: boolean;
+  /** The terms version this writer accepted, and when; older accounts lack them. */
+  termsVersion?: string;
+  termsAcceptedAt?: Date;
+  /** Set when the writer asks to delete the account; the account is hidden from then on. */
+  deletionRequestedAt?: Date;
+};
+
+export const ACCESS_ACTIONS = ['register', 'login', 'upload', 'terms', 'deletion-request', 'deletion-cancel'] as const;
+export type AccessAction = (typeof ACCESS_ACTIONS)[number];
+
+/** Connection records kept for six months (Marco Civil da Internet, art. 15), then expired by MongoDB. */
+export type AccessLogDocument = {
+  userId: ObjectId | null;
+  action: AccessAction;
+  address: string | null;
+  userAgent: string;
+  /** For uploads, the stored image key, so deleting the account can remove the file. */
+  detail?: string;
+  createdAt: Date;
+  expiresAt: Date;
+};
+
+export const REPORT_REASONS = [
+  'child-abuse',
+  'non-consensual-intimate',
+  'hate-or-violence',
+  'copyright',
+  'spam',
+  'other',
+] as const;
+export type ReportReason = (typeof REPORT_REASONS)[number];
+export const REPORT_TARGETS = ['profile', 'novel'] as const;
+export type ReportTarget = (typeof REPORT_TARGETS)[number];
+
+export type ReportDocument = {
+  target: ReportTarget;
+  /** The reported writer. */
+  targetUserId: ObjectId;
+  /** The reported novel, when the target is a novel. */
+  targetProjectId: ObjectId | null;
+  reason: ReportReason;
+  details: string;
+  /** Who reported, when signed in; anyone can report a public page. */
+  reporterUserId: ObjectId | null;
+  reporterAddress: string | null;
+  reporterUserAgent: string;
+  status: 'open' | 'resolved';
+  createdAt: Date;
+  resolvedAt: Date | null;
 };
 
 export type SessionDocument = {
@@ -37,6 +88,8 @@ export type ProjectDocument = {
   playlistUrl: string;
   featured: boolean;
   isPublic?: boolean;
+  /** Words written before the novel was tracked here; older documents lack it. */
+  wordsBefore?: number;
   awards: string[];
   coverUrl: string | null;
   coverKey: string | null;
@@ -88,6 +141,8 @@ export type ProfileDocument = {
   writingTime: string;
   favoriteBooks: string;
   favoriteAuthors: string;
+  /** Older profiles lack it. */
+  pronouns?: '' | 'he' | 'she';
   avatarUrl: string | null;
   avatarKey: string | null;
   isPublic?: boolean;
@@ -103,6 +158,7 @@ export type StoredProject = WithId<ProjectDocument>;
 export type StoredGoal = WithId<GoalDocument>;
 export type StoredEntry = WithId<EntryDocument>;
 export type StoredPost = WithId<PostDocument>;
+export type StoredReport = WithId<ReportDocument>;
 
 export const collections = (database: Db) => ({
   users: database.collection<UserDocument>('users'),
@@ -113,6 +169,8 @@ export const collections = (database: Db) => ({
   entries: database.collection<EntryDocument>('entries'),
   posts: database.collection<PostDocument>('posts'),
   profiles: database.collection<ProfileDocument>('profiles'),
+  accessLogs: database.collection<AccessLogDocument>('access_logs'),
+  reports: database.collection<ReportDocument>('reports'),
 });
 
 const migrateUsernames = async (database: Db): Promise<void> => {
@@ -128,7 +186,8 @@ const migrateUsernames = async (database: Db): Promise<void> => {
 
 export const ensureIndexes = async (database: Db): Promise<void> => {
   await migrateUsernames(database);
-  const { users, sessions, rateLimits, projects, goals, entries, posts, profiles } = collections(database);
+  const { users, sessions, rateLimits, projects, goals, entries, posts, profiles, accessLogs, reports } =
+    collections(database);
 
   await Promise.all([
     users.createIndex({ email: 1 }, { unique: true }),
@@ -143,5 +202,8 @@ export const ensureIndexes = async (database: Db): Promise<void> => {
     posts.createIndex({ userId: 1, createdAt: -1 }),
     profiles.createIndex({ userId: 1 }, { unique: true }),
     posts.createIndex({ userId: 1, projectId: 1, createdAt: -1 }),
+    accessLogs.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+    accessLogs.createIndex({ userId: 1, createdAt: -1 }),
+    reports.createIndex({ status: 1, createdAt: -1 }),
   ]);
 };

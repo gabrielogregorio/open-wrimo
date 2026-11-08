@@ -15,6 +15,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // The dev server keeps its own folder, so a production build (e2e, Lighthouse) never leaves it out of sync.
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   agentRules: false,
   experimental: { serverActions: { bodySizeLimit: '6mb' } },
   poweredByHeader: false,

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BadgeHex } from '@/components/badge-hex';
+import { PRONOUN_LABELS } from '@/components/writing-labels';
 import { formatNumber } from '@/lib/i18n/format';
 import { LIFETIME_BADGES, PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
 import { writingPace } from '@/lib/writing/stats';
@@ -8,12 +9,13 @@ import { getLocale, getTranslator } from '@/server/i18n';
 import {
   allEarnedBadges,
   laurelCount,
-  loadNotebook,
   lifetimeBadges,
+  lifetimeWords,
+  loadNotebook,
   participationBadges,
   wordsFor,
 } from '@/server/notebook';
-import { requireUser } from '@/server/session';
+import { requireWriter } from '@/server/session';
 import { NovelCard } from '../novel-card';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ProfilePage() {
-  const user = await requireUser();
+  const user = await requireWriter();
   const t = await getTranslator();
   const locale = await getLocale();
   const notebook = await loadNotebook();
@@ -45,7 +47,7 @@ export default async function ProfilePage() {
   ];
   const personalBadges = PERSONAL_BADGES.filter((badge) => earned.has(badge.id));
   const numbers: [string, string][] = [
-    [t('Words written'), formatNumber(locale, pace.total)],
+    [t('Words written'), formatNumber(locale, lifetimeWords(notebook))],
     [t('Novels'), formatNumber(locale, notebook.projects.length)],
     [t('Laurels'), formatNumber(locale, laurels)],
     [t('Days in a row'), formatNumber(locale, pace.currentStreak)],
@@ -83,10 +85,16 @@ export default async function ProfilePage() {
             {[profile.location, profile.writingTime].filter(Boolean).join(' · ') ||
               t('Tell where and when you write in your profile.')}
           </p>
-          <p className="text-sm text-ink-soft">@{user.username}</p>
+          <p className="text-sm text-ink-soft">
+            @{user.username}
+            {profile.pronouns ? ` · ${t(PRONOUN_LABELS[profile.pronouns])}` : ''}
+          </p>
           <div className="flex flex-wrap gap-4 text-sm">
             <Link href="/write/profile/edit" className="underline underline-offset-4">
               {t('Edit profile')}
+            </Link>
+            <Link href="/conta" className="underline underline-offset-4">
+              {t('My account and data')}
             </Link>
             {profile.isPublic ? (
               <Link href={`/u/${user.username}`} className="text-accent underline underline-offset-4">

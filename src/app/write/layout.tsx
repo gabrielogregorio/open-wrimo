@@ -5,10 +5,13 @@ import { GoalCelebration, type BeatenGoal } from '@/components/goal-celebration'
 import { LIFETIME_BADGES, PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
 import { getTranslator } from '@/server/i18n';
 import { lifetimeBadges, loadNotebook, participationBadges, projectBadges } from '@/server/notebook';
+import { requireWriter } from '@/server/session';
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function WritingLayout({ children }: { children: ReactNode }) {
+  // An account waiting for deletion goes to its account page to cancel; new terms are shown before writing.
+  await requireWriter();
   const notebook = await loadNotebook();
   const t = await getTranslator();
   const label = (text: string, mark?: string): string => t(text, { count: mark ?? '' });

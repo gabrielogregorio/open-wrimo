@@ -42,6 +42,7 @@ test('the username and name change on the profile, and taken usernames are refus
   await other.getByLabel('Nome de usuário').fill('ocupado-xyz');
   await other.getByLabel('E-mail').fill(`ocupado-${Date.now()}@example.com`);
   await other.getByLabel('Senha').fill('a long enough secret');
+  await other.getByRole('checkbox', { name: /Li e aceito os/ }).check();
   await other.getByRole('button', { name: 'Criar conta' }).click();
   await other.close();
 

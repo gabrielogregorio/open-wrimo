@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0
 
 - Renamed to Open Wrimo and turned into a writing app: novels, goals, word updates, stats, sprints and achievements.
 - Novels with cover, status, type, genres, rich text details with inline images, links and privacy.
@@ -14,6 +14,17 @@
 - Image storage on the local disk or Cloudinary, with WebP conversion and size and rate limits.
 - JSON export of everything a writer logged.
 - Brazilian Portuguese only; the reading shelf, posts and the dark and night themes were removed.
+- Tools area with favorites and a local store: focus editor, word counter, sprint with text, don't stop, drafts
+  with snapshots, goal calculator, year heatmap, pomodoro, reminder, manuscript, ePub and backup.
+- Text review tools and story tools: names in 51 collections, characters, timeline, scenes, ideas from 16 genres
+  and 116 tropes, and plot dice with 159 twists plus 38 rare ones.
+- In-browser converter from docx, odt, md, txt and html to ePub, ready for Send to Kindle.
+- Terms of Use and Privacy Policy with mandatory acceptance, access records, data export and account deletion
+  with a grace period; every write, page and API call waits for the terms in force.
+- Reports on public profiles and novels, an admin page to review them and a manual, previewed account deletion.
+- Server code, the proxy, server actions and API routes are now in the 100% coverage, with tests that no writer
+  reaches another writer's data.
+- Animated page changes, labelled menu icons on small phones, more moods and profile pronouns.
 
 ## 0.1.0
 

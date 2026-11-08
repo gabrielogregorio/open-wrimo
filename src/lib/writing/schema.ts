@@ -29,8 +29,25 @@ const optionalPeriod = z.preprocess(
   z.enum(GOAL_PERIODS, { error: 'Choose how often the goal repeats.' }).nullable(),
 );
 
-export const MOODS = ['inspired', 'steady', 'tired', 'stuck', 'proud'] as const;
+export const MOODS = [
+  'inspired',
+  'excited',
+  'happy',
+  'focused',
+  'steady',
+  'calm',
+  'proud',
+  'tired',
+  'stuck',
+  'anxious',
+  'frustrated',
+  'distracted',
+] as const;
 export type Mood = (typeof MOODS)[number];
+
+// Chosen on the profile; Portuguese moods and texts about the writer agree with it.
+export const PRONOUNS = ['he', 'she'] as const;
+export type Pronoun = (typeof PRONOUNS)[number];
 
 export const GOAL_FILTERS = ['all', 'active', 'upcoming', 'ended'] as const;
 export type GoalFilter = (typeof GOAL_FILTERS)[number];
@@ -38,7 +55,7 @@ export type GoalFilter = (typeof GOAL_FILTERS)[number];
 export const MAX_GENRES = 10;
 export const MAX_GOAL_DAYS = 366;
 export const MAX_GOAL_TARGET = 10_000_000;
-export const MAX_ENTRY_COUNT = 100_000;
+export const MAX_ENTRY_COUNT = 10_000_000;
 const GENRE_MAX_LENGTH = 40;
 
 const text = (maximum: number, message: string) => z.string().trim().max(maximum, { error: message }).default('');
@@ -85,6 +102,15 @@ export const projectInputSchema = z.object({
   playlistUrl: optionalUrl('Enter an https:// address.'),
   featured: z.preprocess((value) => value === 'on' || value === true, z.boolean()),
   isPublic: z.preprocess((value) => value === 'on' || value === true, z.boolean()),
+  // Words written before the novel came to Open Wrimo: they count in its total, not in goals or streaks.
+  wordsBefore: z.preprocess(
+    (value) => (value === undefined || value === '' || value === null ? 0 : value),
+    z.coerce
+      .number({ error: 'Enter a number from 0 to 10000000.' })
+      .int({ error: 'Enter a number from 0 to 10000000.' })
+      .min(0, { error: 'Enter a number from 0 to 10000000.' })
+      .max(MAX_GOAL_TARGET, { error: 'Enter a number from 0 to 10000000.' }),
+  ),
   periodTarget: z.preprocess(
     (value) => (value === undefined || value === '' ? null : value),
     z.coerce
@@ -148,10 +174,10 @@ const optionalMood = z.preprocess(
 export const entryInputSchema = z.object({
   mode: z.enum(['add', 'set'], { error: 'Choose to add or to set the total.' }),
   count: z.coerce
-    .number({ error: 'Enter a number from 0 to 100000.' })
-    .int({ error: 'Enter a number from 0 to 100000.' })
-    .min(0, { error: 'Enter a number from 0 to 100000.' })
-    .max(MAX_ENTRY_COUNT, { error: 'Enter a number from 0 to 100000.' }),
+    .number({ error: 'Enter a number from 0 to 10000000.' })
+    .int({ error: 'Enter a number from 0 to 10000000.' })
+    .min(0, { error: 'Enter a number from 0 to 10000000.' })
+    .max(MAX_ENTRY_COUNT, { error: 'Enter a number from 0 to 10000000.' }),
   date: isoDate('Enter a valid date.'),
   mood: optionalMood,
   place: text(80, 'Keep the place under 80 characters.'),
@@ -174,6 +200,7 @@ export const PROJECT_FIELDS = [
   'playlistUrl',
   'featured',
   'isPublic',
+  'wordsBefore',
   'event',
   'period',
   'periodTarget',
@@ -193,6 +220,10 @@ export const profileInputSchema = z.object({
   writingTime: text(120, 'Keep it under 120 characters.'),
   favoriteBooks: text(1000, 'Keep the list under 1000 characters.'),
   favoriteAuthors: text(1000, 'Keep the list under 1000 characters.'),
+  pronouns: z.preprocess(
+    (value) => value ?? '',
+    z.enum(['', ...PRONOUNS], { error: 'Choose your pronouns from the list.' }),
+  ),
 });
 
 export type ProfileInput = z.infer<typeof profileInputSchema>;
@@ -205,6 +236,7 @@ export const PROFILE_FIELDS = [
   'writingTime',
   'favoriteBooks',
   'favoriteAuthors',
+  'pronouns',
 ] as const;
 export const GOAL_FIELDS = ['name', 'unit', 'target', 'startDate', 'endDate', 'period'] as const;
 export const ENTRY_FIELDS = ['mode', 'count', 'date', 'mood', 'place'] as const;

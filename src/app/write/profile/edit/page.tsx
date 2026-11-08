@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { updateProfileAction } from '@/app/actions/writing';
 import { ProfileForm } from '@/components/profile-form';
 import { getTranslator } from '@/server/i18n';
-import { requireUser, writingContext } from '@/server/session';
+import { requireWriter, writingContext } from '@/server/session';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslator();
@@ -11,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function EditProfilePage() {
-  const user = await requireUser();
+  const user = await requireWriter();
   const { writing, userId } = await writingContext();
   const profile = await writing.getProfile(userId);
   const t = await getTranslator();

@@ -33,6 +33,7 @@ test('the username is typed lowercase with dashes and must be unique', async ({ 
   await page.getByLabel('Nome de usuário').fill(first.username);
   await page.getByLabel('E-mail').fill(`other-${first.email}`);
   await page.getByLabel('Senha').fill(PASSWORD);
+  await page.getByRole('checkbox', { name: /Li e aceito os/ }).check();
   await page.getByRole('button', { name: 'Criar conta' }).click();
 
   await expect(page.getByText('Esse nome de usuário já está em uso.')).toBeVisible();
@@ -46,6 +47,7 @@ test('sign up explains what is wrong with each field', async ({ page }) => {
 
   await expect(page.getByText('Informe um e-mail válido.')).toBeVisible();
   await expect(page.getByText('Use de 10 a 128 caracteres.')).toBeVisible();
+  await expect(page.getByText('Aceite os Termos de Uso e a Política de Privacidade para criar a conta.')).toBeVisible();
   await expect(page.getByText('Use de 3 a 20 letras minúsculas, números e hífens.')).toBeVisible();
 });
 

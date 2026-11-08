@@ -39,13 +39,20 @@ describe('FormAlert', () => {
   });
 });
 
+// A form action that only settles when the test calls finish, so the pending state can be seen.
+const slowAction = () => {
+  let settle: () => void = () => undefined;
+  const action = () =>
+    new Promise<void>((resolve) => {
+      settle = resolve;
+    });
+
+  return { action, finish: () => settle() };
+};
+
 describe('SubmitButton', () => {
   it('turns into a disabled saving state while the form is sent', async () => {
-    let finish: () => void = () => undefined;
-    const action = () =>
-      new Promise<void>((resolve) => {
-        finish = resolve;
-      });
+    const { action, finish } = slowAction();
     renderWithLocale(
       <form action={action}>
         <SubmitButton variant="danger">Remove</SubmitButton>
@@ -58,6 +65,21 @@ describe('SubmitButton', () => {
     expect(await screen.findByRole('button', { name: 'Salvando…' })).toBeDisabled();
     finish();
     expect(await screen.findByRole('button', { name: 'Remove' })).toBeEnabled();
+  });
+
+  it('says what it is doing when given a waiting label', async () => {
+    const { action, finish } = slowAction();
+    render(
+      <form action={action}>
+        <SubmitButton pendingLabel="Signing in…">Sign in</SubmitButton>
+      </form>,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(await screen.findByRole('button', { name: 'Signing in…' })).toBeDisabled();
+    finish();
+    expect(await screen.findByRole('button', { name: 'Sign in' })).toBeEnabled();
   });
 });
 

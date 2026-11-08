@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import type { ComponentProps } from 'react';
 import { BadgeHex } from '@/components/badge-hex';
+import { ReportButton } from '@/components/report-button';
 import { RichText } from '@/components/rich-text';
 import { getDatabase } from '@/lib/db/client';
+import { PRONOUN_LABELS } from '@/components/writing-labels';
 import { formatNumber } from '@/lib/i18n/format';
 import {
   LIFETIME_BADGES,
@@ -17,7 +20,7 @@ import { createWritingRepository } from '@/lib/writing/repository';
 import { writingPace } from '@/lib/writing/stats';
 import { getLocale, getTranslator } from '@/server/i18n';
 import { SITE_DESCRIPTION, absoluteUrl, jsonLd } from '@/server/seo';
-import { getTimeZone } from '@/server/session';
+import { getCurrentUser, getTimeZone } from '@/server/session';
 import { NovelCard } from '../../write/novel-card';
 
 const loadWriter = async (username: string) => {
@@ -71,6 +74,19 @@ const profileStructuredData = (
   });
 };
 
+/** The report button, hidden from the writer looking at their own page. */
+function VisitorReport({ show, ...props }: ComponentProps<typeof ReportButton> & { show: boolean }) {
+  if (!show) {
+    return null;
+  }
+
+  return (
+    <div className="w-full">
+      <ReportButton {...props} />
+    </div>
+  );
+}
+
 export default async function PublicProfilePage({ params }: PageProps<'/u/[username]'>) {
   const found = await loadWriter((await params).username);
 
@@ -82,7 +98,8 @@ export default async function PublicProfilePage({ params }: PageProps<'/u/[usern
   const t = await getTranslator();
   const locale = await getLocale();
   const today = localDate(new Date(), await getTimeZone());
-  const [profile, allProjects, allGoals, allEntries] = await Promise.all([
+  const [viewer, profile, allProjects, allGoals, allEntries] = await Promise.all([
+    getCurrentUser(),
     writing.getProfile(writer.userId),
     writing.listProjects(writer.userId),
     writing.listGoals(writer.userId),
@@ -112,13 +129,17 @@ export default async function PublicProfilePage({ params }: PageProps<'/u/[usern
     ]),
   );
   const personalEarned = new Set(projects.flatMap((project) => project.awards));
-  earnedLifetimeBadges(pace.total).forEach((id) => writingEarned.add(id));
+  const wordsBefore = projects.reduce((sum, project) => sum + project.wordsBefore, 0);
+  const totalWords = pace.total + wordsBefore;
+  earnedLifetimeBadges(totalWords).forEach((id) => writingEarned.add(id));
   const wordsOf = (projectId: string): number =>
+    (projects.find((project) => project.id === projectId)?.wordsBefore ?? 0) +
     entries
       .filter((entry) => entry.projectId === projectId && entry.unit === 'words')
       .reduce((sum, entry) => sum + entry.count, 0);
 
   const structuredData = profileStructuredData(writer, profile);
+  const canReport = viewer?.id !== writer.userId;
 
   return (
     <div className="flex flex-col gap-10">
@@ -139,16 +160,20 @@ export default async function PublicProfilePage({ params }: PageProps<'/u/[usern
         )}
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-4xl font-semibold">{writer.name}</h1>
-          <p className="text-ink-soft">@{writer.username}</p>
+          <p className="text-ink-soft">
+            @{writer.username}
+            {profile.pronouns ? ` · ${t(PRONOUN_LABELS[profile.pronouns])}` : ''}
+          </p>
           <p className="text-sm text-ink-soft">{[profile.location, profile.writingTime].filter(Boolean).join(' · ')}</p>
         </div>
+        <VisitorReport show={canReport} target="profile" username={writer.username} />
       </section>
 
       {profile.shown.stats ? (
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {(
             [
-              [t('Words written'), formatNumber(locale, pace.total)],
+              [t('Words written'), formatNumber(locale, totalWords)],
               [t('Novels'), formatNumber(locale, projects.length)],
               [t('Days in a row'), formatNumber(locale, pace.currentStreak)],
               [t('Longest run'), formatNumber(locale, pace.longestStreak)],
@@ -187,13 +212,15 @@ export default async function PublicProfilePage({ params }: PageProps<'/u/[usern
             {t('Novels')}
           </h2>
           {projects.map((novel) => (
-            <NovelCard
-              key={novel.id}
-              novel={novel}
-              goals={goals.filter((goal) => goal.projectId === novel.id)}
-              totalWords={wordsOf(novel.id)}
-              readOnly
-            />
+            <div key={novel.id} className="flex flex-col gap-2">
+              <NovelCard
+                novel={novel}
+                goals={goals.filter((goal) => goal.projectId === novel.id)}
+                totalWords={wordsOf(novel.id)}
+                readOnly
+              />
+              <VisitorReport show={canReport} target="novel" username={writer.username} projectId={novel.id} />
+            </div>
           ))}
         </section>
       ) : null}

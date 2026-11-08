@@ -292,7 +292,7 @@ describe('writing service', () => {
       fieldErrors: { count: 'Enter how much you wrote.' },
     });
     await expect(logProgress(context, goalId, { ...form, count: '-3' })).resolves.toEqual({
-      fieldErrors: { count: 'Enter a number from 0 to 100000.' },
+      fieldErrors: { count: 'Enter a number from 0 to 10000000.' },
     });
     await expect(logProgress(context, new ObjectId().toHexString(), form)).resolves.toEqual({ error: GOAL_NOT_FOUND });
   });
@@ -349,6 +349,28 @@ describe('writing service', () => {
       saved: true,
     });
     expect((await writing.getProject(WRITER, projectId))?.status).toBe('not-started');
+  });
+
+  it('records every stored image and keeps the upload when the record fails', async () => {
+    const recorded: string[] = [];
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await saveInlineImage({ ...context, onImageStored: async (key) => void recorded.push(key) }, PNG);
+    expect(recorded).toEqual([expect.stringMatching(/^inline\//)]);
+
+    await expect(
+      saveInlineImage(
+        {
+          ...context,
+          onImageStored: async () => {
+            throw new Error('database down');
+          },
+        },
+        PNG,
+      ),
+    ).resolves.toEqual({ url: expect.stringMatching(/^\/media\/inline\//) });
+    expect(errorLog).toHaveBeenCalledWith('Upload record failed', expect.any(Error));
+    errorLog.mockRestore();
   });
 
   it('stores an image dropped in the editor or explains why not', async () => {

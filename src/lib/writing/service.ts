@@ -28,6 +28,8 @@ export type WritingContext = {
   now: Date;
   timeZone: string;
   translate?: (text: string, values: Record<string, string | number>) => string;
+  /** Called with the key of every stored image, to keep the upload in the access records. */
+  onImageStored?: (key: string) => Promise<void>;
 };
 export type WritingResult = FormState & { id?: string };
 
@@ -35,7 +37,7 @@ const fillIn = (text: string, values: Record<string, string | number>): string =
   text.replace(/\{(\w+)\}/g, (_match, name: string) => String(values[name]));
 
 const storeImage = async (
-  { storage, limiter, userId, now }: WritingContext,
+  { storage, limiter, userId, now, onImageStored }: WritingContext,
   bytes: Uint8Array,
   folder: string,
   field: string,
@@ -50,13 +52,20 @@ const storeImage = async (
     return { fieldErrors: { [field]: prepared.error } };
   }
 
+  let image: StoredImage;
+
   try {
-    return { image: await storage.save({ bytes: prepared.image.bytes, kind: prepared.image.kind, folder }) };
+    image = await storage.save({ bytes: prepared.image.bytes, kind: prepared.image.kind, folder });
   } catch (error) {
     console.error('Image storage failed', error);
 
     return { fieldErrors: { [field]: IMAGE_NOT_STORED } };
   }
+
+  // A failure to write the access record never undoes an upload that worked.
+  await onImageStored?.(image.key).catch((error: unknown) => console.error('Upload record failed', error));
+
+  return { image };
 };
 
 export const saveProject = async (

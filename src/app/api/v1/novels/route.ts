@@ -1,12 +1,12 @@
 import { saveCover, saveProject } from '@/lib/writing/service';
-import { bearerClaims, fileBytes, formResponse, json, stringFields, unauthorized } from '@/server/api';
+import { bearerWriter, fileBytes, formResponse, json, stringFields } from '@/server/api';
 import { writingContextFor } from '@/server/session';
 
 export async function POST(request: Request): Promise<Response> {
-  const claims = await bearerClaims(request);
+  const claims = await bearerWriter(request);
 
-  if (!claims) {
-    return unauthorized();
+  if (claims instanceof Response) {
+    return claims;
   }
 
   const form = await request.formData();

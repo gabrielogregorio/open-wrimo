@@ -26,6 +26,7 @@ const PROJECT: ProjectFields = {
   playlistUrl: 'https://example.com/playlist',
   featured: false,
   isPublic: false,
+  wordsBefore: 0,
 };
 
 const GOAL: GoalInput = {
@@ -240,6 +241,7 @@ describe('createWritingRepository', () => {
     writingTime: 'À noite',
     favoriteBooks: 'Dom Casmurro',
     favoriteAuthors: 'Clarice',
+    pronouns: 'she' as const,
     isPublic: true,
   };
   const ALL_SECTIONS = { bio: true, stats: true, favorites: true, badges: true };
@@ -317,10 +319,14 @@ describe('createWritingRepository', () => {
     const projectId = await writing.createProject(WRITER, PROJECT, NOW);
     await collections(testDatabase.database).projects.updateOne(
       { _id: new ObjectId(projectId) },
-      { $set: { status: 'drafted' as never }, $unset: { isPublic: '' } },
+      { $set: { status: 'drafted' as never }, $unset: { isPublic: '', wordsBefore: '' } },
     );
 
-    expect(await writing.getProject(WRITER, projectId)).toMatchObject({ status: 'in-progress', isPublic: false });
+    expect(await writing.getProject(WRITER, projectId)).toMatchObject({
+      status: 'in-progress',
+      isPublic: false,
+      wordsBefore: 0,
+    });
   });
 
   it('finds a public writer by username and hides private ones', async () => {
@@ -335,6 +341,16 @@ describe('createWritingRepository', () => {
     });
     await expect(writing.findPublicWriter('fechada')).resolves.toBeNull();
     await expect(writing.findPublicWriter('ninguem')).resolves.toBeNull();
+
+    const leaving = await addWriter('Saindo', 'saindo');
+    await writing.saveProfile(leaving, { ...PROFILE, name: 'Saindo', username: 'saindo' }, ALL_SECTIONS, NOW);
+    await collections(testDatabase.database).users.updateOne(
+      { _id: new ObjectId(leaving) },
+      { $set: { deletionRequestedAt: NOW } },
+    );
+
+    await expect(writing.findPublicWriter('saindo')).resolves.toBeNull();
+    expect((await writing.listCommunity({ query: 'saindo', sort: 'name', page: 1 })).writers).toEqual([]);
   });
 
   it('lists public writers with their public novels, words and last day', async () => {

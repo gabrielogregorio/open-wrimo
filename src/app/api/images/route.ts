@@ -1,15 +1,24 @@
 import { saveInlineImage } from '@/lib/writing/service';
 import { getTranslator } from '@/server/i18n';
-import { getCurrentUser, writingContext } from '@/server/session';
+import { currentWriter, writingContext } from '@/server/session';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request): Promise<Response> {
-  if (!(await getCurrentUser())) {
-    return Response.json({ error: 'Sign in first.' }, { status: 401 });
+  const writer = await currentWriter();
+  const t = await getTranslator();
+
+  if (writer === 'signed-out') {
+    return Response.json({ error: t('Sign in first.') }, { status: 401 });
   }
 
-  const t = await getTranslator();
+  if (writer === 'blocked') {
+    return Response.json(
+      { error: t('Accept the new Terms of Use, or cancel the deletion of your account, to add images.') },
+      { status: 403 },
+    );
+  }
+
   const file = (await request.formData()).get('image');
 
   if (!(file instanceof File) || file.size === 0) {

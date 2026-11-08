@@ -11,7 +11,7 @@ import {
   type CommunitySort,
 } from '@/lib/writing/repository';
 import { getLocale, getTranslator } from '@/server/i18n';
-import { requireUser } from '@/server/session';
+import { requireWriter } from '@/server/session';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslator();
@@ -24,7 +24,7 @@ const SORT_LABELS: Record<CommunitySort, string> = { words: 'Most words', recent
 const single = (value: string | string[] | undefined): string => (Array.isArray(value) ? value[0] : (value ?? ''));
 
 export default async function CommunityPage({ searchParams }: PageProps<'/write/community'>) {
-  await requireUser();
+  await requireWriter();
   const t = await getTranslator();
   const locale = await getLocale();
   const params = await searchParams;

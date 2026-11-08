@@ -8,12 +8,13 @@ import { getLocale, getTranslator } from '@/server/i18n';
 import {
   allEarnedBadges,
   laurelCount,
+  lifetimeBadges,
+  lifetimeWords,
   loadNotebook,
   participationBadges,
-  lifetimeBadges,
   wordsFor,
 } from '@/server/notebook';
-import { requireUser } from '@/server/session';
+import { requireWriter } from '@/server/session';
 import { NovelCard } from './novel-card';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function WritingDeskPage() {
-  const user = await requireUser();
+  const user = await requireWriter();
   const t = await getTranslator();
   const locale = await getLocale();
   const notebook = await loadNotebook();
@@ -35,7 +36,7 @@ export default async function WritingDeskPage() {
   const lifetime = lifetimeBadges(notebook);
   const goalsOf = (projectId: string) => notebook.goals.filter((goal) => goal.projectId === projectId);
   const numbers = [
-    [t('Words written'), formatNumber(locale, pace.total)],
+    [t('Words written'), formatNumber(locale, lifetimeWords(notebook))],
     [t('Days in a row'), formatNumber(locale, pace.currentStreak)],
     [t('Laurels'), formatNumber(locale, laurelCount(notebook))],
     [t('Badges'), formatNumber(locale, earned.size)],

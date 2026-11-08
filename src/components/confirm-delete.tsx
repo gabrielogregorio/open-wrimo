@@ -24,7 +24,9 @@ export function ConfirmDelete({ action, label, question, confirmLabel }: Confirm
   return (
     <form action={action} className="flex flex-wrap items-center gap-3">
       <p className="text-sm">{question}</p>
-      <SubmitButton variant="danger">{confirmLabel}</SubmitButton>
+      <SubmitButton variant="danger" pendingLabel={t('Deleting…')}>
+        {confirmLabel}
+      </SubmitButton>
       <button type="button" onClick={() => setConfirming(false)} className="text-sm underline underline-offset-4">
         {t('Keep it')}
       </button>

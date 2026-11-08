@@ -15,6 +15,38 @@ type AuthFormProps = {
   next?: string;
 };
 
+function TermsConsent({ checked, error }: { checked: boolean; error?: string }) {
+  const { t } = useI18n();
+
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="flex items-start gap-3 text-sm">
+        <input
+          type="checkbox"
+          name="acceptTerms"
+          defaultChecked={checked}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? 'field-acceptTerms-error' : undefined}
+          className="mt-0.5 h-5 w-5 shrink-0"
+          required
+        />
+        <span>
+          {t('I have read and accept the')}{' '}
+          <Link href="/termos" target="_blank" className="text-accent underline underline-offset-4">
+            {t('Terms of Use and Privacy Policy')}
+          </Link>
+          .
+        </span>
+      </label>
+      {error ? (
+        <p id="field-acceptTerms-error" className="text-sm text-danger">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function AuthForm({ mode, action, next }: AuthFormProps) {
   const { t } = useI18n();
   const [state, formAction] = useActionState(action, {});
@@ -65,7 +97,12 @@ export function AuthForm({ mode, action, next }: AuthFormProps) {
         error={fieldError('password')}
         required
       />
-      <SubmitButton>{isSignUp ? t('Create account') : t('Sign in')}</SubmitButton>
+      {isSignUp ? (
+        <TermsConsent checked={state.values?.acceptTerms === 'on'} error={fieldError('acceptTerms')} />
+      ) : null}
+      <SubmitButton pendingLabel={isSignUp ? t('Creating account…') : t('Signing in…')}>
+        {isSignUp ? t('Create account') : t('Sign in')}
+      </SubmitButton>
       <p className="text-center text-sm text-ink-soft">
         {isSignUp ? t('Already have a library card?') : t('New here?')}{' '}
         <Link href={isSignUp ? '/login' : '/register'} className="text-accent underline underline-offset-4">

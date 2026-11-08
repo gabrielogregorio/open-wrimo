@@ -1,3 +1,5 @@
+import { TOOLS } from '@/lib/tools/catalog';
+import { FANTASY_STYLES, NAME_COLLECTIONS } from '@/lib/tools/story/names';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -11,7 +13,13 @@ import {
   PROJECT_TYPE_LABELS,
   UNIT_LABELS,
 } from '@/components/writing-labels';
-import { EMAIL_TAKEN, INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS, USERNAME_TAKEN } from '@/lib/auth/service';
+import {
+  EMAIL_TAKEN,
+  INVALID_CREDENTIALS,
+  TOO_MANY_ATTEMPTS,
+  USERNAME_TAKEN,
+  ACCOUNT_CLOSED,
+} from '@/lib/auth/service';
 import { LIFETIME_BADGES, PARTICIPATION_BADGES, PERSONAL_BADGES, WRITING_BADGES } from '@/lib/writing/badges';
 import { EVENTS } from '@/lib/writing/events';
 import { IMAGE_STILL_TOO_BIG, IMAGE_UNREADABLE, IMAGE_UPLOAD_TOO_BIG, IMAGE_WRONG_TYPE } from '@/lib/storage/images';
@@ -71,6 +79,14 @@ describe('translate', () => {
     expect(translate('en-US', 'Hello, {name}')).toBe('Hello, {name}');
   });
 
+  it('picks the singular for exactly one and the plural otherwise, even for formatted numbers', () => {
+    expect(translate('pt-BR', '{count} words', { count: 1 })).toBe('1 palavra');
+    expect(translate('pt-BR', '{count} words', { count: 0 })).toBe('0 palavras');
+    expect(translate('pt-BR', '{count} words', { count: '1.234' })).toBe('1.234 palavras');
+    expect(translate('pt-BR', '{count} chapters, {words} words', { count: 1, words: 1 })).toBe('1 capítulo, 1 palavra');
+    expect(translate('pt-BR', '{count} words')).toBe('{count} {count:palavra|palavras}');
+  });
+
   it('falls back to the key when a translation is missing', () => {
     expect(translator('pt-BR')('A sentence nobody translated')).toBe('A sentence nobody translated');
   });
@@ -93,12 +109,15 @@ describe('pt-BR dictionary', () => {
     ...Object.values(PERIOD_LABELS),
     ...Object.values(PERIOD_SUFFIX),
     ...GENRE_SUGGESTIONS,
+    ...TOOLS.flatMap((tool) => [tool.title, tool.description]),
+    ...[...NAME_COLLECTIONS, ...FANTASY_STYLES].map((item) => item.label),
     ...EVENTS.map((event) => event.name),
     ...[...WRITING_BADGES, ...LIFETIME_BADGES, ...PERSONAL_BADGES, ...PARTICIPATION_BADGES].flatMap((badge) => [
       badge.label,
       badge.description,
     ]),
     INVALID_CREDENTIALS,
+    ACCOUNT_CLOSED,
     TOO_MANY_ATTEMPTS,
     EMAIL_TAKEN,
     USERNAME_TAKEN,
@@ -123,8 +142,26 @@ describe('pt-BR dictionary', () => {
     expect(ptBR[key]).toBeTruthy();
   });
 
+  it('defines each text in one dictionary file only, so no file silently overrides another', () => {
+    const dictionaryFiles = readdirSync(join(SOURCE_ROOT, 'lib', 'i18n')).filter((name) => /^pt-BR.*\.ts$/.test(name));
+    const owners = new Map<string, string[]>();
+
+    for (const name of dictionaryFiles) {
+      const source = readFileSync(join(SOURCE_ROOT, 'lib', 'i18n', name), 'utf8');
+
+      for (const match of source.matchAll(/^ {2}(?:'((?:[^'\\]|\\.)*)'|(\w+)):/gm)) {
+        const key = match[1] ?? match[2];
+        owners.set(key, [...(owners.get(key) ?? []), name]);
+      }
+    }
+
+    expect([...owners].filter(([, files]) => files.length > 1)).toEqual([]);
+  });
+
   it('keeps the same placeholders in each translation', () => {
-    const placeholders = (text: string): string[] => [...text.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
+    // A plural choice ("{count:palavra|palavras}") repeats a placeholder, so names are compared as a set.
+    const placeholders = (text: string): string[] =>
+      [...new Set([...text.matchAll(/\{(\w+)(?::[^}]*)?\}/g)].map((match) => match[1]))].sort();
     const mismatched = Object.entries(ptBR).filter(
       ([key, value]) => placeholders(key).join() !== placeholders(value).join(),
     );

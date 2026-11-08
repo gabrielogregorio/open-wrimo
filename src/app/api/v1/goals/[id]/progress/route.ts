@@ -1,15 +1,15 @@
 import { logProgress } from '@/lib/writing/service';
-import { bearerClaims, formResponse, readJson, unauthorized } from '@/server/api';
+import { bearerWriter, formResponse, readJson } from '@/server/api';
 import { writingContextFor } from '@/server/session';
 
 export async function POST(
   request: Request,
   { params }: RouteContext<'/api/v1/goals/[id]/progress'>,
 ): Promise<Response> {
-  const claims = await bearerClaims(request);
+  const claims = await bearerWriter(request);
 
-  if (!claims) {
-    return unauthorized();
+  if (claims instanceof Response) {
+    return claims;
   }
 
   const body = await readJson(request);
