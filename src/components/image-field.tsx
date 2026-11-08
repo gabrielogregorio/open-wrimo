@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState, type DragEvent } from 'react';
+import { useRef, useState, type DragEvent } from 'react';
 import { MAX_UPLOAD_BYTES } from '@/lib/storage/limits';
 import { BookMockup } from './book-mockup';
 import { useI18n } from './i18n-provider';
+import { previewOf } from './image-preview';
 
 type ImageFieldProps = {
   asBook?: boolean;
@@ -33,10 +34,12 @@ export function ImageField({
   const id = `field-${name}`;
   const shownError = localError ?? error;
 
-  useEffect(() => () => (preview ? URL.revokeObjectURL(preview) : undefined), [preview]);
+  // Only the latest pick may set the preview, in case an older one finishes drawing later.
+  const latestPick = useRef(0);
 
   const pick = (target: HTMLInputElement): void => {
     const file = target.files?.[0];
+    latestPick.current += 1;
     setPreview(null);
     setLocalError(null);
 
@@ -51,7 +54,13 @@ export function ImageField({
       return;
     }
 
-    setPreview(URL.createObjectURL(file));
+    const pickNumber = latestPick.current;
+    void previewOf(file).then((drawn) => {
+      // A file the browser cannot draw just has no preview; the server says what is wrong with it.
+      if (pickNumber === latestPick.current) {
+        setPreview(drawn);
+      }
+    });
   };
 
   const onDrop = (event: DragEvent<HTMLDivElement>): void => {
