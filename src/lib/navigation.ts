@@ -3,7 +3,7 @@
 export const SECTIONS = ['writing', 'community', 'profile', 'update', 'sprint'] as const;
 
 export type Section = (typeof SECTIONS)[number];
-export type PageTurn = 'forward' | 'back' | 'none';
+export type PageTurn = 'forward' | 'back' | 'within' | 'none';
 
 const OWN_PAGES: Record<Exclude<Section, 'writing'>, string> = {
   community: '/write/community',
@@ -26,9 +26,15 @@ export const sectionOf = (pathname: string): Section | null => {
   return isUnder(pathname, '/write') ? 'writing' : null;
 };
 
+// 'none' is the first page after a load or a page outside the writing area; 'within' is a move between
+// pages of the same section, such as a novel and its edit page.
 export const pageTurn = (from: Section | null, to: Section | null): PageTurn => {
-  if (!from || !to || from === to) {
+  if (!from || !to) {
     return 'none';
+  }
+
+  if (from === to) {
+    return 'within';
   }
 
   return SECTIONS.indexOf(to) > SECTIONS.indexOf(from) ? 'forward' : 'back';

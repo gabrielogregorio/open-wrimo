@@ -26,8 +26,8 @@ describe('pageTurn', () => {
     expect(pageTurn('update', 'community')).toBe('back');
   });
 
-  it('does not turn inside one section or from outside the writing area', () => {
-    expect(pageTurn('writing', 'writing')).toBe('none');
+  it('moves within a section, and does not turn from or to outside the writing area', () => {
+    expect(pageTurn('writing', 'writing')).toBe('within');
     expect(pageTurn(null, 'writing')).toBe('none');
     expect(pageTurn('profile', null)).toBe('none');
   });

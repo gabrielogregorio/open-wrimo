@@ -19,6 +19,15 @@ describe('PageEnter', () => {
     expect(turnOf('/write')).toBe('none');
     expect(turnOf('/write/profile')).toBe('forward');
     expect(turnOf('/write/community')).toBe('back');
-    expect(turnOf('/write/community')).toBe('none');
+    expect(turnOf('/write/community')).toBe('within');
+  });
+
+  it('plays the entrance again when the address changes inside one section', () => {
+    pathname.current = '/write/novels/a';
+    const { rerender } = render(<PageEnter>novel page</PageEnter>);
+    pathname.current = '/write/novels/a/edit';
+    rerender(<PageEnter>novel page</PageEnter>);
+
+    expect(screen.getByText('novel page')).toHaveAttribute('data-turn', 'within');
   });
 });
