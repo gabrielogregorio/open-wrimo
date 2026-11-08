@@ -1,6 +1,7 @@
 import { ObjectId, type Db } from 'mongodb';
 import { collections, type AccessAction } from '@/lib/db/collections';
-import type { ImageStorage } from '@/lib/storage/storage';
+import { inlineKeysIn, keyOwner } from '@/lib/storage/owners';
+import { IMAGE_FOLDERS, ownerFolder, type OwnedImageStorage } from '@/lib/storage/storage';
 import { needsTermsAcceptance } from '@/lib/legal/terms';
 import { ACCESS_LOG_MONTHS, DELETION_DEADLINE_DAYS, DELETION_GRACE_DAYS } from '@/lib/legal/terms-content';
 
@@ -137,31 +138,12 @@ export type DeletionPreview = {
 
 const later = (date: Date, days: number): Date => new Date(date.getTime() + days * DAY_MS);
 
-const IMAGE_SOURCE = /<img\b[^>]*?\bsrc="([^"]+)"/gi;
-const LOCAL_INLINE_IMAGE = /^\/media\/(inline\/[\w-]+\.webp)$/;
-const CLOUDINARY_IMAGE = /^https:\/\/res\.cloudinary\.com\/[\w-]+\/image\/upload\/(?:v\d+\/)?([\w/-]+)\.\w+$/;
-const INLINE_FOLDER = /(?:^|\/)inline\/[\w-]+$/;
-
-/** The storage key of an image added through the text editor, read from its address; null for anything else. */
-export const inlineImageKey = (url: string): string | null => {
-  const local = LOCAL_INLINE_IMAGE.exec(url);
-
-  if (local) {
-    return local[1];
-  }
-
-  const cloud = CLOUDINARY_IMAGE.exec(url);
-
-  return cloud && INLINE_FOLDER.test(cloud[1]) ? cloud[1] : null;
-};
-
-const inlineKeysIn = (html: string | undefined): string[] =>
-  [...(html ?? '').matchAll(IMAGE_SOURCE)].flatMap((match) => inlineImageKey(match[1]) ?? []);
-
 const escapeRegex = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
  * Inline images uploaded before 0.2.0 have no upload record, so they are found in the writer's texts.
+ * Only keys without an owner folder are read this way: an image in this account's folder goes with the
+ * folder, and one in another account's folder is never this account's to delete.
  * Any account may paste any image address into its text, so a key found that way is kept when another
  * account uploaded it or still shows it: deleting one account never deletes someone else's image.
  */
@@ -203,7 +185,7 @@ const imageKeysOf = async (database: Db, userId: ObjectId): Promise<string[]> =>
     ...ownProjects.flatMap((project) => inlineKeysIn(project.excerpt)),
     ...inlineKeysIn(profile?.bio),
     ...ownPosts.flatMap((post) => inlineKeysIn(post.body)),
-  ].filter((key) => !recorded.includes(key));
+  ].filter((key) => keyOwner(key) === null && !recorded.includes(key));
 
   return [...new Set([...recorded, ...(await keysOnlyThisAccountUses(database, userId, [...new Set(inText)]))])];
 };
@@ -263,7 +245,7 @@ export const listPendingDeletions = async (database: Db, now: Date): Promise<Del
  */
 export const purgeAccount = async (
   database: Db,
-  storage: ImageStorage,
+  storage: OwnedImageStorage,
   userId: string,
   now: Date,
 ): Promise<{ deleted: boolean; images: number }> => {
@@ -277,6 +259,8 @@ export const purgeAccount = async (
 
   const keys = await imageKeysOf(database, id);
   await Promise.all(keys.map((key) => storage.remove(key).catch(() => undefined)));
+  // A failure here stops the deletion, so the admin can try again without losing track of the files.
+  await Promise.all(IMAGE_FOLDERS.map((kind) => storage.removeFolder(ownerFolder(kind, userId))));
   await Promise.all([
     projects.deleteMany({ userId: id }),
     goals.deleteMany({ userId: id }),

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { ImageStorage } from './storage';
+import type { OwnedImageStorage } from './storage';
 
 export type CloudinaryCredentials = { cloudName: string; apiKey: string; apiSecret: string };
 
@@ -32,7 +32,7 @@ export const createCloudinaryStorage = ({
   folder,
   fetch = globalThis.fetch,
   now = () => new Date(),
-}: Options): ImageStorage => {
+}: Options): OwnedImageStorage => {
   const endpoint = (action: string): string => `https://api.cloudinary.com/v1_1/${cloudName}/image/${action}`;
 
   const call = async (action: string, parameters: Record<string, string>, file?: Blob) => {
@@ -62,6 +62,28 @@ export const createCloudinaryStorage = ({
     return (await response.json()) as Record<string, unknown>;
   };
 
+  // The Admin API takes the key and secret as Basic auth instead of a signature.
+  const basicAuth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
+
+  const deleteByPrefix = async (prefix: string, cursor?: string): Promise<string | undefined> => {
+    const query = new URLSearchParams({ prefix, ...(cursor ? { next_cursor: cursor } : {}) });
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/resources/image/upload?${query.toString()}`,
+      {
+        method: 'DELETE',
+        headers: { authorization: `Basic ${basicAuth}` },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Cloudinary delete by prefix failed with status ${response.status}`);
+    }
+
+    const body = (await response.json()) as { next_cursor?: unknown };
+
+    return typeof body.next_cursor === 'string' ? body.next_cursor : undefined;
+  };
+
   return {
     async save({ bytes, kind, folder: subfolder }) {
       const result = await call(
@@ -75,6 +97,21 @@ export const createCloudinaryStorage = ({
 
     async remove(key) {
       await call('destroy', { public_id: key, invalidate: 'true' });
+    },
+
+    async move(key, toKey) {
+      const result = await call('rename', { from_public_id: key, to_public_id: toKey, invalidate: 'true' });
+
+      return { url: String(result.secure_url), key: String(result.public_id) };
+    },
+
+    // Deletes up to a thousand images per call, so it asks again while Cloudinary says there are more.
+    async removeFolder(subfolder) {
+      let cursor: string | undefined;
+
+      do {
+        cursor = await deleteByPrefix(`${folder}/${subfolder}/`, cursor);
+      } while (cursor);
     },
   };
 };

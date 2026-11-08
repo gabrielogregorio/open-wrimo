@@ -132,7 +132,7 @@ describe('writing service', () => {
     const projectId = await newProject();
 
     await expect(saveCover(context, projectId, PNG)).resolves.toEqual({ id: projectId, saved: true });
-    expect(storage.save).toHaveBeenCalledWith(expect.objectContaining({ folder: 'covers' }));
+    expect(storage.save).toHaveBeenCalledWith(expect.objectContaining({ folder: `covers/${WRITER}` }));
     expect(storage.remove).not.toHaveBeenCalled();
     const firstKey = (await storage.save.mock.results[0].value).key;
 
@@ -192,7 +192,7 @@ describe('writing service', () => {
 
     const { id: postId } = await savePost(context, projectId, form, { image: PNG });
     expect((await writing.getPost(WRITER, postId!))?.title).toBe('Day one');
-    expect(storage.save).toHaveBeenCalledWith(expect.objectContaining({ folder: 'posts' }));
+    expect(storage.save).toHaveBeenCalledWith(expect.objectContaining({ folder: `posts/${WRITER}` }));
 
     await expect(savePost(context, projectId, form, { postId })).resolves.toEqual({ id: postId });
     expect(storage.remove).not.toHaveBeenCalled();

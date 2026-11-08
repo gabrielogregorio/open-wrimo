@@ -71,5 +71,8 @@ test('an image can be added in the middle of the additional details', async ({ w
   await page.getByRole('button', { name: 'Inserir imagem' }).click();
   await (await chooser).setFiles({ name: 'map.png', mimeType: 'image/png', buffer: await pngImage(200, 120) });
 
-  await expect(page.locator('.ProseMirror img')).toHaveAttribute('src', /^\/media\/inline\/[0-9a-f-]+\.webp$/);
+  await expect(page.locator('.ProseMirror img')).toHaveAttribute(
+    'src',
+    /^\/media\/inline\/[0-9a-f]{24}\/[0-9a-f-]+\.webp$/,
+  );
 });
