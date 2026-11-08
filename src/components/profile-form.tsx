@@ -126,6 +126,7 @@ export function ProfileForm({ action, profile, name, username }: ProfileFormProp
         currentUrl={profile.avatarUrl}
         error={fieldError('avatar')}
         removeLabel={t('Remove the picture')}
+        square
       />
       <Area name="bio" label={t('About me')} value={values.bio} rows={5} error={fieldError('bio')} />
       <div className="grid gap-5 sm:grid-cols-2">

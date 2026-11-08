@@ -35,7 +35,9 @@ describe('ImageField', () => {
     const { container } = renderWithLocale(<ImageField name="image" label="Picture" />);
     const input = screen.getByLabelText('Picture');
 
-    expect(input).toHaveAccessibleDescription('PNG, JPEG, WebP or GIF under 5 MB. It becomes WebP up to 1920×1080.');
+    expect(input).toHaveAccessibleDescription(
+      'PNG, JPEG, WebP or GIF under 5 MB. It becomes WebP up to 1920×1080; GIFs stay animated.',
+    );
 
     await userEvent.upload(input, image());
 
@@ -55,7 +57,7 @@ describe('ImageField', () => {
 
     expect(input).toHaveAttribute('aria-invalid', 'true');
     expect(input).toHaveAccessibleDescription(
-      'PNG, JPEG, WebP or GIF under 5 MB. It becomes WebP up to 1920×1080. Send an image under 5 MB.',
+      'PNG, JPEG, WebP or GIF under 5 MB. It becomes WebP up to 1920×1080; GIFs stay animated. Send an image under 5 MB.',
     );
     expect(URL.createObjectURL).not.toHaveBeenCalled();
   });
@@ -105,5 +107,13 @@ describe('ImageField', () => {
     );
 
     expect(screen.getByRole('checkbox', { name: 'Remove the image' })).toHaveAttribute('name', 'removeImage');
+  });
+
+  it('tells that a profile picture becomes a square', () => {
+    renderWithLocale(<ImageField name="avatar" label="Profile picture" square />, 'pt-BR');
+
+    expect(screen.getByLabelText('Profile picture')).toHaveAccessibleDescription(
+      'PNG, JPEG, WebP ou GIF com menos de 5 MB. Vira um quadrado WebP de 512×512; GIF continua animado.',
+    );
   });
 });

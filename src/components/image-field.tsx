@@ -12,9 +12,19 @@ type ImageFieldProps = {
   currentUrl?: string | null;
   error?: string;
   removeLabel?: string;
+  /** The picture is cropped to a 512 px square on the server, as profile pictures are. */
+  square?: boolean;
 };
 
-export function ImageField({ asBook = false, name, label, currentUrl, error, removeLabel }: ImageFieldProps) {
+export function ImageField({
+  asBook = false,
+  name,
+  label,
+  currentUrl,
+  error,
+  removeLabel,
+  square = false,
+}: ImageFieldProps) {
   const { t } = useI18n();
   const [preview, setPreview] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -96,7 +106,9 @@ export function ImageField({ asBook = false, name, label, currentUrl, error, rem
         />
       </div>
       <p id={`${id}-hint`} className="text-xs text-ink-soft">
-        {t('PNG, JPEG, WebP or GIF under 5 MB. It becomes WebP up to 1920×1080.')}
+        {square
+          ? t('PNG, JPEG, WebP or GIF under 5 MB. It becomes a 512×512 WebP square; GIFs stay animated.')
+          : t('PNG, JPEG, WebP or GIF under 5 MB. It becomes WebP up to 1920×1080; GIFs stay animated.')}
       </p>
       {shownError ? (
         <p id={`${id}-error`} className="text-sm text-danger">
