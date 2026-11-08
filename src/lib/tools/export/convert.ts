@@ -1044,14 +1044,18 @@ const htmlBlock = (block: RegExpExecArray, store: ImageStore): Item[] => {
 };
 
 // Comments and hidden elements are removed until none is left, so pieces that join up after one pass
-// ("<!<!-- -->--", "<scr<script></script>ipt>") are removed too.
+// ("<!<!-- -->--", "<scr<script></script>ipt>") are removed too. A comment that never closes runs to
+// the end of the text, as it does in a browser. </head> may be left out in valid HTML, so elements
+// still need their closing tag.
 export const withoutHiddenParts = (html: string): string => {
   let previous: string;
   let body = html;
 
   do {
     previous = body;
-    body = body.replace(/<!--[\s\S]*?-->/g, '').replace(/<(script|style|head|template|noscript)\b[\s\S]*?<\/\1>/gi, '');
+    body = body
+      .replace(/<!--[\s\S]*?(?:-->|$)/g, '')
+      .replace(/<(script|style|head|template|noscript)\b[\s\S]*?<\/\1>/gi, '');
   } while (body !== previous);
 
   return body;

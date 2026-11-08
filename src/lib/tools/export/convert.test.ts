@@ -265,6 +265,11 @@ describe('html', () => {
     expect(withoutHiddenParts('<p>Nada a remover</p>')).toBe('<p>Nada a remover</p>');
   });
 
+  it('drops a comment that never closes up to the end of the text', () => {
+    expect(withoutHiddenParts('<p>A</p><!-- sem fim <img src=x onerror=alert(1)>')).toBe('<p>A</p>');
+    expect(withoutHiddenParts('<p>A</p><!<!-- a -->-- sem fim')).toBe('<p>A</p>');
+  });
+
   it('reads title, author, headings, paragraphs and breaks without scripts or styles', async () => {
     const html =
       '<html><head><title>Livro &amp; Cia</title><meta name="author" content="Davi &eacute;"><style>p{}</style></head>' +
