@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import type { ComponentProps } from 'react';
 import { BadgeHex } from '@/components/badge-hex';
-import { ReportButton } from '@/components/report-button';
+import { ReportButton, type ReportPreview } from '@/components/report-button';
 import { RichText } from '@/components/rich-text';
 import { getDatabase } from '@/lib/db/client';
 import { PRONOUN_LABELS } from '@/components/writing-labels';
@@ -73,6 +73,22 @@ const profileStructuredData = (
     },
   });
 };
+
+/** What the report dialog shows of a profile: the name, the picture and the bio when it is shown. */
+const profilePreview = (
+  name: string,
+  profile: { avatarUrl: string | null; bio: string; shown: { bio: boolean } },
+): ReportPreview => ({
+  title: name,
+  imageUrl: profile.avatarUrl,
+  description: profile.shown.bio && profile.bio ? <RichText html={profile.bio} /> : undefined,
+});
+
+const novelPreview = (novel: { title: string; coverUrl: string | null; summary: string }): ReportPreview => ({
+  title: novel.title,
+  imageUrl: novel.coverUrl,
+  description: novel.summary || undefined,
+});
 
 /** The report button, hidden from the writer looking at their own page. */
 function VisitorReport({ show, ...props }: ComponentProps<typeof ReportButton> & { show: boolean }) {
@@ -166,7 +182,12 @@ export default async function PublicProfilePage({ params }: PageProps<'/u/[usern
           </p>
           <p className="text-sm text-ink-soft">{[profile.location, profile.writingTime].filter(Boolean).join(' · ')}</p>
         </div>
-        <VisitorReport show={canReport} target="profile" username={writer.username} />
+        <VisitorReport
+          show={canReport}
+          target="profile"
+          username={writer.username}
+          preview={profilePreview(writer.name, profile)}
+        />
       </section>
 
       {profile.shown.stats ? (
@@ -219,7 +240,13 @@ export default async function PublicProfilePage({ params }: PageProps<'/u/[usern
                 totalWords={wordsOf(novel.id)}
                 readOnly
               />
-              <VisitorReport show={canReport} target="novel" username={writer.username} projectId={novel.id} />
+              <VisitorReport
+                show={canReport}
+                target="novel"
+                username={writer.username}
+                projectId={novel.id}
+                preview={novelPreview(novel)}
+              />
             </div>
           ))}
         </section>

@@ -9,37 +9,56 @@ vi.mock('@/app/actions/moderation', () => ({ reportAction: vi.fn() }));
 
 const mockedReport = vi.mocked(reportAction);
 
+const PROFILE = { title: 'Ana Lima', imageUrl: '/media/avatars/u/a.webp', description: <p>Escrevo de madrugada.</p> };
+const NOVEL = { title: 'Rio de Janeiro', imageUrl: '/media/covers/u/c.webp', description: 'Uma cidade em chamas.' };
+
 const sentFields = (): Record<string, FormDataEntryValue> =>
   Object.fromEntries((mockedReport.mock.calls[0][1] as FormData).entries());
 
 describe('ReportButton', () => {
-  it('opens and closes the report form in the page', async () => {
-    renderWithLocale(<ReportButton target="profile" username="ana" />);
-    const toggle = screen.getByRole('button', { name: 'Report profile' });
+  it('opens an accessible dialog with what is being reported, and closes it three ways', async () => {
+    const user = userEvent.setup();
+    renderWithLocale(<ReportButton target="profile" username="ana" preview={PROFILE} />);
 
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('form')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Report profile' }));
 
-    await userEvent.click(toggle);
-
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('region', { name: 'Report profile' })).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog', { name: 'Report profile' });
+    expect(dialog).toHaveAccessibleDescription('Check that this is what you want to report.');
+    const preview = screen.getByRole('region', { name: 'What you are reporting' });
+    expect(preview).toHaveTextContent('Ana Lima');
+    expect(preview).toHaveTextContent('Escrevo de madrugada.');
+    expect(preview.querySelector('img')).toHaveAttribute('src', '/media/avatars/u/a.webp');
     expect(screen.getByText(/Reports are anonymous to the reported person/)).toBeInTheDocument();
     expect(screen.getByLabelText('Details (optional)')).not.toBeRequired();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel report' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel report' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    expect(screen.queryByRole('region')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Report profile' }));
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    await userEvent.click(toggle);
-    await userEvent.click(toggle);
+    await user.click(screen.getByRole('button', { name: 'Report profile' }));
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
 
-    expect(screen.queryByRole('region')).not.toBeInTheDocument();
+  it('shows a novel without an image or description as just its title', async () => {
+    renderWithLocale(
+      <ReportButton target="novel" username="ana" projectId="p1" preview={{ title: 'Sem capa', imageUrl: null }} />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Report novel' }));
+    const preview = screen.getByRole('region', { name: 'What you are reporting' });
+
+    expect(preview).toHaveTextContent('Sem capa');
+    expect(preview.querySelector('img')).toBeNull();
   });
 
   it('sends a novel report and thanks the reader', async () => {
     mockedReport.mockResolvedValue({ saved: true });
-    renderWithLocale(<ReportButton target="novel" username="ana" projectId="p1" />);
+    renderWithLocale(<ReportButton target="novel" username="ana" projectId="p1" preview={NOVEL} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Report novel' }));
     await userEvent.selectOptions(screen.getByLabelText('Reason'), 'copyright');
@@ -62,7 +81,7 @@ describe('ReportButton', () => {
       errorValues: { minutes: 4 },
       fieldErrors: { reason: 'Choose a reason.', details: 'Tell us what is wrong.' },
     } satisfies FormState);
-    renderWithLocale(<ReportButton target="profile" username="ana" />, 'pt-BR');
+    renderWithLocale(<ReportButton target="profile" username="ana" preview={PROFILE} />, 'pt-BR');
 
     await userEvent.click(screen.getByRole('button', { name: 'Denunciar perfil' }));
     await userEvent.selectOptions(screen.getByLabelText('Motivo'), 'other');
@@ -86,7 +105,7 @@ describe('ReportButton', () => {
           waiting.push(resolve);
         }),
     );
-    renderWithLocale(<ReportButton target="profile" username="ana" />);
+    renderWithLocale(<ReportButton target="profile" username="ana" preview={PROFILE} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Report profile' }));
     await userEvent.selectOptions(screen.getByLabelText('Reason'), 'spam');

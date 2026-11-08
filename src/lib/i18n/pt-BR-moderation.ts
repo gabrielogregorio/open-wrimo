@@ -21,6 +21,8 @@ export const ptBRModeration: Record<string, string> = {
 
   // Report form
   'Report profile': 'Denunciar perfil',
+  'What you are reporting': 'O que você está denunciando',
+  'Check that this is what you want to report.': 'Confira se é isto que você quer denunciar.',
   'Report novel': 'Denunciar romance',
   Reason: 'Motivo',
   'Choose a reason': 'Escolha um motivo',
@@ -44,9 +46,8 @@ export const ptBRModeration: Record<string, string> = {
   'Novel no longer exists': 'Romance não existe mais',
   'Reported by': 'Denunciado por',
   anonymous: 'anônimo',
-  'IP address': 'Endereço IP',
-  Browser: 'Navegador',
-  Unknown: 'Desconhecido',
+  'Report id': 'Id da denúncia',
+  'Novel id': 'Id do romance',
   'Resolved at': 'Resolvida em',
   'Mark as resolved': 'Marcar como resolvida',
   Reopen: 'Reabrir',
