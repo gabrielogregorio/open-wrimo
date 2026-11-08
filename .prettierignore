@@ -3,5 +3,6 @@ public/
 trash/
 coverage/
 .next/
+.next-dev/
 playwright-report/
 test-results/
